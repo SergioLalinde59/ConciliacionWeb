@@ -1,0 +1,16 @@
+# ============================================
+# Development Dependencies
+# ============================================
+
+# Testing
+pytest==9.0.2
+pluggy==1.6.0  # pytest dependency
+
+# Code Quality
+# black==24.0.0  # Code formatter (uncomment to install)
+# flake8==7.0.0  # Linter (uncomment to install)
+# mypy==1.8.0  # Type checker (uncomment to install)
+
+# Development Tools
+# ipython==8.20.0  # Better REPL (uncomment to install)
+# ipdb==0.13.13  # Debugger (uncomment to install)

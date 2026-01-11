@@ -1,0 +1,233 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Script para analizar datos y sugerir estrategias de IA para asignación de ContactoID
+"""
+
+import psycopg2
+import pandas as pd
+from collections import Counter
+
+# Configuración de la base de datos
+DB_CONFIG = {
+    'host': 'localhost',
+    'port': 5433,
+    'user': 'postgres',
+    'password': 'SLB',
+    'database': 'Mvtos'
+}
+
+def conectar():
+    """Conecta a la base de datos"""
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        return conn
+    except Exception as e:
+        print(f"Error al conectar: {e}")
+        return None
+
+def analizar_datos():
+    """Analiza los datos disponibles para hacer recomendaciones"""
+    conn = conectar()
+    if not conn:
+        return
+    
+    try:
+        # 1. Ver estadísticas de movimientos
+        print("=" * 70)
+        print("ANÁLISIS DE DATOS PARA ASIGNACIÓN DE CONTACTO")
+        print("=" * 70)
+        
+        # Obtener ID de cuenta ahorros
+        query_cuenta = "SELECT CuentaID FROM cuentas WHERE cuenta = 'Ahorros'"
+        df_cuenta = pd.read_sql(query_cuenta, conn)
+        
+        if df_cuenta.empty:
+            print("\n⚠️ No se encontró la cuenta 'Ahorros' en la tabla cuentas")
+            return
+        
+        cuenta_id = df_cuenta.iloc[0]['cuentaid']
+        print(f"\n✓ Cuenta 'Ahorros' encontrada - ID: {cuenta_id}")
+        
+        # Estadísticas generales
+        query_stats = f"""
+        SELECT 
+            COUNT(*) as total_movimientos,
+            COUNT(ContactID) as con_contacto,
+            COUNT(*) - COUNT(ContactID) as sin_contacto
+        FROM movimientos 
+        WHERE AccountID = {cuenta_id}
+        """
+        df_stats = pd.read_sql(query_stats, conn)
+        print("\n📊 Estadísticas de Movimientos (Cuenta Ahorros):")
+        print(f"  • Total de movimientos: {df_stats.iloc[0]['total_movimientos']}")
+        print(f"  • Con ContactoID asignado: {df_stats.iloc[0]['con_contacto']}")
+        print(f"  • Sin ContactoID: {df_stats.iloc[0]['sin_contacto']}")
+        
+        # 2. Analizar campos disponibles en movimientos
+        query_campos = f"""
+        SELECT 
+            Descripcion,
+            Referencia,
+            Valor,
+            ContactID
+        FROM movimientos
+        WHERE AccountID = {cuenta_id}
+        LIMIT 20
+        """
+        df_movimientos = pd.read_sql(query_campos, conn)
+        print("\n📋 Muestra de campos en movimientos:")
+        print(df_movimientos.head(10).to_string(index=False))
+        
+        # 3. Analizar contactos existentes
+        query_contactos = """
+        SELECT 
+            contactoid,
+            contacto,
+            descripcion,
+            referencia
+        FROM contactos
+        ORDER BY contactoid
+        LIMIT 15
+        """
+        df_contactos = pd.read_sql(query_contactos, conn)
+        print("\n👥 Contactos existentes:")
+        print(df_contactos.to_string(index=False))
+        print(f"\n  Total de contactos: {len(df_contactos)}")
+        
+        # 4. Buscar patrones en descripciones sin contacto
+        query_sin_contacto = f"""
+        SELECT 
+            Descripcion,
+            COUNT(*) as frecuencia
+        FROM movimientos
+        WHERE AccountID = {cuenta_id} AND ContactID IS NULL
+        GROUP BY Descripcion
+        ORDER BY frecuencia DESC
+        LIMIT 15
+        """
+        df_sin_contacto = pd.read_sql(query_sin_contacto, conn)
+        
+        if not df_sin_contacto.empty:
+            print("\n🔍 Descripciones más frecuentes SIN ContactoID:")
+            print(df_sin_contacto.to_string(index=False))
+        
+        # 5. Buscar patrones en descripciones CON contacto
+        query_con_contacto = f"""
+        SELECT 
+            m.Descripcion,
+            c.contacto,
+            c.descripcion as contacto_desc,
+            COUNT(*) as frecuencia
+        FROM movimientos m
+        JOIN contactos c ON m.ContactID = c.contactoid
+        WHERE m.AccountID = {cuenta_id}
+        GROUP BY m.Descripcion, c.contacto, c.descripcion
+        ORDER BY frecuencia DESC
+        LIMIT 15
+        """
+        df_con_contacto = pd.read_sql(query_con_contacto, conn)
+        
+        if not df_con_contacto.empty:
+            print("\n✓ Descripciones más frecuentes CON ContactoID asignado:")
+            print(df_con_contacto.to_string(index=False))
+        
+        # 6. Analizar longitud promedio de campos
+        query_longitudes = f"""
+        SELECT 
+            AVG(LENGTH(Descripcion)) as long_desc,
+            AVG(LENGTH(Referencia)) as long_ref
+        FROM movimientos
+        WHERE AccountID = {cuenta_id}
+        """
+        df_longitudes = pd.read_sql(query_longitudes, conn)
+        print("\n📏 Longitud promedio de campos:")
+        print(f"  • Descripción: {df_longitudes.iloc[0]['long_desc']:.1f} caracteres")
+        print(f"  • Referencia: {df_longitudes.iloc[0]['long_ref']:.1f} caracteres")
+        
+        # 7. Recomendaciones
+        print("\n" + "=" * 70)
+        print("RECOMENDACIONES PARA ASIGNACIÓN AUTOMÁTICA CON IA")
+        print("=" * 70)
+        
+        print("\n🤖 ESTRATEGIAS RECOMENDADAS:")
+        print("\n1️⃣ MATCHING EXACTO (Reglas simples)")
+        print("   • Crear tabla de mapeo: descripcion -> contactoid")
+        print("   • Útil para descripciones repetitivas exactas")
+        print("   • Bajo costo computacional, alta precisión")
+        
+        print("\n2️⃣ FUZZY MATCHING (Similitud de texto)")
+        print("   • Usar bibliotecas como thefuzz, RapidFuzz")
+        print("   • Comparar descripción del movimiento con:")
+        print("     - contacto.contacto (nombre del contacto)")
+        print("     - contacto.descripcion")
+        print("     - contacto.referencia")
+        print("   • Umbral de similitud recomendado: 85-90%")
+        
+        print("\n3️⃣ NLP + EMBEDDINGS (Machine Learning)")
+        print("   • Usar modelos de lenguaje (sentence-transformers)")
+        print("   • Generar embeddings de descripciones")
+        print("   • Encontrar contactos más similares por similitud coseno")
+        print("   • Modelos recomendados:")
+        print("     - paraphrase-multilingual-MiniLM-L12-v2")
+        print("     - distiluse-base-multilingual-cased-v2")
+        
+        print("\n4️⃣ CLASIFICACIÓN CON ML (Si hay datos de entrenamiento)")
+        print("   • Entrenar clasificador supervisado (Random Forest, XGBoost)")
+        print("   • Features: descripción, referencia, valor, fecha")
+        print("   • Target: contactoid")
+        print("   • Requiere al menos 100+ ejemplos etiquetados")
+        
+        print("\n5️⃣ SISTEMA HÍBRIDO (Recomendado)")
+        print("   • Paso 1: Match exacto (100% precisión)")
+        print("   • Paso 2: Fuzzy matching (>90% similitud)")
+        print("   • Paso 3: NLP embeddings (>80% similitud)")
+        print("   • Paso 4: Sugerencia manual para resto")
+        
+        print("\n" + "=" * 70)
+        print("IMPLEMENTACIÓN SUGERIDA")
+        print("=" * 70)
+        
+        print("""
+📝 PLAN DE IMPLEMENTACIÓN:
+
+A. PREPARACIÓN
+   1. Crear vista materializada de descripciones ya asignadas
+   2. Limpiar y normalizar textos (lowercase, quitar acentos)
+   3. Crear índices para optimizar búsquedas
+
+B. SISTEMA DE ASIGNACIÓN
+   1. Match Exacto (diccionario)
+      → UPDATE movimientos SET ContactID = X WHERE Descripcion = 'Y'
+   
+   2. Fuzzy Matching (thefuzz)
+      → Para cada descripción sin contacto:
+         - Comparar con todas las descripciones de contactos
+         - Si similitud > 90%, sugerir automáticamente
+         - Si similitud 80-90%, marcar para revisión manual
+   
+   3. NLP Embeddings (sentence-transformers)
+      → Para descripciones complejas/variables:
+         - Generar embedding de la descripción
+         - Comparar con embeddings de contactos
+         - Top 3 sugerencias por similitud
+
+C. INTERFAZ DE USUARIO
+   1. Mostrar descripción sin contacto
+   2. Mostrar top 3 sugerencias con % de confianza
+   3. Permitir aceptar/rechazar automáticamente
+   4. Aprender de correcciones del usuario
+
+D. MEJORA CONTINUA
+   1. Guardar feedback del usuario
+   2. Re-entrenar modelos periódicamente
+   3. Ajustar umbrales según accuracy
+        """)
+        
+    except Exception as e:
+        print(f"\n✗ Error durante el análisis: {e}")
+    finally:
+        conn.close()
+
+if __name__ == "__main__":
+    analizar_datos()

@@ -1,0 +1,441 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Listado de Descripciones sin Contacto - Interfaz Gráfica
+Genera un listado de todas las descripciones únicas de movimientos
+que no se encuentran en la tabla contactos.
+
+Autor: Antigravity
+Fecha: 2025-12-29
+"""
+
+import tkinter as tk
+from tkinter import ttk, scrolledtext, messagebox, filedialog
+import psycopg2
+from datetime import datetime
+import pandas as pd
+import threading
+import os
+
+# Configuración de la base de datos
+DB_CONFIG = {
+    'host': 'localhost',
+    'port': 5433,
+    'user': 'postgres',
+    'password': 'SLB',
+    'database': 'Mvtos'
+}
+
+
+class ListadorDescripcionesGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Listado de Descripciones sin Contacto")
+        self.root.geometry("1200x800")
+        self.root.resizable(True, True)
+        
+        # Variables
+        self.descripciones = []
+        self.running = False
+        
+        # Configurar estilo
+        style = ttk.Style()
+        style.theme_use('clam')
+        
+        self.setup_ui()
+        
+        # Log inicial
+        self.agregar_log("✓ Aplicación iniciada correctamente", 'success')
+        self.agregar_log("📊 Haz clic en 'Buscar Descripciones' para comenzar", 'info')
+    
+    def setup_ui(self):
+        """Configura la interfaz de usuario."""
+        # Frame principal
+        main_frame = ttk.Frame(self.root, padding="10")
+        main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        # Configurar expansión
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=1)
+        main_frame.columnconfigure(0, weight=1)
+        main_frame.rowconfigure(3, weight=1)  # TreeView
+        main_frame.rowconfigure(5, weight=1)  # Log
+        
+        # Título
+        title_label = ttk.Label(main_frame, text="Listado de Descripciones sin Contacto", 
+                               font=('Arial', 16, 'bold'))
+        title_label.grid(row=0, column=0, columnspan=2, pady=(0, 20))
+        
+        # === SECCIÓN 1: Búsqueda ===
+        search_frame = ttk.LabelFrame(main_frame, text="1. Búsqueda", padding="10")
+        search_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
+        search_frame.columnconfigure(0, weight=1)
+        
+        # Botón de búsqueda
+        self.search_button = ttk.Button(search_frame, text="🔍 Buscar Descripciones sin Contacto", 
+                                       command=self.buscar_descripciones, width=40)
+        self.search_button.grid(row=0, column=0, pady=5)
+        
+        # === SECCIÓN 2: Estadísticas ===
+        stats_frame = ttk.LabelFrame(main_frame, text="2. Estadísticas", padding="10")
+        stats_frame.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
+        
+        # Container para las cajas de estadísticas
+        stats_container = ttk.Frame(stats_frame)
+        stats_container.grid(row=0, column=0, pady=5)
+        
+        # Caja 1: Descripciones Únicas
+        box1 = ttk.Frame(stats_container, relief='solid', borderwidth=2)
+        box1.grid(row=0, column=0, padx=10)
+        ttk.Label(box1, text="📝 Descripciones Únicas", font=('Arial', 9, 'bold')).pack(pady=(5, 0))
+        self.stats_descripciones = ttk.Label(box1, text="0", font=('Arial', 20, 'bold'), foreground='blue')
+        self.stats_descripciones.pack(pady=(0, 5), padx=20)
+        
+        # Caja 2: Total Movimientos
+        box2 = ttk.Frame(stats_container, relief='solid', borderwidth=2)
+        box2.grid(row=0, column=1, padx=10)
+        ttk.Label(box2, text="📊 Total Movimientos", font=('Arial', 9, 'bold')).pack(pady=(5, 0))
+        self.stats_movimientos = ttk.Label(box2, text="0", font=('Arial', 20, 'bold'), foreground='orange')
+        self.stats_movimientos.pack(pady=(0, 5), padx=20)
+        
+        # Caja 3: Promedio
+        box3 = ttk.Frame(stats_container, relief='solid', borderwidth=2)
+        box3.grid(row=0, column=2, padx=10)
+        ttk.Label(box3, text="📈 Promedio", font=('Arial', 9, 'bold')).pack(pady=(5, 0))
+        self.stats_promedio = ttk.Label(box3, text="0.0", font=('Arial', 20, 'bold'), foreground='green')
+        self.stats_promedio.pack(pady=(0, 5), padx=20)
+        
+        # === SECCIÓN 3: Resultados ===
+        results_frame = ttk.LabelFrame(main_frame, text="3. Resultados", padding="10")
+        results_frame.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 10))
+        results_frame.columnconfigure(0, weight=1)
+        results_frame.rowconfigure(0, weight=1)
+        
+        # TreeView para mostrar descripciones
+        columns = ('num', 'contact', 'reference', 'cantidad', 'primera_fecha', 'ultima_fecha')
+        self.results_tree = ttk.Treeview(results_frame, columns=columns, show='headings', height=15)
+        
+        self.results_tree.heading('num', text='#')
+        self.results_tree.heading('contact', text='Contact (Descripción)')
+        self.results_tree.heading('reference', text='Reference (Referencia)')
+        self.results_tree.heading('cantidad', text='Cant. Mvtos')
+        self.results_tree.heading('primera_fecha', text='Primera Fecha')
+        self.results_tree.heading('ultima_fecha', text='Última Fecha')
+        
+        self.results_tree.column('num', width=50, anchor='center')
+        self.results_tree.column('contact', width=400)
+        self.results_tree.column('reference', width=250)
+        self.results_tree.column('cantidad', width=100, anchor='center')
+        self.results_tree.column('primera_fecha', width=100, anchor='center')
+        self.results_tree.column('ultima_fecha', width=100, anchor='center')
+        
+        # Scrollbars
+        vsb = ttk.Scrollbar(results_frame, orient="vertical", command=self.results_tree.yview)
+        hsb = ttk.Scrollbar(results_frame, orient="horizontal", command=self.results_tree.xview)
+        self.results_tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+        
+        self.results_tree.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        vsb.grid(row=0, column=1, sticky=(tk.N, tk.S))
+        hsb.grid(row=1, column=0, sticky=(tk.W, tk.E))
+        
+        # === SECCIÓN 4: Acciones ===
+        action_frame = ttk.LabelFrame(main_frame, text="4. Acciones", padding="10")
+        action_frame.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
+        action_frame.columnconfigure(0, weight=1)
+        
+        # Botones de acción
+        button_container = ttk.Frame(action_frame)
+        button_container.grid(row=0, column=0)
+        
+        self.export_csv_button = ttk.Button(button_container, text="📄 Exportar a CSV", 
+                                           command=self.exportar_csv, state='disabled', width=20)
+        self.export_csv_button.grid(row=0, column=0, padx=5)
+        
+        self.export_sql_button = ttk.Button(button_container, text="📝 Generar Script SQL", 
+                                           command=self.generar_sql, state='disabled', width=20)
+        self.export_sql_button.grid(row=0, column=1, padx=5)
+        
+        self.clear_button = ttk.Button(button_container, text="🗑️ Limpiar", 
+                                      command=self.limpiar_todo, width=20)
+        self.clear_button.grid(row=0, column=2, padx=5)
+        
+        # === SECCIÓN 5: Log de Eventos ===
+        log_frame = ttk.LabelFrame(main_frame, text="5. Log de Eventos", padding="10")
+        log_frame.grid(row=5, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 10))
+        log_frame.columnconfigure(0, weight=1)
+        log_frame.rowconfigure(0, weight=1)
+        
+        # Área de texto con scroll para el log
+        self.log_text = scrolledtext.ScrolledText(log_frame, height=8, width=80, 
+                                                   font=('Courier', 9), state='disabled')
+        self.log_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        # Configurar colores para el log
+        self.log_text.tag_config('success', foreground='green')
+        self.log_text.tag_config('error', foreground='red')
+        self.log_text.tag_config('warning', foreground='orange')
+        self.log_text.tag_config('info', foreground='blue')
+    
+    def agregar_log(self, mensaje, tipo='info'):
+        """Agrega un mensaje al log con timestamp."""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        self.log_text.config(state='normal')
+        self.log_text.insert(tk.END, f"[{timestamp}] {mensaje}\n", tipo)
+        self.log_text.see(tk.END)
+        self.log_text.config(state='disabled')
+        self.root.update_idletasks()
+    
+    def buscar_descripciones(self):
+        """Inicia la búsqueda de descripciones sin contacto."""
+        self.agregar_log("🔍 Iniciando búsqueda de descripciones sin contacto...", 'info')
+        self.search_button.config(state='disabled')
+        
+        # Ejecutar en thread separado
+        thread = threading.Thread(target=self._ejecutar_busqueda)
+        thread.daemon = True
+        thread.start()
+    
+    def _ejecutar_busqueda(self):
+        """Ejecuta la búsqueda en background."""
+        try:
+            # Conectar a la base de datos
+            self.agregar_log("📡 Conectando a la base de datos...", 'info')
+            conn = psycopg2.connect(**DB_CONFIG)
+            self.agregar_log("✓ Conexión exitosa", 'success')
+            
+            cursor = conn.cursor()
+            
+            # Query para obtener descripciones sin contacto
+            self.agregar_log("🔎 Ejecutando consulta SQL...", 'info')
+            query = """
+                SELECT DISTINCT
+                    m.Descripcion as contact,
+                    MIN(m.Referencia) as reference,
+                    COUNT(*) as cantidad_movimientos,
+                    MIN(m.Fecha) as primera_fecha,
+                    MAX(m.Fecha) as ultima_fecha
+                FROM movimientos m
+                LEFT JOIN contactos c ON LOWER(TRIM(m.Descripcion)) = LOWER(TRIM(c.contacto))
+                WHERE c.contactoid IS NULL
+                  AND m.Descripcion IS NOT NULL
+                  AND NOT EXISTS (
+                      SELECT 1 
+                      FROM contactos c2 
+                      WHERE c2.referencia = m.Referencia 
+                        AND m.Referencia IS NOT NULL
+                        AND m.Referencia != ''
+                  )
+                GROUP BY m.Descripcion
+                ORDER BY cantidad_movimientos DESC, m.Descripcion
+            """
+            
+            cursor.execute(query)
+            resultados = cursor.fetchall()
+            
+            cursor.close()
+            conn.close()
+            
+            # Procesar resultados
+            self.descripciones = []
+            for row in resultados:
+                self.descripciones.append({
+                    'contact': row[0],
+                    'reference': row[1] if row[1] else '',
+                    'cantidad_movimientos': row[2],
+                    'primera_fecha': row[3],
+                    'ultima_fecha': row[4]
+                })
+            
+            # Mostrar resultados
+            self.mostrar_resultados()
+            
+        except Exception as e:
+            self.agregar_log(f"✗ Error durante la búsqueda: {e}", 'error')
+            import traceback
+            traceback.print_exc()
+        finally:
+            self.search_button.config(state='normal')
+    
+    def mostrar_resultados(self):
+        """Muestra los resultados en el TreeView."""
+        # Limpiar TreeView
+        for item in self.results_tree.get_children():
+            self.results_tree.delete(item)
+        
+        if not self.descripciones:
+            self.agregar_log("✓ No se encontraron descripciones sin contacto", 'success')
+            self.agregar_log("  Todas las descripciones tienen un contacto asignado", 'info')
+            return
+        
+        # Insertar datos
+        for i, desc in enumerate(self.descripciones, 1):
+            contact_text = desc['contact'] if desc['contact'] else '(Sin descripción)'
+            reference_text = desc['reference'] if desc['reference'] else ''
+            
+            self.results_tree.insert('', 'end', values=(
+                i,
+                contact_text[:80],  # Truncar si es muy largo
+                reference_text[:50],
+                desc['cantidad_movimientos'],
+                desc['primera_fecha'].strftime('%Y-%m-%d') if desc['primera_fecha'] else '',
+                desc['ultima_fecha'].strftime('%Y-%m-%d') if desc['ultima_fecha'] else ''
+            ))
+        
+        # Actualizar estadísticas
+        self.actualizar_estadisticas()
+        
+        # Habilitar botones de exportación
+        self.export_csv_button.config(state='normal')
+        self.export_sql_button.config(state='normal')
+        
+        # Log de resultados
+        self.agregar_log(f"✓ Búsqueda completada exitosamente", 'success')
+        self.agregar_log(f"  Se encontraron {len(self.descripciones)} descripciones únicas sin contacto", 'success')
+    
+    def actualizar_estadisticas(self):
+        """Actualiza las cajas de estadísticas visuales."""
+        if not self.descripciones:
+            self.stats_descripciones.config(text="0")
+            self.stats_movimientos.config(text="0")
+            self.stats_promedio.config(text="0.0")
+            return
+        
+        total_descripciones = len(self.descripciones)
+        total_movimientos = sum(d['cantidad_movimientos'] for d in self.descripciones)
+        promedio = total_movimientos / total_descripciones if total_descripciones > 0 else 0
+        
+        self.stats_descripciones.config(text=f"{total_descripciones:,}")
+        self.stats_movimientos.config(text=f"{total_movimientos:,}")
+        self.stats_promedio.config(text=f"{promedio:.1f}")
+    
+    def exportar_csv(self):
+        """Exporta los resultados a CSV."""
+        if not self.descripciones:
+            messagebox.showwarning("Advertencia", "No hay datos para exportar.")
+            return
+        
+        # Solicitar nombre de archivo
+        filename = filedialog.asksaveasfilename(
+            title="Guardar archivo CSV",
+            defaultextension=".csv",
+            filetypes=[("CSV Files", "*.csv"), ("All Files", "*.*")],
+            initialfile="descripciones_sin_contacto.csv"
+        )
+        
+        if not filename:
+            return
+        
+        try:
+            self.agregar_log(f"📄 Exportando datos a CSV...", 'info')
+            
+            # Crear DataFrame
+            df = pd.DataFrame(self.descripciones)
+            
+            # Formatear fechas (manejar None values)
+            if 'primera_fecha' in df.columns:
+                df['primera_fecha'] = df['primera_fecha'].apply(
+                    lambda x: x.strftime('%Y-%m-%d') if x is not None else ''
+                )
+            if 'ultima_fecha' in df.columns:
+                df['ultima_fecha'] = df['ultima_fecha'].apply(
+                    lambda x: x.strftime('%Y-%m-%d') if x is not None else ''
+                )
+            
+            # Guardar CSV
+            df.to_csv(filename, index=False, encoding='utf-8-sig')
+            
+            self.agregar_log(f"✓ Archivo CSV guardado exitosamente", 'success')
+            self.agregar_log(f"  Ubicación: {filename}", 'info')
+            self.agregar_log(f"  Total de registros: {len(self.descripciones)}", 'info')
+            
+            messagebox.showinfo("Éxito", f"Archivo CSV exportado exitosamente:\n{filename}")
+            
+        except Exception as e:
+            self.agregar_log(f"✗ Error al exportar CSV: {e}", 'error')
+            messagebox.showerror("Error", f"Error al exportar CSV:\n{e}")
+    
+    def generar_sql(self):
+        """Genera un script SQL con INSERT para crear los contactos."""
+        if not self.descripciones:
+            messagebox.showwarning("Advertencia", "No hay datos para generar script SQL.")
+            return
+        
+        # Solicitar nombre de archivo
+        filename = filedialog.asksaveasfilename(
+            title="Guardar script SQL",
+            defaultextension=".sql",
+            filetypes=[("SQL Files", "*.sql"), ("All Files", "*.*")],
+            initialfile="insert_contactos.sql"
+        )
+        
+        if not filename:
+            return
+        
+        try:
+            self.agregar_log(f"📝 Generando script SQL...", 'info')
+            
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write("-- Script para insertar contactos faltantes\n")
+                f.write(f"-- Generado: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"-- Total de contactos a insertar: {len(self.descripciones)}\n\n")
+                f.write("BEGIN;\n\n")
+                
+                for i, desc in enumerate(self.descripciones, 1):
+                    contact_name = desc['contact'].replace("'", "''")  # Escapar comillas
+                    reference = desc['reference'].replace("'", "''") if desc['reference'] else ''
+                    
+                    f.write(f"-- Descripción #{i}: {desc['cantidad_movimientos']} movimientos\n")
+                    f.write(f"INSERT INTO contactos (contacto, contacttypeid) \n")
+                    f.write(f"VALUES ('{contact_name}', NULL);\n")
+                    if reference:
+                        f.write(f"-- Referencia de ejemplo: {reference}\n")
+                    f.write("\n")
+                
+                f.write("COMMIT;\n")
+                f.write(f"\n-- Total de INSERT statements: {len(self.descripciones)}\n")
+            
+            self.agregar_log(f"✓ Script SQL generado exitosamente", 'success')
+            self.agregar_log(f"  Ubicación: {filename}", 'info')
+            self.agregar_log(f"  Total de INSERT: {len(self.descripciones)}", 'info')
+            
+            messagebox.showinfo("Éxito", f"Script SQL generado exitosamente:\n{filename}\n\nTotal de INSERT: {len(self.descripciones)}")
+            
+        except Exception as e:
+            self.agregar_log(f"✗ Error al generar script SQL: {e}", 'error')
+            messagebox.showerror("Error", f"Error al generar script SQL:\n{e}")
+    
+    def limpiar_todo(self):
+        """Limpia todos los datos y resetea la interfaz."""
+        self.descripciones = []
+        
+        # Limpiar TreeView
+        for item in self.results_tree.get_children():
+            self.results_tree.delete(item)
+        
+        # Resetear estadísticas
+        self.stats_descripciones.config(text="0")
+        self.stats_movimientos.config(text="0")
+        self.stats_promedio.config(text="0.0")
+        
+        # Deshabilitar botones
+        self.export_csv_button.config(state='disabled')
+        self.export_sql_button.config(state='disabled')
+        
+        # Limpiar log
+        self.log_text.config(state='normal')
+        self.log_text.delete('1.0', tk.END)
+        self.log_text.config(state='disabled')
+        
+        self.agregar_log("✓ Interfaz limpiada", 'success')
+        self.agregar_log("📊 Haz clic en 'Buscar Descripciones' para comenzar", 'info')
+
+
+def main():
+    """Función principal."""
+    root = tk.Tk()
+    app = ListadorDescripcionesGUI(root)
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()

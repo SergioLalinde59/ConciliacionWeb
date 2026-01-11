@@ -1,0 +1,325 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Reglas de Negocio para Asignación Automática de ContactoID
+Implementa reglas basadas en el campo "referencia" para asignar contactos automáticamente
+
+Reglas implementadas:
+1. Listar movimientos sin contactoid
+2. Asignar contactoid basándose en referencias coincidentes
+"""
+
+import psycopg2
+from datetime import datetime
+import sys
+
+# Configuración de la base de datos
+DB_CONFIG = {
+    'host': 'localhost',
+    'port': 5433,
+    'user': 'postgres',
+    'password': 'SLB',
+    'database': 'Mvtos'
+}
+
+def conectar():
+    """Conecta a la base de datos"""
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        return conn
+    except Exception as e:
+        print(f"✗ Error al conectar a la base de datos: {e}")
+        return None
+
+def listar_movimientos_sin_contacto():
+    """
+    REGLA 1: Lista todos los movimientos sin ContactoID asignado
+    """
+    conn = conectar()
+    if not conn:
+        return []
+    
+    try:
+        cursor = conn.cursor()
+        
+        query = """
+        SELECT 
+            Id,
+            Fecha,
+            Descripcion,
+            Referencia,
+            Valor,
+            AccountID
+        FROM movimientos
+        WHERE ContactID IS NULL
+        ORDER BY Fecha DESC, Id
+        """
+        
+        cursor.execute(query)
+        movimientos = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return movimientos
+        
+    except Exception as e:
+        print(f"✗ Error al listar movimientos: {e}")
+        if conn:
+            conn.close()
+        return []
+
+def analizar_referencias_para_asignacion():
+    """
+    REGLA 2: Encuentra movimientos que pueden asignarse automáticamente
+    basándose en referencias coincidentes con movimientos ya asignados
+    
+    Returns:
+        Lista de tuplas: (id_sin_contacto, referencia, contactoid_sugerido, descripcion_contacto)
+    """
+    conn = conectar()
+    if not conn:
+        return []
+    
+    try:
+        cursor = conn.cursor()
+        
+        # Query que encuentra movimientos sin contacto que tienen una referencia
+        # que coincide con movimientos que SÍ tienen contacto asignado
+        query = """
+        SELECT DISTINCT
+            m1.Id as movimiento_sin_contacto_id,
+            m1.Descripcion as descripcion_movimiento,
+            m1.Referencia as referencia,
+            m1.Valor as valor,
+            m1.Fecha as fecha,
+            m2.ContactID as contactoid_sugerido,
+            c.contacto as nombre_contacto,
+            c.descripcion as descripcion_contacto,
+            COUNT(*) OVER (PARTITION BY m1.Referencia) as veces_referencia_usado
+        FROM movimientos m1
+        INNER JOIN movimientos m2 
+            ON m1.Referencia = m2.Referencia 
+            AND m1.Referencia IS NOT NULL 
+            AND m1.Referencia != ''
+        INNER JOIN contactos c 
+            ON m2.ContactID = c.contactoid
+        WHERE 
+            m1.ContactID IS NULL 
+            AND m2.ContactID IS NOT NULL
+        ORDER BY m1.Fecha DESC, m1.Id
+        """
+        
+        cursor.execute(query)
+        asignaciones_sugeridas = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return asignaciones_sugeridas
+        
+    except Exception as e:
+        print(f"✗ Error al analizar referencias: {e}")
+        if conn:
+            conn.close()
+        return []
+
+def generar_reporte_asignaciones(asignaciones):
+    """
+    Genera un reporte detallado de las asignaciones sugeridas
+    """
+    print("\n" + "="*100)
+    print("REPORTE DE ASIGNACIONES AUTOMÁTICAS SUGERIDAS")
+    print("="*100)
+    
+    if not asignaciones:
+        print("\n❌ No se encontraron asignaciones automáticas basadas en referencias.")
+        print("   Esto puede significar que:")
+        print("   • No hay movimientos sin contacto con referencias")
+        print("   • Ninguna referencia coincide con movimientos ya asignados")
+        print("   • Necesitas asignar contactos manualmente primero")
+        return
+    
+    print(f"\n✓ Se encontraron {len(asignaciones)} movimientos que pueden asignarse automáticamente\n")
+    
+    # Agrupar por contacto sugerido
+    por_contacto = {}
+    for asig in asignaciones:
+        contactoid = asig[5]
+        nombre_contacto = asig[6]
+        
+        if contactoid not in por_contacto:
+            por_contacto[contactoid] = {
+                'nombre': nombre_contacto,
+                'descripcion': asig[7],
+                'movimientos': []
+            }
+        
+        por_contacto[contactoid]['movimientos'].append({
+            'id': asig[0],
+            'descripcion': asig[1],
+            'referencia': asig[2],
+            'valor': asig[3],
+            'fecha': asig[4]
+        })
+    
+    # Mostrar reporte por contacto
+    total_a_asignar = 0
+    for contactoid, datos in por_contacto.items():
+        print(f"\n📌 CONTACTO: {datos['nombre']} (ID: {contactoid})")
+        if datos['descripcion']:
+            print(f"   Descripción: {datos['descripcion']}")
+        print(f"   Movimientos a asignar: {len(datos['movimientos'])}")
+        print(f"   {'-'*90}")
+        
+        for mov in datos['movimientos']:
+            fecha_str = mov['fecha'].strftime('%Y-%m-%d') if mov['fecha'] else 'N/A'
+            valor_str = f"${mov['valor']:,.2f}" if mov['valor'] else "N/A"
+            print(f"   • ID: {mov['id']:4d} | Fecha: {fecha_str} | Valor: {valor_str:>15s}")
+            print(f"     Descripción: {mov['descripcion'][:70]}")
+            print(f"     Referencia:  {mov['referencia']}")
+            print()
+        
+        total_a_asignar += len(datos['movimientos'])
+    
+    print("="*100)
+    print(f"RESUMEN: {total_a_asignar} movimientos listos para asignar a {len(por_contacto)} contactos")
+    print("="*100)
+    
+    return total_a_asignar
+
+def aplicar_asignaciones(asignaciones):
+    """
+    Aplica las asignaciones sugeridas a la base de datos
+    """
+    if not asignaciones:
+        print("\n❌ No hay asignaciones para aplicar")
+        return 0
+    
+    conn = conectar()
+    if not conn:
+        return 0
+    
+    try:
+        cursor = conn.cursor()
+        actualizados = 0
+        errores = 0
+        
+        print("\n" + "="*100)
+        print("APLICANDO ASIGNACIONES...")
+        print("="*100)
+        
+        for asig in asignaciones:
+            movimiento_id = asig[0]
+            contactoid = asig[5]
+            referencia = asig[2]
+            
+            try:
+                query = """
+                UPDATE movimientos 
+                SET ContactID = %s 
+                WHERE Id = %s AND ContactID IS NULL
+                """
+                
+                cursor.execute(query, (contactoid, movimiento_id))
+                
+                if cursor.rowcount > 0:
+                    actualizados += 1
+                    print(f"✓ Movimiento {movimiento_id} asignado a ContactoID {contactoid} (ref: {referencia})")
+                
+            except Exception as e:
+                errores += 1
+                print(f"✗ Error al actualizar movimiento {movimiento_id}: {e}")
+                conn.rollback()
+                continue
+        
+        # Commit de todos los cambios
+        conn.commit()
+        
+        print("\n" + "="*100)
+        print(f"RESULTADO: {actualizados} movimientos actualizados, {errores} errores")
+        print("="*100)
+        
+        cursor.close()
+        conn.close()
+        
+        return actualizados
+        
+    except Exception as e:
+        print(f"\n✗ Error crítico al aplicar asignaciones: {e}")
+        if conn:
+            conn.rollback()
+            conn.close()
+        return 0
+
+def main():
+    """Función principal"""
+    print("\n" + "="*100)
+    print("SISTEMA DE ASIGNACIÓN AUTOMÁTICA DE CONTACTOS POR REGLAS DE NEGOCIO")
+    print("="*100)
+    print(f"Fecha/Hora: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    # PASO 1: Listar movimientos sin contacto
+    print("\n📋 PASO 1: Listando movimientos sin ContactoID...")
+    movimientos_sin_contacto = listar_movimientos_sin_contacto()
+    
+    print(f"\n✓ Se encontraron {len(movimientos_sin_contacto)} movimientos sin ContactoID asignado")
+    
+    if len(movimientos_sin_contacto) == 0:
+        print("\n🎉 ¡Todos los movimientos ya tienen ContactoID asignado!")
+        return
+    
+    # Contar cuántos tienen referencia
+    con_referencia = sum(1 for m in movimientos_sin_contacto if m[3] and m[3].strip())
+    sin_referencia = len(movimientos_sin_contacto) - con_referencia
+    
+    print(f"   • Con referencia: {con_referencia}")
+    print(f"   • Sin referencia: {sin_referencia}")
+    
+    if con_referencia == 0:
+        print("\n⚠️ Ningún movimiento tiene referencia, no se puede aplicar la regla de coincidencia")
+        return
+    
+    # PASO 2: Analizar referencias para asignación automática
+    print("\n🔍 PASO 2: Analizando referencias para asignación automática...")
+    asignaciones = analizar_referencias_para_asignacion()
+    
+    if not asignaciones:
+        print("\n⚠️ No se encontraron coincidencias de referencias con movimientos ya asignados")
+        print("   Necesitas asignar algunos contactos manualmente primero para crear referencias base")
+        return
+    
+    # PASO 3: Generar reporte
+    total = generar_reporte_asignaciones(asignaciones)
+    
+    if total == 0:
+        return
+    
+    # PASO 4: Confirmar aplicación
+    print("\n" + "⚠️"*40)
+    print("¿Deseas aplicar estas asignaciones automáticas?")
+    print("Esto actualizará el campo ContactID en los movimientos listados")
+    print("⚠️"*40)
+    
+    respuesta = input("\nEscribe 'SI' para confirmar, cualquier otra cosa para cancelar: ").strip().upper()
+    
+    if respuesta == 'SI':
+        actualizados = aplicar_asignaciones(asignaciones)
+        
+        if actualizados > 0:
+            print(f"\n✓✓✓ PROCESO COMPLETADO EXITOSAMENTE ✓✓✓")
+            print(f"Se asignaron {actualizados} movimientos automáticamente")
+        else:
+            print("\n❌ No se pudo actualizar ningún movimiento")
+    else:
+        print("\n❌ Operación cancelada por el usuario")
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n\n❌ Proceso interrumpido por el usuario")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\n✗ Error inesperado: {e}")
+        sys.exit(1)

@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Verificar estado de asignaciones de contactos
+"""
+
+import psycopg2
+
+DB_CONFIG = {
+    'host': 'localhost',
+    'port': 5433,
+    'user': 'postgres',
+    'password': 'SLB',
+    'database': 'Mvtos'
+}
+
+def verificar_estado():
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+        
+        # Estadísticas generales
+        print("\n" + "="*80)
+        print("ESTADO DE ASIGNACIÓN DE CONTACTOS")
+        print("="*80)
+        
+        # Por cuenta
+        query = """
+        SELECT 
+            c.cuenta,
+            COUNT(*) as total,
+            COUNT(m.ContactID) as con_contacto,
+            COUNT(*) - COUNT(m.ContactID) as sin_contacto
+        FROM movimientos m
+        JOIN cuentas c ON m.AccountID = c.CuentaID
+        GROUP BY c.cuenta
+        ORDER BY c.cuenta
+        """
+        cursor.execute(query)
+        resultados = cursor.fetchall()
+        
+        print("\nEstado por cuenta:")
+        print(f"{'Cuenta':<20} {'Total':>10} {'Con Contacto':>15} {'Sin Contacto':>15}")
+        print("-"*80)
+        
+        total_general = 0
+        total_con_contacto = 0
+        total_sin_contacto = 0
+        
+        for row in resultados:
+            cuenta, total, con_contacto, sin_contacto = row
+            print(f"{cuenta:<20} {total:>10,} {con_contacto:>15,} {sin_contacto:>15,}")
+            total_general += total
+            total_con_contacto += con_contacto
+            total_sin_contacto += sin_contacto
+        
+        print("-"*80)
+        print(f"{'TOTAL':<20} {total_general:>10,} {total_con_contacto:>15,} {total_sin_contacto:>15,}")
+        
+        # Mostrar algunos movimientos SIN contacto de cada cuenta
+        if total_sin_contacto > 0:
+            print("\n" + "="*80)
+            print("MUESTRA DE MOVIMIENTOS SIN CONTACTO")
+            print("="*80)
+            
+            query_sin = """
+            SELECT 
+                m.Id,
+                c.cuenta,
+                m.Fecha,
+                m.Descripcion,
+                m.Referencia,
+                m.Valor
+            FROM movimientos m
+            JOIN cuentas c ON m.AccountID = c.CuentaID
+            WHERE m.ContactID IS NULL
+            ORDER BY c.cuenta, m.Fecha DESC
+            LIMIT 20
+            """
+            cursor.execute(query_sin)
+            movimientos = cursor.fetchall()
+            
+            for mov in movimientos:
+                print(f"\nID: {mov[0]} | Cuenta: {mov[1]} | Fecha: {mov[2]}")
+                print(f"  Descripción: {mov[3]}")
+                print(f"  Referencia: {mov[4] or '(vacío)'}")
+                print(f"  Valor: ${mov[5]:,.2f}")
+        
+        cursor.close()
+        conn.close()
+        
+    except Exception as e:
+        print(f"Error: {e}")
+
+if __name__ == "__main__":
+    verificar_estado()

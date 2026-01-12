@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 services:
   db:
@@ -20,14 +20,14 @@ services:
 
   backend:
     build:
-      context: ./ConciliaciónBancariaWeb/Backend
+      context: ./Backend
     container_name: mvtos_backend
     environment:
-      - DB_HOST=db
-      - DB_PORT=5432
+      - DB_HOST=host.docker.internal
+      - DB_PORT=5433
       - DB_NAME=${DB_NAME:-Mvtos}
       - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_PASSWORD=SLB
       - ENVIRONMENT=production
     depends_on:
       db:
@@ -37,10 +37,10 @@ services:
 
   frontend:
     build:
-      context: ./ConciliaciónBancariaWeb/frontend
+      context: ./frontend
     container_name: mvtos_frontend
     ports:
-      - "80:80"
+      - "5173:80"
     depends_on:
       - backend
 

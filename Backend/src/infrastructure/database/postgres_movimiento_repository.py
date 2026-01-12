@@ -41,7 +41,9 @@ class PostgresMovimientoRepository(MovimientoRepository):
                            tercero_id: Optional[int] = None,
                            grupo_id: Optional[int] = None,
                            concepto_id: Optional[int] = None,
-                           grupos_excluidos: Optional[List[int]] = None
+                           grupos_excluidos: Optional[List[int]] = None,
+                           solo_pendientes: bool = False,
+                           tipo_movimiento: Optional[str] = None
     ) -> tuple[str, list]:
         """
         Construye la cláusula WHERE y los parámetros para los filtros comunes.

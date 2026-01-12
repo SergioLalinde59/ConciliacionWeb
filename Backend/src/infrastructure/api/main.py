@@ -68,6 +68,7 @@ origins = [
     "http://localhost",
     "http://localhost:80",
     "http://localhost:5173", # Vite dev server
+    "http://conciliacion.local",
 ]
 
 app.add_middleware(

@@ -5,15 +5,7 @@
 function Start-Backend {
     Write-Host "Iniciando Backend en nueva ventana..." -ForegroundColor Cyan
     $rootDir = Get-Location
-    # Buscamos dinamicamente el directorio que termina en 'Web' para evitar problemas de codificacion
-    $webDir = Get-ChildItem -Path $rootDir -Directory | Where-Object { $_.Name -like "*Web" } | Select-Object -First 1
-    
-    if ($null -eq $webDir) {
-        Write-Error "No se encontro el directorio '*Web' (Ej: ConciliaciónBancariaWeb)"
-        return
-    }
-
-    $backendPath = Join-Path $webDir.FullName "Backend"
+    $backendPath = Join-Path $rootDir "Backend"
     # Usamos python -m uvicorn para evitar el wrapper roto del venv
     $backendCmd = "cd '$backendPath'; & '$rootDir\.venv\Scripts\Activate.ps1'; python -m uvicorn src.infrastructure.api.main:app --reload --host 0.0.0.0 --port 8000"
     Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd
@@ -24,15 +16,7 @@ function Start-Backend {
 function Start-Frontend {
     Write-Host "Iniciando Frontend en nueva ventana..." -ForegroundColor Cyan
     $rootDir = Get-Location
-    # Buscamos dinamicamente el directorio que termina en 'Web' para evitar problemas de codificacion
-    $webDir = Get-ChildItem -Path $rootDir -Directory | Where-Object { $_.Name -like "*Web" } | Select-Object -First 1
-
-    if ($null -eq $webDir) {
-        Write-Error "No se encontro el directorio '*Web' (Ej: ConciliaciónBancariaWeb)"
-        return
-    }
-
-    $frontendPath = Join-Path $webDir.FullName "Frontend"
+    $frontendPath = Join-Path $rootDir "frontend"
     $frontendCmd = "cd '$frontendPath'; npm run dev"
     Start-Process powershell -ArgumentList "-NoExit", "-Command", $frontendCmd
     Write-Host "Frontend iniciado en ventana separada" -ForegroundColor Green

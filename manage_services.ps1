@@ -58,16 +58,8 @@ function Start-Services {
     Write-Host "Starting services..." -ForegroundColor Cyan
     
     $root = $PSScriptRoot
-    # Buscamos dinamicamente el directorio que termina en 'Web' para evitar problemas de codificacion
-    $webDir = Get-ChildItem -Path $root -Directory | Where-Object { $_.Name -like "*Web" } | Select-Object -First 1
-    
-    if ($null -eq $webDir) {
-        Write-Error "No se encontro el directorio '*Web' (Ej: ConciliaciónBancariaWeb)"
-        return
-    }
-
-    $backendPath = Join-Path $webDir.FullName "Backend"
-    $frontendPath = Join-Path $webDir.FullName "Frontend"
+    $backendPath = Join-Path $root "Backend"
+    $frontendPath = Join-Path $root "frontend"
     
     # Backend
     $backend = Get-PortProcess 8000

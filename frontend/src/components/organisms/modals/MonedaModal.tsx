@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Save } from 'lucide-react'
-import { Modal } from './molecules/Modal'
-import { Button } from './atoms/Button'
-import { Input } from './atoms/Input'
-import type { Moneda } from '../types'
+import { Modal } from '../../molecules/Modal'
+import { Button } from '../../atoms/Button'
+import { Input } from '../../atoms/Input'
+import type { Moneda } from '../../../types'
 
 interface Props {
     isOpen: boolean

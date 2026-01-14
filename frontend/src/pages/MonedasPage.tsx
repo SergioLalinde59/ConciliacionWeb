@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { Plus } from 'lucide-react'
 import type { Moneda } from '../types'
-import { MonedasTable } from '../components/MonedasTable'
-import { MonedaModal } from '../components/MonedaModal'
-import { CsvExportButton } from '../components/CsvExportButton'
+import { MonedasTable } from '../components/organisms/tables/MonedasTable'
+import { MonedaModal } from '../components/organisms/modals/MonedaModal'
+import { CsvExportButton } from '../components/molecules/CsvExportButton'
 import { API_BASE_URL } from '../config'
 
 export const MonedasPage = () => {

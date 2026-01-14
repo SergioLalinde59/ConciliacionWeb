@@ -1,5 +1,5 @@
-import { DataTable, idColumn, nombreColumn, type Column } from './molecules/DataTable'
-import type { Grupo } from '../types'
+import { DataTable, idColumn, nombreColumn, type Column } from '../../molecules/DataTable'
+import type { Grupo } from '../../../types'
 
 interface Props {
     grupos: Grupo[]

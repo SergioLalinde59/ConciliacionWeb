@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Save, X } from 'lucide-react'
-import { Button } from './atoms/Button'
-import { Input } from './atoms/Input'
-import { Select } from './atoms/Select'
-import type { Movimiento, Cuenta, Moneda, Tercero, Grupo, Concepto } from '../types'
-import { API_BASE_URL } from '../config'
+import { Button } from '../../atoms/Button'
+import { Input } from '../../atoms/Input'
+import { Select } from '../../atoms/Select'
+import type { Movimiento, Cuenta, Moneda, Tercero, Grupo, Concepto } from '../../../types'
+import { API_BASE_URL } from '../../../config'
 
 interface MovimientoModalProps {
     isOpen: boolean

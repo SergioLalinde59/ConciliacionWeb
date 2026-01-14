@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import type { TipoMovimiento } from '../types'
-import { TiposMovimientoTable } from '../components/TiposMovimientoTable'
-import { TipoMovimientoModal } from '../components/TipoMovimientoModal'
-import { CsvExportButton } from '../components/CsvExportButton'
+import { TiposMovimientoTable } from '../components/organisms/tables/TiposMovimientoTable'
+import { TipoMovimientoModal } from '../components/organisms/modals/TipoMovimientoModal'
+import { CsvExportButton } from '../components/molecules/CsvExportButton'
 import { API_BASE_URL } from '../config'
 
 export const TiposMovimientoPage = () => {

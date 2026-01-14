@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { Plus } from 'lucide-react'
 import type { Cuenta } from '../types'
-import { CuentasTable } from '../components/CuentasTable'
-import { CuentaModal } from '../components/CuentaModal'
-import { CsvExportButton } from '../components/CsvExportButton'
+import { CuentasTable } from '../components/organisms/tables/CuentasTable'
+import { CuentaModal } from '../components/organisms/modals/CuentaModal'
+import { CsvExportButton } from '../components/molecules/CsvExportButton'
 import { API_BASE_URL } from '../config'
 
 export const CuentasPage = () => {

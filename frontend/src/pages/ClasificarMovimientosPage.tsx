@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import type { Movimiento, SugerenciaClasificacion, ContextoClasificacionResponse } from '../types'
 import { apiService } from '../services/api'
 import { ComboBox } from '../components/molecules/ComboBox'
-import { TerceroModal } from '../components/TerceroModal'
+import { TerceroModal } from '../components/organisms/modals/TerceroModal'
 import { CurrencyDisplay } from '../components/atoms/CurrencyDisplay'
 import { Save, Layers, Clock, CheckCircle, ArrowRight, Search, Copy } from 'lucide-react'
 

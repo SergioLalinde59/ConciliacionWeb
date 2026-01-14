@@ -1,5 +1,5 @@
 import { Pencil, Trash2 } from 'lucide-react'
-import type { TipoMovimiento } from '../types'
+import type { TipoMovimiento } from '../../../types'
 
 interface Props {
     tipos: TipoMovimiento[]

@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { Plus } from 'lucide-react'
 import type { Concepto, Grupo } from '../types'
-import { ConceptosTable } from '../components/ConceptosTable'
-import { ConceptoModal } from '../components/ConceptoModal'
+import { ConceptosTable } from '../components/organisms/tables/ConceptosTable'
+import { ConceptoModal } from '../components/organisms/modals/ConceptoModal'
 import { ComboBox } from '../components/molecules/ComboBox'
-import { CsvExportButton } from '../components/CsvExportButton'
+import { CsvExportButton } from '../components/molecules/CsvExportButton'
 import { apiService } from '../services/api'
 
 export const ConceptosPage = () => {

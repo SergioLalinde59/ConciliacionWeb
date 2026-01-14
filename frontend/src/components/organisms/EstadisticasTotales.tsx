@@ -1,5 +1,5 @@
 import { TrendingUp, TrendingDown, Wallet } from 'lucide-react'
-import { CurrencyDisplay } from './atoms/CurrencyDisplay'
+import { CurrencyDisplay } from '../atoms/CurrencyDisplay'
 
 interface EstadisticasTotalesProps {
     ingresos: number

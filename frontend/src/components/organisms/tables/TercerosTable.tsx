@@ -1,5 +1,5 @@
-import { DataTable, idColumn, nombreColumn, type Column } from './molecules/DataTable'
-import type { Tercero } from '../types'
+import { DataTable, idColumn, nombreColumn, type Column } from '../../molecules/DataTable'
+import type { Tercero } from '../../../types'
 
 interface Props {
     terceros: Tercero[]

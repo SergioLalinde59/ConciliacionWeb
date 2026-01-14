@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { BarChart2, X } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
-import { FiltrosReporte } from '../components/FiltrosReporte' // Import FiltrosReporte
-import { EstadisticasTotales } from '../components/EstadisticasTotales'
+import { FiltrosReporte } from '../components/organisms/FiltrosReporte' // Import FiltrosReporte
+import { EstadisticasTotales } from '../components/organisms/EstadisticasTotales'
 import { CurrencyDisplay } from '../components/atoms/CurrencyDisplay'
 import { apiService } from '../services/api'
 import { useCatalogo } from '../hooks/useCatalogo'

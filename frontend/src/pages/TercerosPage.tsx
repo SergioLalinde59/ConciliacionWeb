@@ -3,9 +3,9 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Plus, Tag } from 'lucide-react'
 import type { Tercero } from '../types'
-import { TercerosTable } from '../components/TercerosTable'
-import { TerceroModal } from '../components/TerceroModal'
-import { CsvExportButton } from '../components/CsvExportButton'
+import { TercerosTable } from '../components/organisms/tables/TercerosTable'
+import { TerceroModal } from '../components/organisms/modals/TerceroModal'
+import { CsvExportButton } from '../components/molecules/CsvExportButton'
 import { API_BASE_URL } from '../config'
 
 export const TercerosPage = () => {

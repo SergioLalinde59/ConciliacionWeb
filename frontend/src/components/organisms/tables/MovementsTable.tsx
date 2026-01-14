@@ -1,5 +1,5 @@
-import type { Movimiento } from '../types'
-import { CurrencyDisplay } from './atoms/CurrencyDisplay'
+import type { Movimiento } from '../../../types'
+import { CurrencyDisplay } from '../../atoms/CurrencyDisplay'
 
 interface Props {
     movimientos: Movimiento[]

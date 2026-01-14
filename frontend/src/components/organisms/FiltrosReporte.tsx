@@ -1,9 +1,9 @@
 import { RotateCcw, CreditCard } from 'lucide-react'
-import { Select } from './atoms/Select'
-import { Button } from './atoms/Button'
-import { DateRangeButtons, DateRangeInputs } from './molecules/DateRangeSelector'
-import { ClassificationFilters } from './molecules/ClassificationFilters'
-import { FilterToggles } from './molecules/FilterToggles'
+import { Select } from '../atoms/Select'
+import { Button } from '../atoms/Button'
+import { DateRangeButtons, DateRangeInputs } from '../molecules/DateRangeSelector'
+import { ClassificationFilters } from '../molecules/ClassificationFilters'
+import { FilterToggles } from '../molecules/FilterToggles'
 
 export interface FiltrosReporteProps {
     // Date filters
@@ -105,7 +105,7 @@ export const FiltrosReporte = ({
                     label="Cuenta"
                     icon={CreditCard}
                     value={cuentaId}
-                    onChange={(e) => onCuentaChange(e.target.value)}
+                    onChange={(e: any) => onCuentaChange(e.target.value)}
                     options={[
                         { value: '', label: 'Todas' },
                         ...cuentas.map(c => ({ value: c.id, label: c.nombre }))

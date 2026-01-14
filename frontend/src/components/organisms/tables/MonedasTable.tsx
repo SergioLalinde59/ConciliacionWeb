@@ -1,5 +1,5 @@
 import { Pencil, Trash2 } from 'lucide-react'
-import type { Moneda } from '../types'
+import type { Moneda } from '../../../types'
 
 interface Props {
     monedas: Moneda[]

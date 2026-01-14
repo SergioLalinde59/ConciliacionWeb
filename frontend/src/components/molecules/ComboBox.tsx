@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, ChevronDown } from 'lucide-react'
+import { Input } from '../atoms/Input'
 
 interface ComboBoxOption {
     id: number
@@ -146,7 +147,7 @@ export const ComboBox = ({ value, onChange, options, placeholder, label, require
             )}
 
             <div className="relative group">
-                <input
+                <Input
                     ref={inputRef}
                     type="text"
                     value={searchTerm}
@@ -155,12 +156,12 @@ export const ComboBox = ({ value, onChange, options, placeholder, label, require
                     onFocus={handleFocus}
                     placeholder={placeholder || 'Buscar...'}
                     disabled={disabled}
-                    className={`w-full px-3 py-2 pr-10 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all ${disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-100' : 'hover:border-gray-300'}`}
                     required={required}
                     autoFocus={autoFocus}
+                    className="pr-10" // Space for icons
                 />
 
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                <div className="absolute right-2 top-[calc(50%+10px)] -translate-y-1/2 flex items-center gap-1">
                     {searchTerm && !disabled && (
                         <button
                             type="button"

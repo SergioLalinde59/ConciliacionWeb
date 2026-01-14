@@ -8,7 +8,7 @@ import { Button } from '../components/atoms/Button'
 import { Input } from '../components/atoms/Input'
 import { Modal } from '../components/molecules/Modal'
 import { DataTable, type Column } from '../components/molecules/DataTable'
-import { CsvExportButton } from '../components/CsvExportButton'
+import { CsvExportButton } from '../components/molecules/CsvExportButton'
 import { apiService } from '../services/api'
 import type { Tercero, TerceroDescripcion } from '../types'
 

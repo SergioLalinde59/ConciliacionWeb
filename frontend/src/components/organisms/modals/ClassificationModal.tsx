@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import type { Movimiento, ItemCatalogo, ClasificacionManual } from '../types'
-import { CurrencyDisplay } from './atoms/CurrencyDisplay'
+import type { Movimiento, ItemCatalogo, ClasificacionManual } from '../../../types'
+import { CurrencyDisplay } from '../../atoms/CurrencyDisplay'
 
 interface Props {
     isOpen: boolean

@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useState, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { createPortal } from 'react-dom'
+import { Button } from '../atoms/Button'
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full'
 
@@ -127,13 +128,15 @@ export const Modal = ({
                         )}
                         {!title && <div />}
                         {showCloseButton && (
-                            <button
+                            <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={onClose}
-                                className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                                className="!p-1 text-gray-400 hover:text-gray-600 rounded-full"
                                 aria-label="Cerrar"
                             >
                                 <X size={20} />
-                            </button>
+                            </Button>
                         )}
                     </div>
                 )}

@@ -1,5 +1,6 @@
 import { Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 import { useState, useMemo } from 'react'
+import { Button } from '../atoms/Button'
 
 /**
  * Definición de una columna para DataTable
@@ -241,22 +242,26 @@ export function DataTable<T extends Record<string, any>>({
                                 <td className="py-3 px-4 text-right">
                                     <div className="flex justify-end gap-2">
                                         {onEdit && (
-                                            <button
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
                                                 onClick={() => onEdit(row)}
-                                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                                                className="!p-1.5 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border-blue-100"
                                                 title="Editar"
                                             >
                                                 <Pencil size={16} />
-                                            </button>
+                                            </Button>
                                         )}
                                         {onDelete && (
-                                            <button
+                                            <Button
+                                                variant="danger"
+                                                size="sm"
                                                 onClick={() => handleDelete(row)}
-                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                                className="!p-1.5"
                                                 title="Eliminar"
                                             >
                                                 <Trash2 size={16} />
-                                            </button>
+                                            </Button>
                                         )}
                                     </div>
                                 </td>

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { DataTable, type Column } from './molecules/DataTable'
-import type { Concepto, Grupo } from '../types'
+import { DataTable, type Column } from '../../molecules/DataTable'
+import type { Concepto, Grupo } from '../../../types'
 
 interface Props {
     conceptos: Concepto[]

@@ -7,8 +7,8 @@ import { apiService } from '../services/api'
 import { useCatalogo } from '../hooks/useCatalogo'
 import { useSessionStorage } from '../hooks/useSessionStorage'
 import { getMesActual } from '../utils/dateUtils'
-import { FiltrosReporte } from '../components/FiltrosReporte'
-import { EstadisticasTotales } from '../components/EstadisticasTotales'
+import { FiltrosReporte } from '../components/organisms/FiltrosReporte'
+import { EstadisticasTotales } from '../components/organisms/EstadisticasTotales'
 
 export const MovimientosPage = () => {
     const navigate = useNavigate()

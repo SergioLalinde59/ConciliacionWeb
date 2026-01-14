@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { Plus } from 'lucide-react'
 import type { Grupo } from '../types'
-import { GruposTable } from '../components/GruposTable'
-import { GrupoModal } from '../components/GrupoModal'
-import { CsvExportButton } from '../components/CsvExportButton'
+import { GruposTable } from '../components/organisms/tables/GruposTable'
+import { GrupoModal } from '../components/organisms/modals/GrupoModal'
+import { CsvExportButton } from '../components/molecules/CsvExportButton'
 import { apiService } from '../services/api'
 
 export const GruposPage = () => {

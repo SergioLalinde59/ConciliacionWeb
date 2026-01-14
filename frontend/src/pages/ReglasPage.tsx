@@ -3,7 +3,7 @@ import { apiService } from '../services/api'
 import type { ReglaClasificacion, Tercero, Grupo, Concepto } from '../types'
 import { Trash2, Plus, Zap, Edit, X } from 'lucide-react'
 import { ComboBox } from '../components/molecules/ComboBox'
-import { CsvExportButton } from '../components/CsvExportButton'
+import { CsvExportButton } from '../components/molecules/CsvExportButton'
 
 export const ReglasPage: React.FC = () => {
     const [reglas, setReglas] = useState<ReglaClasificacion[]>([])

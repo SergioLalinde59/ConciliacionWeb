@@ -1,6 +1,6 @@
 import { CheckCircle, XCircle } from 'lucide-react'
-import { DataTable, idColumn, nombreColumn, type Column } from './molecules/DataTable'
-import type { Cuenta } from '../types'
+import { DataTable, idColumn, nombreColumn, type Column } from '../../molecules/DataTable'
+import type { Cuenta } from '../../../types'
 
 interface Props {
     cuentas: Cuenta[]

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Save } from 'lucide-react'
-import { Modal } from './molecules/Modal'
-import { Button } from './atoms/Button'
-import { Input } from './atoms/Input'
-import { ComboBox } from './molecules/ComboBox'
-import type { Concepto, Grupo } from '../types'
+import { Modal } from '../../molecules/Modal'
+import { Button } from '../../atoms/Button'
+import { Input } from '../../atoms/Input'
+import { ComboBox } from '../../molecules/ComboBox'
+import type { Concepto, Grupo } from '../../../types'
 
 interface Props {
     isOpen: boolean

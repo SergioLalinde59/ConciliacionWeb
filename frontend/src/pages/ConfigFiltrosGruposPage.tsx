@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { Plus, Filter } from 'lucide-react'
-import { ConfigFiltrosGruposTable } from '../components/ConfigFiltrosGruposTable'
-import { ConfigFiltroGrupoModal } from '../components/ConfigFiltroGrupoModal'
-import { CsvExportButton } from '../components/CsvExportButton'
+import { ConfigFiltrosGruposTable } from '../components/organisms/tables/ConfigFiltrosGruposTable'
+import { ConfigFiltroGrupoModal } from '../components/organisms/modals/ConfigFiltroGrupoModal'
+import { CsvExportButton } from '../components/molecules/CsvExportButton'
 import { apiService } from '../services/api'
 
 interface ConfigFiltroGrupo {

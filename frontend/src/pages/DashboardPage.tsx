@@ -11,7 +11,7 @@ export const DashboardPage = () => {
     const [loading, setLoading] = useState(true)
 
     // Catálogos desde Hook centralizado
-    const { terceros, grupos, conceptos } = useCatalogo()
+    const { terceros, centrosCostos, conceptos } = useCatalogo()
 
     // Estado del Modal
     const [modalOpen, setModalOpen] = useState(false)
@@ -100,7 +100,7 @@ export const DashboardPage = () => {
                 isOpen={modalOpen}
                 movimiento={itemEditando}
                 terceros={terceros}
-                grupos={grupos}
+                centrosCostos={centrosCostos}
                 conceptos={conceptos}
                 onClose={() => setModalOpen(false)}
                 onSave={guardarClasificacion}

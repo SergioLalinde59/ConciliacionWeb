@@ -19,7 +19,7 @@ interface ItemDesglose {
 }
 
 interface DrilldownLevel {
-    level: 'grupo' | 'tercero' | 'concepto'
+    level: 'centro_costo' | 'tercero' | 'concepto'
     title: string
     parentId?: number
     grandParentId?: number
@@ -29,24 +29,24 @@ interface DrilldownLevel {
     sortField: 'nombre' | 'ingresos' | 'egresos' | 'saldo'
 }
 
-export const ReporteEgresosGrupoPage = () => {
+export const ReporteEgresosCentroCostoPage = () => {
     // Filtros
-    const [desde, setDesde] = useSessionStorage('rep_egresos_grupo_desde', getMesActual().inicio)
-    const [hasta, setHasta] = useSessionStorage('rep_egresos_grupo_hasta', getMesActual().fin)
-    const [cuentaId, setCuentaId] = useSessionStorage('rep_egresos_grupo_cuentaId', '')
-    const [terceroId, setTerceroId] = useSessionStorage('rep_egresos_grupo_terceroId', '')
-    const [grupoId, setGrupoId] = useSessionStorage('rep_egresos_grupo_grupoId', '')
-    const [conceptoId, setConceptoId] = useSessionStorage('rep_egresos_grupo_conceptoId', '')
-    const [mostrarIngresos, setMostrarIngresos] = useSessionStorage('rep_egresos_grupo_ingresos', false)
-    const [mostrarEgresos, setMostrarEgresos] = useSessionStorage('rep_egresos_grupo_egresos', true)
+    const [desde, setDesde] = useSessionStorage('rep_egresos_cc_desde', getMesActual().inicio)
+    const [hasta, setHasta] = useSessionStorage('rep_egresos_cc_hasta', getMesActual().fin)
+    const [cuentaId, setCuentaId] = useSessionStorage('rep_egresos_cc_cuentaId', '')
+    const [terceroId, setTerceroId] = useSessionStorage('rep_egresos_cc_terceroId', '')
+    const [centroCostoId, setCentroCostoId] = useSessionStorage('rep_egresos_cc_centroCostoId', '')
+    const [conceptoId, setConceptoId] = useSessionStorage('rep_egresos_cc_conceptoId', '')
+    const [mostrarIngresos, setMostrarIngresos] = useSessionStorage('rep_egresos_cc_ingresos', false)
+    const [mostrarEgresos, setMostrarEgresos] = useSessionStorage('rep_egresos_cc_egresos', true)
 
     // Dynamic Exclusion
-    const [gruposExcluidos, setGruposExcluidos] = useSessionStorage<number[] | null>('rep_egresos_grupo_gruposExcluidos', null)
-    const actualGruposExcluidos = gruposExcluidos || []
+    const [centrosCostosExcluidos, setCentrosCostosExcluidos] = useSessionStorage<number[] | null>('rep_egresos_cc_excluidos', null)
+    const actualCentrosCostosExcluidos = centrosCostosExcluidos || []
 
-    // State for Sorting and Modals (re-added correctly)
-    const [sortAscGrupo, setSortAscGrupo] = useState(false)
-    const [sortFieldGrupo, setSortFieldGrupo] = useState<'nombre' | 'ingresos' | 'egresos' | 'saldo'>('egresos')
+    // State for Sorting
+    const [sortAscCentroCosto, setSortAscCentroCosto] = useState(false)
+    const [sortFieldCentroCosto, setSortFieldCentroCosto] = useState<'nombre' | 'ingresos' | 'egresos' | 'saldo'>('egresos')
 
     const [terceroModal, setTerceroModal] = useState<DrilldownLevel>({
         level: 'tercero',
@@ -68,34 +68,34 @@ export const ReporteEgresosGrupoPage = () => {
 
     // Params for Hook
     const paramsReporte = {
-        nivel: 'grupo',
+        nivel: 'centro_costo',
         fecha_inicio: desde,
         fecha_fin: hasta,
         cuenta_id: cuentaId ? Number(cuentaId) : undefined,
         tercero_id: terceroId ? Number(terceroId) : undefined,
-        grupo_id: grupoId ? Number(grupoId) : undefined,
+        centro_costo_id: centroCostoId ? Number(centroCostoId) : undefined,
         concepto_id: conceptoId ? Number(conceptoId) : undefined,
-        grupos_excluidos: actualGruposExcluidos.length > 0 ? actualGruposExcluidos : undefined
+        centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined
     }
 
     const { data: gruposDataRaw, isLoading: loading } = useReporteDesgloseGastos(paramsReporte)
     const gruposData = (gruposDataRaw as ItemDesglose[]) || []
 
     // Load Catalogs
-    const { cuentas, terceros, grupos, conceptos } = useCatalogo()
+    const { cuentas, terceros, centrosCostos, conceptos } = useCatalogo()
 
     // Load Exclusion Config
     const { data: configuracionExclusion = [] } = useConfiguracionExclusion()
 
     // Set defaults when config loads
     useEffect(() => {
-        if (configuracionExclusion.length > 0 && gruposExcluidos === null) {
-            const defaults = (configuracionExclusion as ConfigFiltroExclusion[]).filter(d => d.activo_por_defecto).map(d => d.grupo_id)
-            setGruposExcluidos(defaults)
+        if (configuracionExclusion.length > 0 && centrosCostosExcluidos === null) {
+            const defaults = (configuracionExclusion as ConfigFiltroExclusion[]).filter(d => d.activo_por_defecto).map(d => d.centro_costo_id)
+            setCentrosCostosExcluidos(defaults)
         }
-    }, [configuracionExclusion, gruposExcluidos, setGruposExcluidos])
+    }, [configuracionExclusion, centrosCostosExcluidos, setCentrosCostosExcluidos])
 
-    const handleGrupoClick = (item: ItemDesglose) => {
+    const handleCentroCostoClick = (item: ItemDesglose) => {
         setTerceroModal({
             level: 'tercero',
             title: `Terceros para: ${item.nombre}`,
@@ -112,9 +112,9 @@ export const ReporteEgresosGrupoPage = () => {
             fecha_fin: hasta,
             cuenta_id: cuentaId ? Number(cuentaId) : undefined,
             tercero_id: undefined,
-            grupo_id: item.id,
+            centro_costo_id: item.id,
             concepto_id: conceptoId ? Number(conceptoId) : undefined,
-            grupos_excluidos: actualGruposExcluidos.length > 0 ? actualGruposExcluidos : undefined
+            centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined
         } as any).then(data => {
             setTerceroModal(prev => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
         })
@@ -138,9 +138,9 @@ export const ReporteEgresosGrupoPage = () => {
             fecha_fin: hasta,
             cuenta_id: cuentaId ? Number(cuentaId) : undefined,
             tercero_id: item.id,
-            grupo_id: terceroModal.parentId,
+            centro_costo_id: terceroModal.parentId,
             concepto_id: conceptoId ? Number(conceptoId) : undefined,
-            grupos_excluidos: actualGruposExcluidos.length > 0 ? actualGruposExcluidos : undefined
+            centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined
         } as any).then(data => {
             setConceptoModal(prev => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
         })
@@ -157,12 +157,12 @@ export const ReporteEgresosGrupoPage = () => {
         })
     }
 
-    const handleSortGrupo = (field: 'nombre' | 'ingresos' | 'egresos' | 'saldo') => {
-        if (field === sortFieldGrupo) {
-            setSortAscGrupo(!sortAscGrupo)
+    const handleSortCentroCosto = (field: 'nombre' | 'ingresos' | 'egresos' | 'saldo') => {
+        if (field === sortFieldCentroCosto) {
+            setSortAscCentroCosto(!sortAscCentroCosto)
         } else {
-            setSortFieldGrupo(field)
-            setSortAscGrupo(field === 'nombre')
+            setSortFieldCentroCosto(field)
+            setSortAscCentroCosto(field === 'nombre')
         }
     }
 
@@ -172,15 +172,15 @@ export const ReporteEgresosGrupoPage = () => {
         setHasta(mesActual.fin)
         setCuentaId('')
         setTerceroId('')
-        setGrupoId('')
+        setCentroCostoId('')
         setConceptoId('')
         setMostrarIngresos(false)
         setMostrarEgresos(true)
         if (configuracionExclusion.length > 0) {
-            const defaults = configuracionExclusion.filter(d => d.activo_por_defecto).map(d => d.grupo_id)
-            setGruposExcluidos(defaults)
+            const defaults = configuracionExclusion.filter(d => d.activo_por_defecto).map(d => d.centro_costo_id)
+            setCentrosCostosExcluidos(defaults)
         } else {
-            setGruposExcluidos([])
+            setCentrosCostosExcluidos([])
         }
     }
 
@@ -347,7 +347,7 @@ export const ReporteEgresosGrupoPage = () => {
     return (
         <div className="max-w-7xl mx-auto pb-12">
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">Egresos por Grupo</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Egresos por Centro de Costo</h1>
                 <p className="text-gray-500 text-sm mt-1">Drilldown interactivo de egresos</p>
             </div>
 
@@ -362,12 +362,12 @@ export const ReporteEgresosGrupoPage = () => {
                 cuentas={cuentas}
                 terceroId={terceroId}
                 onTerceroChange={setTerceroId}
-                grupoId={grupoId}
-                onGrupoChange={setGrupoId}
+                centroCostoId={centroCostoId}
+                onCentroCostoChange={setCentroCostoId}
                 conceptoId={conceptoId}
                 onConceptoChange={setConceptoId}
                 terceros={terceros}
-                grupos={grupos}
+                centrosCostos={centrosCostos}
                 conceptos={conceptos}
                 showClasificacionFilters={true}
                 mostrarIngresos={mostrarIngresos}
@@ -376,8 +376,8 @@ export const ReporteEgresosGrupoPage = () => {
                 onMostrarEgresosChange={setMostrarEgresos}
                 showIngresosEgresos={false}
                 configuracionExclusion={configuracionExclusion}
-                gruposExcluidos={actualGruposExcluidos}
-                onGruposExcluidosChange={setGruposExcluidos}
+                centrosCostosExcluidos={actualCentrosCostosExcluidos}
+                onCentrosCostosExcluidosChange={setCentrosCostosExcluidos}
                 onLimpiar={handleLimpiar}
             />
 
@@ -394,7 +394,7 @@ export const ReporteEgresosGrupoPage = () => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50">
                     <div>
-                        <h3 className="text-lg font-bold text-gray-800">Egresos por Grupo</h3>
+                        <h3 className="text-lg font-bold text-gray-800">Egresos por Centro de Costo</h3>
                         <p className="text-xs text-slate-500">
                             Ingresos: ${totales.ingresos.toLocaleString('es-CO')} |
                             Egresos: ${totales.egresos.toLocaleString('es-CO')} |
@@ -403,7 +403,7 @@ export const ReporteEgresosGrupoPage = () => {
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="text-xs text-gray-500">
-                            {sortAscGrupo ? '↑' : '↓'} {sortFieldGrupo === 'nombre' ? 'Nombre' : sortFieldGrupo === 'ingresos' ? 'Ingresos' : sortFieldGrupo === 'egresos' ? 'Egresos' : 'Saldo'}
+                            {sortAscCentroCosto ? '↑' : '↓'} {sortFieldCentroCosto === 'nombre' ? 'Nombre' : sortFieldCentroCosto === 'ingresos' ? 'Ingresos' : sortFieldCentroCosto === 'egresos' ? 'Egresos' : 'Saldo'}
                         </span>
                     </div>
                 </div>
@@ -414,45 +414,45 @@ export const ReporteEgresosGrupoPage = () => {
                             <tr>
                                 <th
                                     className="py-3 px-6 cursor-pointer hover:bg-gray-50 transition-colors select-none"
-                                    onClick={() => handleSortGrupo('nombre')}
+                                    onClick={() => handleSortCentroCosto('nombre')}
                                 >
                                     <div className="flex items-center gap-1">
-                                        Grupo
-                                        {sortFieldGrupo === 'nombre' && (
-                                            <span className="text-blue-600">{sortAscGrupo ? '↑' : '↓'}</span>
+                                        Centro de Costo
+                                        {sortFieldCentroCosto === 'nombre' && (
+                                            <span className="text-blue-600">{sortAscCentroCosto ? '↑' : '↓'}</span>
                                         )}
                                     </div>
                                 </th>
                                 <th
                                     className="py-3 px-6 text-right cursor-pointer hover:bg-gray-50 transition-colors select-none"
-                                    onClick={() => handleSortGrupo('ingresos')}
+                                    onClick={() => handleSortCentroCosto('ingresos')}
                                 >
                                     <div className="flex items-center justify-end gap-1">
                                         Ingresos
-                                        {sortFieldGrupo === 'ingresos' && (
-                                            <span className="text-blue-600">{sortAscGrupo ? '↑' : '↓'}</span>
+                                        {sortFieldCentroCosto === 'ingresos' && (
+                                            <span className="text-blue-600">{sortAscCentroCosto ? '↑' : '↓'}</span>
                                         )}
                                     </div>
                                 </th>
                                 <th
                                     className="py-3 px-6 text-right cursor-pointer hover:bg-gray-50 transition-colors select-none"
-                                    onClick={() => handleSortGrupo('egresos')}
+                                    onClick={() => handleSortCentroCosto('egresos')}
                                 >
                                     <div className="flex items-center justify-end gap-1">
                                         Egresos
-                                        {sortFieldGrupo === 'egresos' && (
-                                            <span className="text-blue-600">{sortAscGrupo ? '↑' : '↓'}</span>
+                                        {sortFieldCentroCosto === 'egresos' && (
+                                            <span className="text-blue-600">{sortAscCentroCosto ? '↑' : '↓'}</span>
                                         )}
                                     </div>
                                 </th>
                                 <th
                                     className="py-3 px-6 text-right cursor-pointer hover:bg-gray-50 transition-colors select-none"
-                                    onClick={() => handleSortGrupo('saldo')}
+                                    onClick={() => handleSortCentroCosto('saldo')}
                                 >
                                     <div className="flex items-center justify-end gap-1">
                                         Saldo
-                                        {sortFieldGrupo === 'saldo' && (
-                                            <span className="text-blue-600">{sortAscGrupo ? '↑' : '↓'}</span>
+                                        {sortFieldCentroCosto === 'saldo' && (
+                                            <span className="text-blue-600">{sortAscCentroCosto ? '↑' : '↓'}</span>
                                         )}
                                     </div>
                                 </th>
@@ -462,8 +462,8 @@ export const ReporteEgresosGrupoPage = () => {
                         <tbody className="divide-y divide-gray-50">
                             {loading ? (
                                 <tr><td colSpan={5} className="py-8 text-center text-sm text-gray-500">Cargando...</td></tr>
-                            ) : sortData(gruposData, sortFieldGrupo, sortAscGrupo).map((item, i) => (
-                                <tr key={i} className="hover:bg-blue-50 transition-colors group cursor-pointer" onClick={() => handleGrupoClick(item)}>
+                            ) : sortData(gruposData, sortFieldCentroCosto, sortAscCentroCosto).map((item, i) => (
+                                <tr key={i} className="hover:bg-blue-50 transition-colors group cursor-pointer" onClick={() => handleCentroCostoClick(item)}>
                                     <td className="py-3 px-6 text-sm font-medium text-gray-700">{item.nombre}</td>
                                     <td className="py-3 px-6 text-sm text-right font-mono">
                                         <CurrencyDisplay value={item.ingresos} showCurrency={false} />

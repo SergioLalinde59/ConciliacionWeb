@@ -10,7 +10,7 @@ from src.domain.ports.movimiento_repository import MovimientoRepository
 from src.domain.ports.cuenta_repository import CuentaRepository
 from src.domain.ports.moneda_repository import MonedaRepository
 from src.domain.ports.tercero_repository import TerceroRepository
-from src.domain.ports.grupo_repository import GrupoRepository
+from src.domain.ports.centro_costo_repository import CentroCostoRepository
 from src.domain.ports.concepto_repository import ConceptoRepository
 
 from src.infrastructure.api.dependencies import (
@@ -18,7 +18,7 @@ from src.infrastructure.api.dependencies import (
     get_cuenta_repository,
     get_moneda_repository,
     get_tercero_repository,
-    get_grupo_repository,
+    get_centro_costo_repository,
     get_concepto_repository,
     get_config_valor_pendiente_repository
 )
@@ -36,7 +36,7 @@ class MovimientoDTO(BaseModel):
     moneda_id: int
     cuenta_id: int
     tercero_id: Optional[int] = None
-    grupo_id: Optional[int] = None
+    centro_costo_id: Optional[int] = None
     concepto_id: Optional[int] = None
     detalle: Optional[str] = None
 
@@ -51,7 +51,7 @@ class MovimientoResponse(BaseModel):
     moneda_id: Optional[int]
     cuenta_id: Optional[int]
     tercero_id: Optional[int]
-    grupo_id: Optional[int]
+    centro_costo_id: Optional[int]
     concepto_id: Optional[int]
     created_at: Optional[datetime]
     detalle: Optional[str]
@@ -59,7 +59,7 @@ class MovimientoResponse(BaseModel):
     cuenta_display: str
     moneda_display: str
     tercero_display: Optional[str]
-    grupo_display: Optional[str]
+    centro_costo_display: Optional[str]
     concepto_display: Optional[str]
 
 class PaginatedMovimientosResponse(BaseModel):
@@ -83,14 +83,14 @@ def _to_response(mov: Movimiento) -> MovimientoResponse:
         moneda_id=mov.moneda_id,
         cuenta_id=mov.cuenta_id,
         tercero_id=mov.tercero_id,
-        grupo_id=mov.grupo_id,
+        centro_costo_id=mov.centro_costo_id,
         concepto_id=mov.concepto_id,
         created_at=mov.created_at,
         detalle=mov.detalle,
         cuenta_display=f"{mov.cuenta_id} - {mov.cuenta_nombre}" if mov.cuenta_id and mov.cuenta_nombre else (str(mov.cuenta_id) if mov.cuenta_id else "Sin Cuenta"),
         moneda_display=f"{mov.moneda_id} - {mov.moneda_nombre}" if mov.moneda_id and mov.moneda_nombre else (str(mov.moneda_id) if mov.moneda_id else "Sin Moneda"),
         tercero_display=f"{mov.tercero_id} - {mov.tercero_nombre}" if mov.tercero_id and mov.tercero_nombre else None,
-        grupo_display=f"{mov.grupo_id} - {mov.grupo_nombre}" if mov.grupo_id and mov.grupo_nombre else None,
+        centro_costo_display=f"{mov.centro_costo_id} - {mov.centro_costo_nombre}" if mov.centro_costo_id and mov.centro_costo_nombre else None,
         concepto_display=f"{mov.concepto_id} - {mov.concepto_nombre}" if mov.concepto_id and mov.concepto_nombre else None
     )
 
@@ -99,7 +99,7 @@ def _validar_catalogos(
     repo_cuenta: CuentaRepository,
     repo_moneda: MonedaRepository,
     repo_tercero: TerceroRepository,
-    repo_grupo: GrupoRepository,
+    repo_centro_costo: CentroCostoRepository,
     repo_concepto: ConceptoRepository
 ):
     """Valida que todos los IDs de catálogos existan y sean consistentes"""
@@ -112,19 +112,19 @@ def _validar_catalogos(
     if dto.tercero_id and not repo_tercero.obtener_por_id(dto.tercero_id):
         raise HTTPException(status_code=400, detail=f"Tercero con ID {dto.tercero_id} no existe")
     
-    if dto.grupo_id and not repo_grupo.obtener_por_id(dto.grupo_id):
-        raise HTTPException(status_code=400, detail=f"Grupo con ID {dto.grupo_id} no existe")
+    if dto.centro_costo_id and not repo_centro_costo.obtener_por_id(dto.centro_costo_id):
+        raise HTTPException(status_code=400, detail=f"Centro de Costo con ID {dto.centro_costo_id} no existe")
     
     if dto.concepto_id:
         concepto = repo_concepto.obtener_por_id(dto.concepto_id)
         if not concepto:
             raise HTTPException(status_code=400, detail=f"Concepto con ID {dto.concepto_id} no existe")
         
-        # Validar que el concepto pertenezca al grupo seleccionado (si hay grupo)
-        if dto.grupo_id and concepto.grupoid_fk != dto.grupo_id:
+        # Validar que el concepto pertenezca al centro_costo seleccionado (si hay centro_costo)
+        if dto.centro_costo_id and concepto.centro_costo_id != dto.centro_costo_id:
              raise HTTPException(
                  status_code=400, 
-                 detail=f"El concepto {dto.concepto_id} no pertenece al grupo {dto.grupo_id}"
+                 detail=f"El concepto {dto.concepto_id} no pertenece al centro de costo {dto.centro_costo_id}"
              )
 
 @router.get("", response_model=PaginatedMovimientosResponse)
@@ -133,9 +133,9 @@ def listar_movimientos(
     hasta: Optional[date] = None,
     cuenta_id: Optional[int] = None,
     tercero_id: Optional[int] = None,
-    grupo_id: Optional[int] = None,
+    centro_costo_id: Optional[int] = None,
     concepto_id: Optional[int] = None,
-    grupos_excluidos: Optional[List[int]] = Query(None),
+    centros_costos_excluidos: Optional[List[int]] = Query(None),
     solo_pendientes: bool = False,
     tipo_movimiento: Optional[str] = None,
     repo: MovimientoRepository = Depends(get_movimiento_repository)
@@ -149,9 +149,9 @@ def listar_movimientos(
             fecha_fin=hasta,
             cuenta_id=cuenta_id,
             tercero_id=tercero_id,
-            grupo_id=grupo_id,
+            centro_costo_id=centro_costo_id,
             concepto_id=concepto_id,
-            grupos_excluidos=grupos_excluidos,
+            centros_costos_excluidos=centros_costos_excluidos,
             solo_pendientes=solo_pendientes,
             tipo_movimiento=tipo_movimiento,
             skip=0,
@@ -187,12 +187,12 @@ def obtener_pendientes_dashboard(
     """Obtiene movimientos pendientes (igual que el anterior pero con URL compatible con Dashboard)"""
     # Obtener IDs de valores que semánticamente significan "pendiente"
     terceros_pendientes = config_repo.obtener_ids_por_tipo('tercero')
-    grupos_pendientes = config_repo.obtener_ids_por_tipo('grupo')
+    centros_costos_pendientes = config_repo.obtener_ids_por_tipo('centro_costo')
     conceptos_pendientes = config_repo.obtener_ids_por_tipo('concepto')
     
     pendientes = repo.buscar_pendientes_clasificacion(
         terceros_pendientes=terceros_pendientes,
-        grupos_pendientes=grupos_pendientes,
+        centros_costos_pendientes=centros_costos_pendientes,
         conceptos_pendientes=conceptos_pendientes
     )
     return [_to_response(m) for m in pendientes]
@@ -205,12 +205,12 @@ def obtener_pendientes_clasificacion(
     """Obtiene movimientos pendientes de clasificación (sin grupo o concepto o con valores 'Por Clasificar')"""
     # Obtener IDs de valores que semánticamente significan "pendiente"
     terceros_pendientes = config_repo.obtener_ids_por_tipo('tercero')
-    grupos_pendientes = config_repo.obtener_ids_por_tipo('grupo')
+    centros_costos_pendientes = config_repo.obtener_ids_por_tipo('centro_costo')
     conceptos_pendientes = config_repo.obtener_ids_por_tipo('concepto')
     
     pendientes = repo.buscar_pendientes_clasificacion(
         terceros_pendientes=terceros_pendientes,
-        grupos_pendientes=grupos_pendientes,
+        centros_costos_pendientes=centros_costos_pendientes,
         conceptos_pendientes=conceptos_pendientes
     )
     return [_to_response(m) for m in pendientes]
@@ -229,9 +229,9 @@ def reporte_clasificacion(
     hasta: Optional[date] = None,
     cuenta_id: Optional[int] = None,
     tercero_id: Optional[int] = None,
-    grupo_id: Optional[int] = None,
+    centro_costo_id: Optional[int] = None,
     concepto_id: Optional[int] = None,
-    grupos_excluidos: Optional[List[int]] = Query(None),
+    centros_costos_excluidos: Optional[List[int]] = Query(None),
     tipo_movimiento: Optional[str] = None,
     repo: MovimientoRepository = Depends(get_movimiento_repository)
 ):
@@ -242,9 +242,9 @@ def reporte_clasificacion(
             fecha_fin=hasta,
             cuenta_id=cuenta_id,
             tercero_id=tercero_id,
-            grupo_id=grupo_id,
+            centro_costo_id=centro_costo_id,
             concepto_id=concepto_id,
-            grupos_excluidos=grupos_excluidos,
+            centros_costos_excluidos=centros_costos_excluidos,
             tipo_movimiento=tipo_movimiento
         )
     except Exception as e:
@@ -257,9 +257,9 @@ def reporte_ingresos_gastos_mes(
     hasta: Optional[date] = None,
     cuenta_id: Optional[int] = None,
     tercero_id: Optional[int] = None,
-    grupo_id: Optional[int] = None,
+    centro_costo_id: Optional[int] = None,
     concepto_id: Optional[int] = None,
-    grupos_excluidos: Optional[List[int]] = Query(None),
+    centros_costos_excluidos: Optional[List[int]] = Query(None),
     repo: MovimientoRepository = Depends(get_movimiento_repository)
 ):
     try:
@@ -268,9 +268,9 @@ def reporte_ingresos_gastos_mes(
             fecha_fin=hasta,
             cuenta_id=cuenta_id,
             tercero_id=tercero_id,
-            grupo_id=grupo_id,
+            centro_costo_id=centro_costo_id,
             concepto_id=concepto_id,
-            grupos_excluidos=grupos_excluidos
+            centros_costos_excluidos=centros_costos_excluidos
         )
     except Exception as e:
         logger.error(f"Error generando reporte mensual: {str(e)}", exc_info=True)
@@ -283,9 +283,9 @@ def reporte_desglose_gastos(
     hasta: Optional[date] = None,
     cuenta_id: Optional[int] = None,
     tercero_id: Optional[int] = None,
-    grupo_id: Optional[int] = None,
+    centro_costo_id: Optional[int] = None,
     concepto_id: Optional[int] = None,
-    grupos_excluidos: Optional[List[int]] = Query(None),
+    centros_costos_excluidos: Optional[List[int]] = Query(None),
     repo: MovimientoRepository = Depends(get_movimiento_repository)
 ):
     try:
@@ -295,9 +295,9 @@ def reporte_desglose_gastos(
             fecha_fin=hasta,
             cuenta_id=cuenta_id,
             tercero_id=tercero_id,
-            grupo_id=grupo_id,
+            centro_costo_id=centro_costo_id,
             concepto_id=concepto_id,
-            grupos_excluidos=grupos_excluidos
+            centros_costos_excluidos=centros_costos_excluidos
         )
     except Exception as e:
         logger.error(f"Error generando reporte desglose: {str(e)}", exc_info=True)
@@ -310,11 +310,12 @@ def crear_movimiento(
     repo_cuenta: CuentaRepository = Depends(get_cuenta_repository),
     repo_moneda: MonedaRepository = Depends(get_moneda_repository),
     repo_tercero: TerceroRepository = Depends(get_tercero_repository),
-    repo_grupo: GrupoRepository = Depends(get_grupo_repository),
+
+    repo_centro_costo: CentroCostoRepository = Depends(get_centro_costo_repository),
     repo_concepto: ConceptoRepository = Depends(get_concepto_repository)
 ):
     logger.info(f"Creando nuevo movimiento: {dto.descripcion} por {dto.valor}")
-    _validar_catalogos(dto, repo_cuenta, repo_moneda, repo_tercero, repo_grupo, repo_concepto)
+    _validar_catalogos(dto, repo_cuenta, repo_moneda, repo_tercero, repo_centro_costo, repo_concepto)
     
     nuevo = Movimiento(
         id=None,
@@ -327,7 +328,7 @@ def crear_movimiento(
         moneda_id=dto.moneda_id,
         cuenta_id=dto.cuenta_id,
         tercero_id=dto.tercero_id,
-        grupo_id=dto.grupo_id,
+        centro_costo_id=dto.centro_costo_id,
         concepto_id=dto.concepto_id,
         detalle=dto.detalle
     )
@@ -349,14 +350,14 @@ def actualizar_movimiento(
     repo_cuenta: CuentaRepository = Depends(get_cuenta_repository),
     repo_moneda: MonedaRepository = Depends(get_moneda_repository),
     repo_tercero: TerceroRepository = Depends(get_tercero_repository),
-    repo_grupo: GrupoRepository = Depends(get_grupo_repository),
+    repo_centro_costo: CentroCostoRepository = Depends(get_centro_costo_repository),
     repo_concepto: ConceptoRepository = Depends(get_concepto_repository)
 ):
     existente = repo.obtener_por_id(id)
     if not existente:
         raise HTTPException(status_code=404, detail="Movimiento no encontrado")
     
-    _validar_catalogos(dto, repo_cuenta, repo_moneda, repo_tercero, repo_grupo, repo_concepto)
+    _validar_catalogos(dto, repo_cuenta, repo_moneda, repo_tercero, repo_centro_costo, repo_concepto)
     
     actualizado = Movimiento(
         id=id,
@@ -369,7 +370,7 @@ def actualizar_movimiento(
         moneda_id=dto.moneda_id,
         cuenta_id=dto.cuenta_id,
         tercero_id=dto.tercero_id,
-        grupo_id=dto.grupo_id,
+        centro_costo_id=dto.centro_costo_id,
         concepto_id=dto.concepto_id,
         detalle=dto.detalle
     )
@@ -400,7 +401,7 @@ def obtener_datos_exportacion(
         raise HTTPException(status_code=500, detail="Error obteniendo datos para exportación")
 class ReclasificacionRequest(BaseModel):
     tercero_id: int
-    grupo_id: Optional[int] = None
+    centro_costo_id: Optional[int] = None
     concepto_id: Optional[int] = None
     fecha_inicio: Optional[date] = None
     fecha_fin: Optional[date] = None
@@ -424,7 +425,7 @@ def obtener_sugerencias_reclasificacion(
 @router.get("/sugerencias/detalles", response_model=List[MovimientoResponse])
 def obtener_detalles_sugerencia(
     tercero_id: int,
-    grupo_id: Optional[int] = None,
+    centro_costo_id: Optional[int] = None,
     concepto_id: Optional[int] = None,
     desde: Optional[date] = None,
     hasta: Optional[date] = None,
@@ -434,9 +435,9 @@ def obtener_detalles_sugerencia(
     Obtiene los movimientos individuales de un grupo sugerido.
     """
     try:
-        movimientos = repo.obtener_movimientos_grupo(
+        movimientos = repo.obtener_movimientos_centro_costo(
             tercero_id=tercero_id, 
-            grupo_id=grupo_id, 
+            centro_costo_id=centro_costo_id, 
             concepto_id=concepto_id,
             fecha_inicio=desde,
             fecha_fin=hasta
@@ -455,9 +456,9 @@ def reclasificar_lote(
     Reclasifica todos los movimientos del grupo especificado a Traslado.
     """
     try:
-        afectados = repo.reclasificar_movimientos_grupo(
+        afectados = repo.reclasificar_movimientos_centro_costo(
             tercero_id=request.tercero_id,
-            grupo_id_anterior=request.grupo_id,
+            centro_costo_id_anterior=request.centro_costo_id,
             concepto_id_anterior=request.concepto_id,
             fecha_inicio=request.fecha_inicio,
             fecha_fin=request.fecha_fin,
@@ -470,13 +471,13 @@ def reclasificar_lote(
 
 @router.get("/configuracion/filtros-exclusion")
 def obtener_configuracion_filtros_exclusion(
-    repo_grupo: GrupoRepository = Depends(get_grupo_repository)
+    repo_centro_costo: CentroCostoRepository = Depends(get_centro_costo_repository)
 ):
     """
-    Retorna la configuración de grupos que deben aparecer como checkboxes de exclusión.
+    Retorna la configuración de centros de costos que deben aparecer como checkboxes de exclusión.
     """
     try:
-        return repo_grupo.obtener_filtros_exclusion()
+        return repo_centro_costo.obtener_filtros_exclusion()
     except Exception as e:
         logger.error(f"Error obteniendo configuracion filtros: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error obteniendo configuracion")

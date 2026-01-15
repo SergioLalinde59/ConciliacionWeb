@@ -19,7 +19,7 @@ export const MovimientosPage = () => {
     const [hasta, setHasta] = useSessionStorage('filtro_hasta', getMesActual().fin)
     const [cuentaId, setCuentaId] = useSessionStorage('filtro_cuentaId', '')
     const [terceroId, setTerceroId] = useSessionStorage('filtro_terceroId', '')
-    const [grupoId, setGrupoId] = useSessionStorage('filtro_grupoId', '')
+    const [centroCostoId, setCentroCostoId] = useSessionStorage('filtro_centroCostoId', '')
     const [conceptoId, setConceptoId] = useSessionStorage('filtro_conceptoId', '')
     const [soloPendientes, setSoloPendientes] = useSessionStorage('filtro_soloPendientes', false)
     const [mostrarIngresos, setMostrarIngresos] = useSessionStorage('filtro_mostrarIngresos', true)
@@ -27,18 +27,18 @@ export const MovimientosPage = () => {
     const [mostrarEgresos, setMostrarEgresos] = useSessionStorage('filtro_mostrarEgresos', true)
 
     // Dynamic Exclusion Logic
-    const [configuracionExclusion, setConfiguracionExclusion] = useState<Array<{ grupo_id: number; etiqueta: string; activo_por_defecto: boolean }>>([])
+    const [configuracionExclusion, setConfiguracionExclusion] = useState<Array<{ centro_costo_id: number; etiqueta: string; activo_por_defecto: boolean }>>([])
     // We use null initial value to detect if we need to set defaults from config
-    const [gruposExcluidos, setGruposExcluidos] = useSessionStorage<number[] | null>('filtro_gruposExcluidos', null)
+    const [centrosCostosExcluidos, setCentrosCostosExcluidos] = useSessionStorage<number[] | null>('filtro_centrosCostosExcluidos', null)
 
-    // Grupos excluidos finales para la API
-    const actualGruposExcluidos = useMemo(() => {
-        return gruposExcluidos || []
-    }, [gruposExcluidos])
+    // Centros de costos excluidos finales para la API
+    const actualCentrosCostosExcluidos = useMemo(() => {
+        return centrosCostosExcluidos || []
+    }, [centrosCostosExcluidos])
 
 
     // Datos Maestros desde Hook centralizado
-    const { cuentas, terceros, grupos, conceptos } = useCatalogo()
+    const { cuentas, terceros, centrosCostos, conceptos } = useCatalogo()
 
     // Paginación ELIMINADA - mostrar todos los registros
     const [movimientos, setMovimientos] = useState<Movimiento[]>([])
@@ -62,8 +62,8 @@ export const MovimientosPage = () => {
                 let bValue: any
 
                 if (sortConfig.key === 'clasificacion') {
-                    aValue = (a.grupo_display || '') + (a.concepto_display || '')
-                    bValue = (b.grupo_display || '') + (b.concepto_display || '')
+                    aValue = (a.centro_costo_display || '') + (a.concepto_display || '')
+                    bValue = (b.centro_costo_display || '') + (b.concepto_display || '')
                 } else {
                     aValue = a[sortConfig.key]
                     bValue = b[sortConfig.key]
@@ -120,7 +120,7 @@ export const MovimientosPage = () => {
         // Parse IDs to numbers or undefined (empty strings should be undefined)
         const parsedCuentaId = cuentaId && cuentaId !== '' ? parseInt(cuentaId) : undefined
         const parsedTerceroId = terceroId && terceroId !== '' ? parseInt(terceroId) : undefined
-        const parsedGrupoId = grupoId && grupoId !== '' ? parseInt(grupoId) : undefined
+        const parsedCentroCostoId = centroCostoId && centroCostoId !== '' ? parseInt(centroCostoId) : undefined
         const parsedConceptoId = conceptoId && conceptoId !== '' ? parseInt(conceptoId) : undefined
 
         const filterParams = {
@@ -128,9 +128,9 @@ export const MovimientosPage = () => {
             hasta: f_hasta || hasta,
             cuenta_id: parsedCuentaId,
             tercero_id: parsedTerceroId,
-            grupo_id: parsedGrupoId,
+            centro_costo_id: parsedCentroCostoId,
             concepto_id: parsedConceptoId,
-            grupos_excluidos: actualGruposExcluidos.length > 0 ? actualGruposExcluidos : undefined,
+            centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined,
             solo_pendientes: soloPendientes || undefined,
             tipo_movimiento: tipoMovimiento
             // Sin parámetros de paginación - cargar todos
@@ -150,7 +150,7 @@ export const MovimientosPage = () => {
                 setLoading(false)
             })
 
-    }, [desde, hasta, cuentaId, terceroId, grupoId, conceptoId, soloPendientes, mostrarIngresos, mostrarEgresos, actualGruposExcluidos])
+    }, [desde, hasta, cuentaId, terceroId, centroCostoId, conceptoId, soloPendientes, mostrarIngresos, mostrarEgresos, actualCentrosCostosExcluidos])
 
 
     // Load on mount and whenever filters change
@@ -167,16 +167,16 @@ export const MovimientosPage = () => {
                 setConfiguracionExclusion(data)
 
                 // If no user preference saved (null), use defaults from DB
-                if (gruposExcluidos === null) {
+                if (centrosCostosExcluidos === null) {
                     // Set all filters with activo_por_defecto=true as excluded
-                    const defaults = data.filter((d: any) => d.activo_por_defecto).map((d: any) => d.grupo_id)
-                    setGruposExcluidos(defaults)
+                    const defaults = data.filter((d: any) => d.activo_por_defecto).map((d: any) => d.centro_costo_id)
+                    setCentrosCostosExcluidos(defaults)
                 }
             })
             .catch(err => console.error("Error fetching filter config", err))
     }, [])
 
-    // Note: Reload when gruposExcluidos changes is handled by main useEffect via actualGruposExcluidos
+    // Note: Reload when centrosCostosExcluidos changes is handled by main useEffect via actualCentrosCostosExcluidos
 
 
 
@@ -186,14 +186,14 @@ export const MovimientosPage = () => {
         setHasta(mesActual.fin)
         setCuentaId('')
         setTerceroId('')
-        setGrupoId('')
+        setCentroCostoId('')
         setConceptoId('')
         // Reset all exclusion filters to defaults from config
         if (configuracionExclusion.length > 0) {
-            const defaults = configuracionExclusion.filter(d => d.activo_por_defecto).map(d => d.grupo_id)
-            setGruposExcluidos(defaults)
+            const defaults = configuracionExclusion.filter(d => d.activo_por_defecto).map(d => d.centro_costo_id)
+            setCentrosCostosExcluidos(defaults)
         } else {
-            setGruposExcluidos([])
+            setCentrosCostosExcluidos([])
         }
         setSoloPendientes(false)
         setMostrarIngresos(true)
@@ -226,15 +226,15 @@ export const MovimientosPage = () => {
                 cuentas={cuentas}
                 terceroId={terceroId}
                 onTerceroChange={setTerceroId}
-                grupoId={grupoId}
-                onGrupoChange={(val) => {
-                    setGrupoId(val)
+                centroCostoId={centroCostoId}
+                onCentroCostoChange={(val) => {
+                    setCentroCostoId(val)
                     setConceptoId('')
                 }}
                 conceptoId={conceptoId}
                 onConceptoChange={setConceptoId}
                 terceros={terceros}
-                grupos={grupos}
+                centrosCostos={centrosCostos}
                 conceptos={conceptos}
                 showClasificacionFilters={true}
                 soloPendientes={soloPendientes}
@@ -246,8 +246,8 @@ export const MovimientosPage = () => {
                 onMostrarEgresosChange={setMostrarEgresos}
                 showIngresosEgresos={true}
                 configuracionExclusion={configuracionExclusion}
-                gruposExcluidos={actualGruposExcluidos}
-                onGruposExcluidosChange={setGruposExcluidos}
+                centrosCostosExcluidos={actualCentrosCostosExcluidos}
+                onCentrosCostosExcluidosChange={setCentrosCostosExcluidos}
                 onLimpiar={handleLimpiar}
             />
 
@@ -436,9 +436,9 @@ export const MovimientosPage = () => {
                                             </div>
                                         </td>
                                         <td className="py-2 px-2">
-                                            {mov.grupo_display ? (
+                                            {mov.centro_costo_display ? (
                                                 <div className="flex flex-col gap-0.5">
-                                                    <span className="text-[11px] font-bold text-slate-700">{mov.grupo_display}</span>
+                                                    <span className="text-[11px] font-bold text-slate-700">{mov.centro_costo_display}</span>
                                                     <span className="text-[10px] text-slate-400 italic font-medium">{mov.concepto_display}</span>
                                                 </div>
                                             ) : (

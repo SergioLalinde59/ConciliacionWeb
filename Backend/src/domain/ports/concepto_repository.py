@@ -16,14 +16,14 @@ class ConceptoRepository(ABC):
         pass
     
     @abstractmethod
-    def buscar_por_grupoid(self, grupoid: int) -> List[Concepto]:
+    def buscar_por_centro_costo_id(self, centro_costo_id: int) -> List[Concepto]:
         pass
 
     @abstractmethod
-    def buscar_por_nombre(self, nombre: str, grupoid: Optional[int] = None) -> Optional[Concepto]:
+    def buscar_por_nombre(self, nombre: str, centro_costo_id: Optional[int] = None) -> Optional[Concepto]:
         pass
 
     @abstractmethod
-    def obtener_id_traslados(self, grupoid: int) -> Optional[int]:
+    def obtener_id_traslados(self, centro_costo_id: int) -> Optional[int]:
         """Obtiene el ID del concepto de 'Traslado' para un grupo dado"""
         pass

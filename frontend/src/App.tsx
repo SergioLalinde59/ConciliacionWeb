@@ -6,7 +6,7 @@ import { MonedasPage } from './pages/MonedasPage'
 import { TiposMovimientoPage } from './pages/TiposMovimientoPage'
 import { TercerosPage } from './pages/TercerosPage'
 import { TerceroDescripcionesPage } from './pages/TerceroDescripcionesPage'
-import { GruposPage } from './pages/GruposPage'
+import { CentrosCostosPage } from './pages/CentrosCostosPage'
 import { ConceptosPage } from './pages/ConceptosPage'
 import { MovimientosPage } from './pages/MovimientosPage'
 import { MovimientoFormPage } from './pages/MovimientoFormPage'
@@ -18,8 +18,8 @@ import { ReglasPage } from './pages/ReglasPage'
 import { DescargarMovimientosPage } from './pages/DescargarMovimientosPage'
 import { SugerenciasReclasificacionPage } from './pages/SugerenciasReclasificacionPage'
 import { ReporteEgresosTerceroPage } from './pages/ReporteEgresosTerceroPage'
-import { ReporteEgresosGrupoPage } from './pages/ReporteEgresosGrupoPage'
-import { ConfigFiltrosGruposPage } from './pages/ConfigFiltrosGruposPage'
+import { ReporteEgresosCentroCostoPage } from './pages/ReporteEgresosCentroCostoPage'
+import { ConfigFiltrosCentrosCostosPage } from './pages/ConfigFiltrosCentrosCostosPage'
 
 
 function App() {
@@ -33,9 +33,9 @@ function App() {
                     <Route path="/maestros/tipos-movimiento" element={<TiposMovimientoPage />} />
                     <Route path="/maestros/terceros" element={<TercerosPage />} />
                     <Route path="/maestros/terceros-descripciones" element={<TerceroDescripcionesPage />} />
-                    <Route path="/maestros/grupos" element={<GruposPage />} />
+                    <Route path="/maestros/centros-costos" element={<CentrosCostosPage />} />
                     <Route path="/maestros/conceptos" element={<ConceptosPage />} />
-                    <Route path="/maestros/config-filtros" element={<ConfigFiltrosGruposPage />} />
+                    <Route path="/maestros/config-filtros" element={<ConfigFiltrosCentrosCostosPage />} />
                     <Route path="/maestros/reglas" element={<ReglasPage />} />
                     <Route path="/movimientos" element={<MovimientosPage />} />
                     <Route path="/movimientos/cargar" element={<UploadMovimientosPage />} />
@@ -43,7 +43,7 @@ function App() {
                     <Route path="/movimientos/reporte" element={<ReporteClasificacionesPage />} />
                     <Route path="/movimientos/sugerencias" element={<SugerenciasReclasificacionPage />} />
                     <Route path="/reportes/egresos-tercero" element={<ReporteEgresosTerceroPage />} />
-                    <Route path="/reportes/egresos-grupo" element={<ReporteEgresosGrupoPage />} />
+                    <Route path="/reportes/egresos-centro-costo" element={<ReporteEgresosCentroCostoPage />} />
                     <Route path="/reportes/ingresos-gastos" element={<ReporteIngresosGastosMesPage />} />
                     <Route path="/reportes/descargar" element={<DescargarMovimientosPage />} />
                     <Route path="/movimientos/clasificar" element={<ClasificarMovimientosPage />} />

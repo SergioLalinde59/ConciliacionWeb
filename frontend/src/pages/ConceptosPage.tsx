@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { Plus } from 'lucide-react'
-import type { Concepto, Grupo } from '../types'
+import type { Concepto, CentroCosto } from '../types'
 import { ConceptosTable } from '../components/organisms/tables/ConceptosTable'
 import { ConceptoModal } from '../components/organisms/modals/ConceptoModal'
 import { ComboBox } from '../components/molecules/ComboBox'
@@ -10,38 +10,49 @@ import { apiService } from '../services/api'
 
 export const ConceptosPage = () => {
     const [conceptos, setConceptos] = useState<Concepto[]>([])
-    const [grupos, setGrupos] = useState<Grupo[]>([])
+    const [centrosCostos, setCentrosCostos] = useState<CentroCosto[]>([])
     const [loading, setLoading] = useState(true)
     const [modalOpen, setModalOpen] = useState(false)
     const [itemEditando, setItemEditando] = useState<Concepto | null>(null)
-    const [grupoFiltro, setGrupoFiltro] = useState<string>('') // Filtro por grupo
+    const [centroCostoFiltro, setCentroCostoFiltro] = useState<string>('') // Filtro por centro de costo
 
-    const cargarDatos = async () => {
+    const cargarCentrosCostos = async () => {
+        try {
+            const data = await apiService.centrosCostos.listar()
+            setCentrosCostos(data)
+        } catch (err) {
+            console.error("Error cargando centros de costos:", err)
+            toast.error("Error al cargar centros de costos")
+        }
+    }
+
+    const cargarConceptos = async (centroCostoId?: number) => {
         setLoading(true)
         try {
-            const [dataConceptos, dataGrupos] = await Promise.all([
-                apiService.conceptos.listar(),
-                apiService.grupos.listar()
-            ])
-            setConceptos(dataConceptos)
-            setGrupos(dataGrupos)
+            // Si centroCostoId es 0 o undefined, pasamos undefined al servicio para que traiga todos
+            const idParaServicio = (centroCostoId && centroCostoId !== 0) ? centroCostoId : undefined
+            const data = await apiService.conceptos.listar(idParaServicio)
+            setConceptos(data)
         } catch (err) {
-            console.error("Error cargando datos:", err)
-            toast.error("Error al cargar datos maestros")
+            console.error("Error cargando conceptos:", err)
+            toast.error("Error al cargar conceptos")
         } finally {
             setLoading(false)
         }
     }
 
     useEffect(() => {
-        cargarDatos()
+        cargarCentrosCostos()
+        setLoading(false) // Initial load done
     }, [])
 
-    // Filtrar conceptos por grupo
-    const conceptosFiltrados = conceptos.filter(concepto => {
-        if (!grupoFiltro || grupoFiltro === '0') return true // Si no hay filtro o es '0', mostrar todos
-        return concepto.grupo_id === parseInt(grupoFiltro)
-    })
+    useEffect(() => {
+        const id = centroCostoFiltro ? parseInt(centroCostoFiltro) : 0
+        cargarConceptos(id)
+    }, [centroCostoFiltro])
+
+    // No client-side filtering needed anymore as we fetch filtered data
+    const conceptosFiltrados = conceptos
 
     const handleCreate = () => {
         setItemEditando(null)
@@ -57,17 +68,18 @@ export const ConceptosPage = () => {
         apiService.conceptos.eliminar(id)
             .then(() => {
                 toast.success('Concepto eliminado')
-                cargarDatos()
+                const id = centroCostoFiltro ? parseInt(centroCostoFiltro) : 0
+                cargarConceptos(id)
             })
             .catch(err => {
                 toast.error("Error al eliminar: " + err.message)
             })
     }
 
-    const handleSave = (data: { nombre: string, grupo_id: number }) => {
+    const handleSave = (data: { nombre: string, centro_costo_id: number }) => {
         const payload = {
             concepto: data.nombre,
-            grupoid_fk: data.grupo_id
+            centro_costo_id: data.centro_costo_id
         }
 
         const promise = itemEditando
@@ -78,7 +90,8 @@ export const ConceptosPage = () => {
             .then(() => {
                 toast.success(itemEditando ? 'Concepto actualizado' : 'Concepto creado')
                 setModalOpen(false)
-                cargarDatos()
+                const id = centroCostoFiltro ? parseInt(centroCostoFiltro) : 0
+                cargarConceptos(id)
             })
             .catch(err => {
                 toast.error(`Error al ${itemEditando ? 'actualizar' : 'crear'} el concepto: ${err.message}`)
@@ -88,8 +101,8 @@ export const ConceptosPage = () => {
     const csvColumns = [
         { key: 'id' as const, label: 'ID' },
         { key: 'nombre' as const, label: 'Nombre' },
-        { key: 'grupo_id' as const, label: 'Grupo ID' },
-        { key: 'grupo_nombre' as const, label: 'Grupo' },
+        { key: 'centro_costo_id' as const, label: 'Centro Costo ID' },
+        { key: 'centro_costo_nombre' as const, label: 'Centro Costo' },
     ]
 
     return (
@@ -111,21 +124,21 @@ export const ConceptosPage = () => {
                 </div>
             </div>
 
-            {/* Filtro por Grupo */}
+            {/* Filtro por Centro de Costo */}
             <div className="mb-4 flex items-center gap-3">
                 <div className="w-80">
                     <ComboBox
                         label=""
-                        value={grupoFiltro}
-                        onChange={value => setGrupoFiltro(value)}
+                        value={centroCostoFiltro}
+                        onChange={value => setCentroCostoFiltro(value)}
                         options={[
-                            { id: 0, nombre: 'Todos los grupos' },
-                            ...grupos
+                            { id: 0, nombre: 'Todos los centros de costos' },
+                            ...centrosCostos
                         ]}
-                        placeholder="Seleccione o busque grupo..."
+                        placeholder="Seleccione o busque centro de costo..."
                     />
                 </div>
-                {grupoFiltro && grupoFiltro !== '0' && (
+                {centroCostoFiltro && centroCostoFiltro !== '0' && (
                     <span className="text-sm text-gray-600">
                         Mostrando {conceptosFiltrados.length} de {conceptos.length} conceptos
                     </span>
@@ -135,7 +148,7 @@ export const ConceptosPage = () => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <ConceptosTable
                     conceptos={conceptosFiltrados}
-                    grupos={grupos}
+                    centrosCostos={centrosCostos}
                     loading={loading}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
@@ -145,7 +158,7 @@ export const ConceptosPage = () => {
             <ConceptoModal
                 isOpen={modalOpen}
                 concepto={itemEditando}
-                grupos={grupos}
+                centrosCostos={centrosCostos}
                 conceptos={conceptos}
                 onClose={() => setModalOpen(false)}
                 onSave={handleSave}

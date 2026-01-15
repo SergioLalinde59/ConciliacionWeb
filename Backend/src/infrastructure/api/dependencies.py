@@ -13,8 +13,8 @@ from src.domain.ports.tipo_mov_repository import TipoMovRepository
 from src.infrastructure.database.postgres_tercero_repository import PostgresTerceroRepository
 from src.domain.ports.tercero_repository import TerceroRepository
 
-from src.infrastructure.database.postgres_grupo_repository import PostgresGrupoRepository
-from src.domain.ports.grupo_repository import GrupoRepository
+from src.infrastructure.database.postgres_centro_costo_repository import PostgresCentroCostoRepository
+from src.domain.ports.centro_costo_repository import CentroCostoRepository
 
 from src.infrastructure.database.postgres_concepto_repository import PostgresConceptoRepository
 from src.domain.ports.concepto_repository import ConceptoRepository
@@ -25,8 +25,8 @@ from src.domain.ports.movimiento_repository import MovimientoRepository
 from src.infrastructure.database.postgres_reglas_repository import PostgresReglasRepository
 from src.domain.ports.reglas_repository import ReglasRepository
 
-from src.infrastructure.database.postgres_config_filtro_grupo_repository import PostgresConfigFiltroGrupoRepository
-from src.domain.ports.config_filtro_grupo_repository import ConfigFiltroGrupoRepository
+from src.infrastructure.database.postgres_config_filtro_centro_costo_repository import PostgresConfigFiltroCentroCostoRepository
+from src.domain.ports.config_filtro_centro_costo_repository import ConfigFiltroCentroCostoRepository
 
 from src.infrastructure.database.postgres_config_valor_pendiente_repository import PostgresConfigValorPendienteRepository
 from src.domain.ports.config_valor_pendiente_repository import ConfigValorPendienteRepository
@@ -49,8 +49,8 @@ from src.domain.ports.tercero_descripcion_repository import TerceroDescripcionRe
 def get_tercero_descripcion_repository(conn=Depends(get_db_connection)) -> TerceroDescripcionRepository:
     return PostgresTerceroDescripcionRepository(conn)
 
-def get_grupo_repository(conn=Depends(get_db_connection)) -> GrupoRepository:
-    return PostgresGrupoRepository(conn)
+def get_centro_costo_repository(conn=Depends(get_db_connection)) -> CentroCostoRepository:
+    return PostgresCentroCostoRepository(conn)
 
 def get_concepto_repository(conn=Depends(get_db_connection)) -> ConceptoRepository:
     return PostgresConceptoRepository(conn)
@@ -61,8 +61,8 @@ def get_movimiento_repository(conn=Depends(get_db_connection)) -> MovimientoRepo
 def get_reglas_repository(conn=Depends(get_db_connection)) -> ReglasRepository:
     return PostgresReglasRepository(conn)
 
-def get_config_filtro_grupo_repository(conn=Depends(get_db_connection)) -> ConfigFiltroGrupoRepository:
-    return PostgresConfigFiltroGrupoRepository(conn)
+def get_config_filtro_centro_costo_repository(conn=Depends(get_db_connection)) -> ConfigFiltroCentroCostoRepository:
+    return PostgresConfigFiltroCentroCostoRepository(conn)
 
 def get_config_valor_pendiente_repository(conn=Depends(get_db_connection)) -> ConfigValorPendienteRepository:
     return PostgresConfigValorPendienteRepository(conn)

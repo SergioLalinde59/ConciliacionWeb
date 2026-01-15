@@ -18,7 +18,7 @@ export const ClasificarMovimientosPage: React.FC = () => {
 
     // Form State
     const [terceroId, setTerceroId] = useState<number | null>(null)
-    const [grupoId, setGrupoId] = useState<number | null>(null)
+    const [centroCostoId, setCentroCostoId] = useState<number | null>(null)
     const [conceptoId, setConceptoId] = useState<number | null>(null)
 
     // Modals
@@ -32,8 +32,8 @@ export const ClasificarMovimientosPage: React.FC = () => {
     const [loadingBatch, setLoadingBatch] = useState(false)
 
     // Catalogos
-    const [grupos, setGrupos] = useState<{ id: number, nombre: string }[]>([])
-    const [conceptos, setConceptos] = useState<{ id: number, nombre: string, grupo_id?: number }[]>([])
+    const [centrosCostos, setCentrosCostos] = useState<{ id: number, nombre: string }[]>([])
+    const [conceptos, setConceptos] = useState<{ id: number, nombre: string, centro_costo_id?: number }[]>([])
     const [terceros, setTerceros] = useState<{ id: number, nombre: string }[]>([])
 
     // --- Effects ---
@@ -51,7 +51,7 @@ export const ClasificarMovimientosPage: React.FC = () => {
                 apiService.catalogos.obtenerTodos()
             ])
             setPendientes(pends)
-            setGrupos(cats.grupos)
+            setCentrosCostos(cats.centros_costos)
             setConceptos(cats.conceptos)
             setTerceros(cats.terceros)
         } catch (error) {
@@ -88,14 +88,14 @@ export const ClasificarMovimientosPage: React.FC = () => {
 
     const limpiarFormulario = () => {
         setTerceroId(null)
-        setGrupoId(null)
+        setCentroCostoId(null)
         setConceptoId(null)
     }
 
     const aplicarSugerencia = (sug: SugerenciaClasificacion) => {
         // Always update form state, clearing previous values if suggestion is null
         setTerceroId(sug.tercero_id ?? null)
-        setGrupoId(sug.grupo_id ?? null)
+        setCentroCostoId(sug.centro_costo_id ?? null)
         setConceptoId(sug.concepto_id ?? null)
     }
 
@@ -104,8 +104,8 @@ export const ClasificarMovimientosPage: React.FC = () => {
     }
 
     const guardarClasificacion = async () => {
-        if (!movimientoActual || !terceroId || !grupoId || !conceptoId) {
-            alert("Por favor complete Tercero, Grupo y Concepto")
+        if (!movimientoActual || !terceroId || !centroCostoId || !conceptoId) {
+            alert("Por favor complete Tercero, Centro de Costo y Concepto")
             return
         }
 
@@ -113,7 +113,7 @@ export const ClasificarMovimientosPage: React.FC = () => {
             const payload = {
                 ...movimientoActual,
                 tercero_id: terceroId,
-                grupo_id: grupoId,
+                centro_costo_id: centroCostoId,
                 concepto_id: conceptoId,
             }
 
@@ -131,8 +131,8 @@ export const ClasificarMovimientosPage: React.FC = () => {
 
     const abrirModalLote = async () => {
         if (!movimientoActual) return
-        if (!terceroId || !grupoId || !conceptoId) {
-            alert("Por favor complete Tercero, Grupo y Concepto antes de aplicar en lote")
+        if (!terceroId || !centroCostoId || !conceptoId) {
+            alert("Por favor complete Tercero, Centro de Costo y Concepto antes de aplicar en lote")
             return
         }
 
@@ -155,13 +155,13 @@ export const ClasificarMovimientosPage: React.FC = () => {
     }
 
     const confirmarLote = async () => {
-        if (!batchPatron || !terceroId || !grupoId || !conceptoId) return
+        if (!batchPatron || !terceroId || !centroCostoId || !conceptoId) return
 
         try {
             const dto = {
                 patron: batchPatron,
                 tercero_id: terceroId,
-                grupo_id: grupoId,
+                centro_costo_id: centroCostoId,
                 concepto_id: conceptoId
             }
             const res = await apiService.clasificacion.clasificarLote(dto)
@@ -339,22 +339,22 @@ export const ClasificarMovimientosPage: React.FC = () => {
                                 {/* Grupo y Concepto en la misma línea */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Grupo</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Centro de Costo</label>
                                         <ComboBox
-                                            options={grupos}
-                                            value={grupoId ? grupoId.toString() : ""}
+                                            options={centrosCostos}
+                                            value={centroCostoId ? centroCostoId.toString() : ""}
                                             onChange={(val) => {
-                                                setGrupoId(val ? parseInt(val) : null)
+                                                setCentroCostoId(val ? parseInt(val) : null)
                                                 setConceptoId(null)
                                             }}
-                                            placeholder="Seleccionar grupo..."
+                                            placeholder="Seleccionar centro de costo..."
                                         />
                                     </div>
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Concepto</label>
                                         <ComboBox
-                                            options={conceptos.filter(c => !grupoId || c.grupo_id === grupoId)}
+                                            options={conceptos.filter(c => !centroCostoId || c.centro_costo_id === centroCostoId)}
                                             value={conceptoId ? conceptoId.toString() : ""}
                                             onChange={(val) => setConceptoId(val ? parseInt(val) : null)}
                                             placeholder="Seleccionar concepto..."
@@ -425,14 +425,14 @@ export const ClasificarMovimientosPage: React.FC = () => {
                                                         <div className="text-gray-900 font-medium">{ctx.tercero_display?.split('-')[1] || '-'}</div>
                                                     </td>
                                                     <td className="px-4 py-2">
-                                                        <div className="text-xs text-gray-500">{ctx.grupo_display?.split('-')[1]} / {ctx.concepto_display?.split('-')[1]}</div>
+                                                        <div className="text-xs text-gray-500">{ctx.centro_costo_display?.split('-')[1]} / {ctx.concepto_display?.split('-')[1]}</div>
                                                     </td>
                                                     <td className="px-4 py-2">
                                                         <button
                                                             className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
                                                             onClick={() => {
                                                                 if (ctx.tercero_id) setTerceroId(ctx.tercero_id)
-                                                                if (ctx.grupo_id) setGrupoId(ctx.grupo_id)
+                                                                if (ctx.centro_costo_id) setCentroCostoId(ctx.centro_costo_id)
                                                                 if (ctx.concepto_id) setConceptoId(ctx.concepto_id)
                                                             }}
                                                             title="Copiar clasificación"
@@ -488,8 +488,8 @@ export const ClasificarMovimientosPage: React.FC = () => {
                                     <p className="font-medium">{terceros.find(t => t.id === terceroId)?.nombre || '-'}</p>
                                 </div>
                                 <div className="bg-green-50 rounded-lg p-3">
-                                    <p className="text-gray-500">Grupo</p>
-                                    <p className="font-medium">{grupos.find(g => g.id === grupoId)?.nombre || '-'}</p>
+                                    <p className="text-gray-500">Centro de Costo</p>
+                                    <p className="font-medium">{centrosCostos.find(g => g.id === centroCostoId)?.nombre || '-'}</p>
                                 </div>
                                 <div className="bg-yellow-50 rounded-lg p-3">
                                     <p className="text-gray-500">Concepto</p>

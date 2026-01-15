@@ -4,41 +4,41 @@ import { Modal } from '../../molecules/Modal'
 import { Button } from '../../atoms/Button'
 import { Input } from '../../atoms/Input'
 
-import type { Grupo } from '../../../types'
+import type { CentroCosto } from '../../../types'
 
 interface Props {
     isOpen: boolean
-    grupo: Grupo | null
-    grupos: Grupo[]
+    centroCosto: CentroCosto | null
+    centrosCostos: CentroCosto[]
     onClose: () => void
     onSave: (nombre: string) => void
 }
 
 /**
- * Modal para crear/editar grupos - Refactorizado con Modal base
+ * Modal para crear/editar centros de costos - Refactorizado con Modal base
  */
-export const GrupoModal = ({ isOpen, grupo, grupos, onClose, onSave }: Props) => {
+export const CentroCostoModal = ({ isOpen, centroCosto, centrosCostos, onClose, onSave }: Props) => {
     const [nombre, setNombre] = useState('')
     const [errorNombre, setErrorNombre] = useState('')
 
     useEffect(() => {
         if (isOpen) {
-            setNombre(grupo ? grupo.nombre : '')
+            setNombre(centroCosto ? centroCosto.nombre : '')
             setErrorNombre('')
         }
-    }, [isOpen, grupo])
+    }, [isOpen, centroCosto])
 
     const validarNombreUnico = (val: string) => {
         const nombreLimpio = val.trim().toLowerCase()
         if (!nombreLimpio) return true
 
-        const existe = grupos.some(g => {
-            if (grupo && g.id === grupo.id) return false
-            return g.nombre.toLowerCase() === nombreLimpio
+        const existe = centrosCostos.some(c => {
+            if (centroCosto && c.id === centroCosto.id) return false
+            return c.nombre.toLowerCase() === nombreLimpio
         })
 
         if (existe) {
-            setErrorNombre('Ya existe un grupo con este nombre')
+            setErrorNombre('Ya existe un centro de costo con este nombre')
             return false
         }
 
@@ -57,7 +57,7 @@ export const GrupoModal = ({ isOpen, grupo, grupos, onClose, onSave }: Props) =>
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={grupo ? 'Editar Grupo' : 'Nuevo Grupo'}
+            title={centroCosto ? 'Editar Centro de Costo' : 'Nuevo Centro de Costo'}
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose}>
@@ -75,14 +75,14 @@ export const GrupoModal = ({ isOpen, grupo, grupos, onClose, onSave }: Props) =>
         >
             <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }} className="space-y-4">
                 <Input
-                    label="Nombre del Grupo"
+                    label="Nombre del Centro de Costo"
                     value={nombre}
                     onChange={(e) => {
                         setNombre(e.target.value)
                         if (errorNombre) setErrorNombre('')
                     }}
                     onBlur={(e) => validarNombreUnico(e.target.value)}
-                    placeholder="Ej: Préstamos"
+                    placeholder="Ej: Administración"
                     error={errorNombre}
                     autoFocus
                 />

@@ -1,35 +1,35 @@
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { Plus, Filter } from 'lucide-react'
-import { ConfigFiltrosGruposTable } from '../components/organisms/tables/ConfigFiltrosGruposTable'
-import { ConfigFiltroGrupoModal } from '../components/organisms/modals/ConfigFiltroGrupoModal'
+import { ConfigFiltrosCentrosCostosTable } from '../components/organisms/tables/ConfigFiltrosCentrosCostosTable'
+import { ConfigFiltroCentroCostoModal } from '../components/organisms/modals/ConfigFiltroCentroCostoModal'
 import { CsvExportButton } from '../components/molecules/CsvExportButton'
 import { apiService } from '../services/api'
 
-interface ConfigFiltroGrupo {
+interface ConfigFiltroCentroCosto {
     id: number
-    grupo_id: number
+    centro_costo_id: number
     etiqueta: string
     activo_por_defecto: boolean
 }
 
-export const ConfigFiltrosGruposPage = () => {
-    const [configs, setConfigs] = useState<ConfigFiltroGrupo[]>([])
-    const [grupos, setGrupos] = useState<{ id: number, nombre: string }[]>([])
+export const ConfigFiltrosCentrosCostosPage = () => {
+    const [configs, setConfigs] = useState<ConfigFiltroCentroCosto[]>([])
+    const [centrosCostos, setCentrosCostos] = useState<{ id: number, nombre: string }[]>([])
     const [loading, setLoading] = useState(true)
     const [modalOpen, setModalOpen] = useState(false)
-    const [itemEditando, setItemEditando] = useState<ConfigFiltroGrupo | null>(null)
+    const [itemEditando, setItemEditando] = useState<ConfigFiltroCentroCosto | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
 
     const cargarDatos = async () => {
         setLoading(true)
         try {
-            const [configsData, gruposData] = await Promise.all([
-                apiService.configFiltrosGrupos.listar(),
-                apiService.grupos.listar()
+            const [configsData, centrosCostosData] = await Promise.all([
+                apiService.configFiltrosCentrosCostos.listar(),
+                apiService.centrosCostos.listar()
             ])
             setConfigs(configsData)
-            setGrupos(gruposData)
+            setCentrosCostos(centrosCostosData)
         } catch (err) {
             console.error('Error cargando datos:', err)
             toast.error('Error al cargar configuraciones')
@@ -53,14 +53,14 @@ export const ConfigFiltrosGruposPage = () => {
         setModalOpen(true)
     }
 
-    const handleEdit = (config: ConfigFiltroGrupo) => {
+    const handleEdit = (config: ConfigFiltroCentroCosto) => {
         setItemEditando(config)
         setModalOpen(true)
     }
 
     const handleDelete = async (id: number) => {
         try {
-            await apiService.configFiltrosGrupos.eliminar(id)
+            await apiService.configFiltrosCentrosCostos.eliminar(id)
             toast.success('Configuración eliminada')
             cargarDatos()
         } catch (err: any) {
@@ -69,15 +69,15 @@ export const ConfigFiltrosGruposPage = () => {
         }
     }
 
-    const handleSave = async (grupo_id: number, etiqueta: string, activo_por_defecto: boolean) => {
+    const handleSave = async (centro_costo_id: number, etiqueta: string, activo_por_defecto: boolean) => {
         try {
-            const dto = { grupo_id, etiqueta, activo_por_defecto }
+            const dto = { centro_costo_id, etiqueta, activo_por_defecto }
 
             if (itemEditando) {
-                await apiService.configFiltrosGrupos.actualizar(itemEditando.id, dto)
+                await apiService.configFiltrosCentrosCostos.actualizar(itemEditando.id, dto)
                 toast.success('Configuración actualizada')
             } else {
-                await apiService.configFiltrosGrupos.crear(dto)
+                await apiService.configFiltrosCentrosCostos.crear(dto)
                 toast.success('Configuración creada')
             }
 
@@ -89,15 +89,15 @@ export const ConfigFiltrosGruposPage = () => {
         }
     }
 
-    const getGrupoNombre = (grupoId: number) => {
-        const grupo = grupos.find(g => g.id === grupoId)
-        return grupo ? grupo.nombre : grupoId.toString()
+    const getCentroCostoNombre = (id: number) => {
+        const centro = centrosCostos.find(c => c.id === id)
+        return centro ? centro.nombre : id.toString()
     }
 
     const csvColumns = [
         { key: 'id' as const, label: 'ID' },
-        { key: 'grupo_id', label: 'Grupo ID', accessor: (c: ConfigFiltroGrupo) => c.grupo_id },
-        { key: 'grupo_nombre', label: 'Grupo', accessor: (c: ConfigFiltroGrupo) => getGrupoNombre(c.grupo_id) },
+        { key: 'centro_costo_id', label: 'Centro Costo ID', accessor: (c: ConfigFiltroCentroCosto) => c.centro_costo_id },
+        { key: 'centro_costo_nombre', label: 'Centro Costo', accessor: (c: ConfigFiltroCentroCosto) => getCentroCostoNombre(c.centro_costo_id) },
         { key: 'etiqueta' as const, label: 'Etiqueta' },
         { key: 'activo_por_defecto' as const, label: 'Activo por Defecto' },
     ]
@@ -111,7 +111,7 @@ export const ConfigFiltrosGruposPage = () => {
                         <h1 className="text-2xl font-bold text-gray-900">Configuración de Filtros</h1>
                     </div>
                     <p className="text-gray-500 text-sm">
-                        Gestiona las configuraciones de filtros de exclusión por grupos
+                        Gestiona las configuraciones de filtros de exclusión por centros de costos
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -143,19 +143,19 @@ export const ConfigFiltrosGruposPage = () => {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <ConfigFiltrosGruposTable
+                <ConfigFiltrosCentrosCostosTable
                     configs={configsFiltrados}
-                    grupos={grupos}
+                    centrosCostos={centrosCostos}
                     loading={loading}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                 />
             </div>
 
-            <ConfigFiltroGrupoModal
+            <ConfigFiltroCentroCostoModal
                 isOpen={modalOpen}
                 config={itemEditando}
-                grupos={grupos}
+                centrosCostos={centrosCostos}
                 onClose={() => setModalOpen(false)}
                 onSave={handleSave}
             />

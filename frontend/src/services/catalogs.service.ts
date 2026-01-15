@@ -1,6 +1,6 @@
 import { API_BASE_URL, handleResponse } from './httpClient'
 import { invalidateCatalogos } from '../utils/queryClient'
-import type { Grupo, Tercero, Cuenta, Moneda, Concepto } from '../types'
+import type { CentroCosto, Tercero, Cuenta, Moneda, Concepto } from '../types'
 
 /**
  * Tipo de datos retornados por el endpoint de catálogos
@@ -9,7 +9,7 @@ export interface CatalogosData {
     cuentas: Cuenta[]
     monedas: Moneda[]
     terceros: Tercero[]
-    grupos: Grupo[]
+    centros_costos: CentroCosto[]
     conceptos: Concepto[]
 }
 
@@ -35,36 +35,36 @@ export const catalogosService = {
 }
 
 /**
- * Servicio para Grupos
+ * Servicio para Centros de Costos
  */
-export const gruposService = {
-    listar: async (): Promise<Grupo[]> => {
-        const data = await fetch(`${API_BASE_URL}/api/grupos`).then(handleResponse)
-        return data as Grupo[]
+export const centrosCostosService = {
+    listar: async (): Promise<CentroCosto[]> => {
+        const data = await fetch(`${API_BASE_URL}/api/catalogos/centros-costos`).then(handleResponse)
+        return data as CentroCosto[]
     },
 
-    crear: async (nombre: string): Promise<Grupo> => {
-        const result = await fetch(`${API_BASE_URL}/api/grupos`, {
+    crear: async (nombre: string): Promise<CentroCosto> => {
+        const result = await fetch(`${API_BASE_URL}/api/centros-costos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ grupo: nombre })
+            body: JSON.stringify({ centro_costo: nombre })
         }).then(handleResponse)
         invalidateCatalogos()
         return result
     },
 
-    actualizar: async (id: number, nombre: string): Promise<Grupo> => {
-        const result = await fetch(`${API_BASE_URL}/api/grupos/${id}`, {
+    actualizar: async (id: number, nombre: string): Promise<CentroCosto> => {
+        const result = await fetch(`${API_BASE_URL}/api/centros-costos/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ grupo: nombre })
+            body: JSON.stringify({ centro_costo: nombre })
         }).then(handleResponse)
         invalidateCatalogos()
         return result
     },
 
     eliminar: async (id: number): Promise<void> => {
-        await fetch(`${API_BASE_URL}/api/grupos/${id}`, { method: 'DELETE' }).then(handleResponse)
+        await fetch(`${API_BASE_URL}/api/centros-costos/${id}`, { method: 'DELETE' }).then(handleResponse)
         invalidateCatalogos()
     }
 }
@@ -133,8 +133,12 @@ export const tercerosService = {
  * Servicio para Conceptos
  */
 export const conceptosService = {
-    listar: async (): Promise<Concepto[]> => {
-        const data = await fetch(`${API_BASE_URL}/api/conceptos`).then(handleResponse)
+    listar: async (centroCostoId?: number): Promise<Concepto[]> => {
+        let url = `${API_BASE_URL}/api/conceptos`
+        if (centroCostoId) {
+            url += `?centro_costo_id=${centroCostoId}`
+        }
+        const data = await fetch(url).then(handleResponse)
         return data as Concepto[]
     },
 

@@ -23,7 +23,7 @@ const AVAILABLE_COLUMNS: ExportColumn[] = [
     { key: 'fecha', label: 'Fecha', fieldDisplay: 'fecha' },
     { key: 'cuenta', label: 'Cuenta', fieldDisplay: 'cuenta_display', fieldId: 'cuenta_id' },
     { key: 'tercero', label: 'Tercero', fieldDisplay: 'tercero_display', fieldId: 'tercero_id' },
-    { key: 'grupo', label: 'Grupo', fieldDisplay: 'grupo_display', fieldId: 'grupo_id' },
+    { key: 'centro_costo', label: 'Centro Costo', fieldDisplay: 'centro_costo_display', fieldId: 'centro_costo_id' },
     { key: 'concepto', label: 'Concepto', fieldDisplay: 'concepto_display', fieldId: 'concepto_id' },
     { key: 'valor', label: 'Valor', fieldDisplay: 'valor' },
     { key: 'moneda', label: 'Moneda', fieldDisplay: 'moneda_display', fieldId: 'moneda_id' },
@@ -41,13 +41,13 @@ export const DescargarMovimientosPage: React.FC = () => {
     const [hasta, setHasta] = useSessionStorage('desc_filtro_hasta', getMesActual().fin)
     const [cuentaId, setCuentaId] = useSessionStorage('desc_filtro_cuentaId', '')
     const [terceroId, setTerceroId] = useSessionStorage('desc_filtro_terceroId', '')
-    const [grupoId, setGrupoId] = useSessionStorage('desc_filtro_grupoId', '')
+    const [centroCostoId, setCentroCostoId] = useSessionStorage('desc_filtro_centroCostoId', '')
     const [conceptoId, setConceptoId] = useSessionStorage('desc_filtro_conceptoId', '')
 
     // Dynamic Exclusion
-    const [configuracionExclusion, setConfiguracionExclusion] = useState<Array<{ grupo_id: number; etiqueta: string; activo_por_defecto: boolean }>>([])
-    const [gruposExcluidos, setGruposExcluidos] = useSessionStorage<number[]>('desc_filtro_gruposExcluidos', [])
-    const actualGruposExcluidos = gruposExcluidos
+    const [configuracionExclusion, setConfiguracionExclusion] = useState<Array<{ centro_costo_id: number; etiqueta: string; activo_por_defecto: boolean }>>([])
+    const [centrosCostosExcluidos, setCentrosCostosExcluidos] = useSessionStorage<number[]>('desc_filtro_centrosCostosExcluidos', [])
+    const actualCentrosCostosExcluidos = centrosCostosExcluidos
 
     // Export Options
     const [plainFormat, setPlainFormat] = useState(false)
@@ -68,7 +68,7 @@ export const DescargarMovimientosPage: React.FC = () => {
     // Data State
     const [movimientos, setMovimientos] = useState<Movimiento[]>([])
     const [loading, setLoading] = useState(false)
-    const { cuentas, terceros, grupos, conceptos } = useCatalogo()
+    const { cuentas, terceros, centrosCostos, conceptos } = useCatalogo()
 
     // Load Exclusion Config
     useEffect(() => {
@@ -86,7 +86,7 @@ export const DescargarMovimientosPage: React.FC = () => {
 
         const parsedCuentaId = cuentaId && cuentaId !== '' ? parseInt(cuentaId) : undefined
         const parsedTerceroId = terceroId && terceroId !== '' ? parseInt(terceroId) : undefined
-        const parsedGrupoId = grupoId && grupoId !== '' ? parseInt(grupoId) : undefined
+        const parsedCentroCostoId = centroCostoId && centroCostoId !== '' ? parseInt(centroCostoId) : undefined
         const parsedConceptoId = conceptoId && conceptoId !== '' ? parseInt(conceptoId) : undefined
 
         const filterParams = {
@@ -94,9 +94,9 @@ export const DescargarMovimientosPage: React.FC = () => {
             hasta,
             cuenta_id: parsedCuentaId,
             tercero_id: parsedTerceroId,
-            grupo_id: parsedGrupoId,
+            centro_costo_id: parsedCentroCostoId,
             concepto_id: parsedConceptoId,
-            grupos_excluidos: actualGruposExcluidos.length > 0 ? actualGruposExcluidos : undefined,
+            centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined,
         }
 
         apiService.movimientos.listar(filterParams)
@@ -114,7 +114,7 @@ export const DescargarMovimientosPage: React.FC = () => {
     // Effect to reload when filters change
     useEffect(() => {
         cargarDatos()
-    }, [desde, hasta, cuentaId, terceroId, grupoId, conceptoId, actualGruposExcluidos])
+    }, [desde, hasta, cuentaId, terceroId, centroCostoId, conceptoId, actualCentrosCostosExcluidos])
 
     const handleLimpiar = () => {
         const mesActual = getMesActual()
@@ -122,13 +122,13 @@ export const DescargarMovimientosPage: React.FC = () => {
         setHasta(mesActual.fin)
         setCuentaId('')
         setTerceroId('')
-        setGrupoId('')
+        setCentroCostoId('')
         setConceptoId('')
         if (configuracionExclusion.length > 0) {
-            const defaults = configuracionExclusion.filter(d => d.activo_por_defecto).map(d => d.grupo_id)
-            setGruposExcluidos(defaults)
+            const defaults = configuracionExclusion.filter(d => d.activo_por_defecto).map(d => d.centro_costo_id)
+            setCentrosCostosExcluidos(defaults)
         } else {
-            setGruposExcluidos([])
+            setCentrosCostosExcluidos([])
         }
     }
 
@@ -467,20 +467,20 @@ export const DescargarMovimientosPage: React.FC = () => {
                     cuentas={cuentas}
                     terceroId={terceroId}
                     onTerceroChange={setTerceroId}
-                    grupoId={grupoId}
-                    onGrupoChange={(val) => {
-                        setGrupoId(val)
+                    centroCostoId={centroCostoId}
+                    onCentroCostoChange={(val) => {
+                        setCentroCostoId(val)
                         setConceptoId('')
                     }}
                     conceptoId={conceptoId}
                     onConceptoChange={setConceptoId}
                     terceros={terceros}
-                    grupos={grupos}
+                    centrosCostos={centrosCostos}
                     conceptos={conceptos}
                     showClasificacionFilters={true}
                     configuracionExclusion={configuracionExclusion}
-                    gruposExcluidos={actualGruposExcluidos}
-                    onGruposExcluidosChange={setGruposExcluidos}
+                    centrosCostosExcluidos={actualCentrosCostosExcluidos}
+                    onCentrosCostosExcluidosChange={setCentrosCostosExcluidos}
                     onLimpiar={handleLimpiar}
                 />
             </div>

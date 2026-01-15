@@ -6,18 +6,18 @@ interface Props {
     isOpen: boolean
     movimiento: Movimiento | null
     terceros: ItemCatalogo[]
-    grupos: ItemCatalogo[]
+    centrosCostos: ItemCatalogo[]
     conceptos: ItemCatalogo[]
     onClose: () => void
     onSave: (datos: ClasificacionManual) => void
 }
 
 export const ClassificationModal = ({
-    isOpen, movimiento, terceros, grupos, conceptos, onClose, onSave
+    isOpen, movimiento, terceros, centrosCostos, conceptos, onClose, onSave
 }: Props) => {
     const [formValues, setFormValues] = useState<ClasificacionManual>({
         tercero_id: 0,
-        grupo_id: 0,
+        centro_costo_id: 0,
         concepto_id: 0
     })
 
@@ -26,7 +26,7 @@ export const ClassificationModal = ({
         if (isOpen) {
             setFormValues({
                 tercero_id: 0,
-                grupo_id: 0,
+                centro_costo_id: 0,
                 concepto_id: 0
             })
         }
@@ -35,12 +35,12 @@ export const ClassificationModal = ({
     if (!isOpen || !movimiento) return null
 
     // Filtrar conceptos
-    const conceptosFiltrados = formValues.grupo_id
-        ? conceptos.filter(c => c.grupo_id === Number(formValues.grupo_id))
+    const conceptosFiltrados = formValues.centro_costo_id
+        ? conceptos.filter(c => c.centro_costo_id === Number(formValues.centro_costo_id))
         : []
 
     const handleSubmit = () => {
-        if (!formValues.tercero_id || !formValues.grupo_id || !formValues.concepto_id) {
+        if (!formValues.tercero_id || !formValues.centro_costo_id || !formValues.concepto_id) {
             alert("Por favor seleccione todos los campos")
             return
         }
@@ -74,14 +74,14 @@ export const ClassificationModal = ({
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Grupo</label>
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Centro de Costo</label>
                         <select
                             className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                            value={formValues.grupo_id}
-                            onChange={e => setFormValues({ ...formValues, grupo_id: Number(e.target.value), concepto_id: 0 })}
+                            value={formValues.centro_costo_id}
+                            onChange={e => setFormValues({ ...formValues, centro_costo_id: Number(e.target.value), concepto_id: 0 })}
                         >
-                            <option value={0}>Seleccione un grupo...</option>
-                            {grupos.map(g => <option key={g.id} value={g.id}>{g.nombre}</option>)}
+                            <option value={0}>Seleccione un centro de costo...</option>
+                            {centrosCostos.map(g => <option key={g.id} value={g.id}>{g.nombre}</option>)}
                         </select>
                     </div>
 
@@ -91,7 +91,7 @@ export const ClassificationModal = ({
                             className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:text-gray-400"
                             value={formValues.concepto_id}
                             onChange={e => setFormValues({ ...formValues, concepto_id: Number(e.target.value) })}
-                            disabled={formValues.grupo_id === 0}
+                            disabled={formValues.centro_costo_id === 0}
                         >
                             <option value={0}>Seleccione un concepto...</option>
                             {conceptosFiltrados.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}

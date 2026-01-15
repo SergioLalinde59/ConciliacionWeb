@@ -19,7 +19,7 @@ interface ItemReporte {
     saldo: number
     // Campos opcionales para drilldown
     tercero_id?: number
-    grupo_id?: number
+    centro_costo_id?: number
 }
 
 export const ReporteClasificacionesPage = () => {
@@ -28,7 +28,7 @@ export const ReporteClasificacionesPage = () => {
     const [hasta, setHasta] = useSessionStorage('rep_filtro_hasta', getMesActual().fin)
     const [cuentaId, setCuentaId] = useSessionStorage('rep_filtro_cuentaId', '')
     const [terceroId, setTerceroId] = useSessionStorage('rep_filtro_terceroId', '')
-    const [grupoId, setGrupoId] = useSessionStorage('rep_filtro_grupoId', '')
+    const [centroCostoId, setCentroCostoId] = useSessionStorage('rep_filtro_centroCostoId', '')
     const [conceptoId, setConceptoId] = useSessionStorage('rep_filtro_conceptoId', '')
     const [mostrarIngresos, setMostrarIngresos] = useSessionStorage('rep_filtro_mostrar_ingresos', true)
 
@@ -37,9 +37,9 @@ export const ReporteClasificacionesPage = () => {
     // Dynamic Exclusion
     // Dynamic Exclusion
     const { data: configuracionExclusion = [] } = useConfiguracionExclusion()
-    const [gruposExcluidos, setGruposExcluidos] = useSessionStorage<number[] | null>('rep_filtro_gruposExcluidos', null)
+    const [centrosCostosExcluidos, setCentrosCostosExcluidos] = useSessionStorage<number[] | null>('rep_filtro_centrosCostosExcluidos', null)
 
-    const actualGruposExcluidos = gruposExcluidos || []
+    const actualCentrosCostosExcluidos = centrosCostosExcluidos || []
 
 
     // Tipo de Agrupación (Calculado automáticamente más abajo)
@@ -80,16 +80,19 @@ export const ReporteClasificacionesPage = () => {
     })
 
     // Datos Maestros
-    // Datos Maestros
-    const { cuentas, terceros, grupos, conceptos } = useCatalogo()
+    const { cuentas, terceros, centrosCostos, conceptos } = useCatalogo()
+
+    // Tipo de Agrupación (Calculado automáticamente más abajo)
+
+    // Drilldown State (First Level: Centros de Costo)
 
     // Lógica Params (Calculado en render para el hook)
     const tipoAgrupacion = useMemo(() => {
         if (terceroId) {
-            return grupoId ? 'concepto' : 'grupo'
+            return centroCostoId ? 'concepto' : 'centro_costo'
         }
         return 'tercero'
-    }, [terceroId, grupoId])
+    }, [terceroId, centroCostoId])
 
     const tipoMovimiento = useMemo(() => {
         if (mostrarIngresos && !mostrarEgresos) return 'ingresos'
@@ -103,11 +106,11 @@ export const ReporteClasificacionesPage = () => {
         hasta,
         cuenta_id: cuentaId ? Number(cuentaId) : undefined,
         tercero_id: terceroId ? Number(terceroId) : undefined,
-        grupo_id: grupoId ? Number(grupoId) : undefined,
+        centro_costo_id: centroCostoId ? Number(centroCostoId) : undefined,
         concepto_id: conceptoId ? Number(conceptoId) : undefined,
-        grupos_excluidos: actualGruposExcluidos.length > 0 ? actualGruposExcluidos : undefined,
+        centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined,
         tipo_movimiento: tipoMovimiento
-    }), [tipoAgrupacion, desde, hasta, cuentaId, terceroId, grupoId, conceptoId, actualGruposExcluidos, tipoMovimiento])
+    }), [tipoAgrupacion, desde, hasta, cuentaId, terceroId, centroCostoId, conceptoId, actualCentrosCostosExcluidos, tipoMovimiento])
 
     const { data: datosRaw, isLoading: loading } = useReporteClasificacion(paramsReporte)
     const datos = (datosRaw as ItemReporte[]) || []
@@ -250,11 +253,11 @@ export const ReporteClasificacionesPage = () => {
 
     // Load Exclusion Config Defaults
     useEffect(() => {
-        if (configuracionExclusion.length > 0 && gruposExcluidos === null) {
-            const defaults = (configuracionExclusion as ConfigFiltroExclusion[]).filter(d => d.activo_por_defecto).map(d => d.grupo_id)
-            setGruposExcluidos(defaults)
+        if (configuracionExclusion.length > 0 && centrosCostosExcluidos === null) {
+            const defaults = (configuracionExclusion as ConfigFiltroExclusion[]).filter(d => d.activo_por_defecto).map(d => d.centro_costo_id)
+            setCentrosCostosExcluidos(defaults)
         }
-    }, [configuracionExclusion, gruposExcluidos])
+    }, [configuracionExclusion, centrosCostosExcluidos])
 
     // Load Exclusion Config Effect Removed (handled above)
 
@@ -264,14 +267,14 @@ export const ReporteClasificacionesPage = () => {
         setHasta(mesActual.fin)
         setCuentaId('')
         setTerceroId('')
-        setGrupoId('')
+        setCentroCostoId('')
         setConceptoId('')
         // Reset all exclusion filters to defaults from config
         if (configuracionExclusion.length > 0) {
-            const defaults = configuracionExclusion.filter(d => d.activo_por_defecto).map(d => d.grupo_id)
-            setGruposExcluidos(defaults)
+            const defaults = configuracionExclusion.filter(d => d.activo_por_defecto).map(d => d.centro_costo_id)
+            setCentrosCostosExcluidos(defaults)
         } else {
-            setGruposExcluidos([])
+            setCentrosCostosExcluidos([])
         }
         setMostrarIngresos(true)
         setMostrarEgresos(true)
@@ -290,7 +293,7 @@ export const ReporteClasificacionesPage = () => {
             hasta,
             cuenta_id: cuentaId,
             concepto_id: conceptoId,
-            grupos_excluidos: actualGruposExcluidos.length > 0 ? actualGruposExcluidos : undefined,
+            centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined,
             // Mantener filtro de tipo de movimiento para el drilldown también
             tipo_movimiento: (mostrarIngresos && !mostrarEgresos) ? 'ingresos' : (!mostrarIngresos && mostrarEgresos) ? 'egresos' : undefined
         }
@@ -298,9 +301,9 @@ export const ReporteClasificacionesPage = () => {
         if (tipoAgrupacion === 'tercero') {
             const tObj = terceros.find(t => t.nombre === item.nombre)
             if (tObj) {
-                nextTitle = `Detalle por Grupo: ${item.nombre}`
+                nextTitle = `Detalle por Centro de Costo: ${item.nombre}`
                 filterParams.tercero_id = tObj.id
-                filterParams.tipo = 'grupo'
+                filterParams.tipo = 'centro_costo'
 
                 // Guardar el tercero_id para el segundo nivel de drilldown
                 setDrilldownState({
@@ -332,12 +335,12 @@ export const ReporteClasificacionesPage = () => {
             } else {
                 return
             }
-        } else if (tipoAgrupacion === 'grupo') {
-            const gObj = grupos.find(g => g.nombre === item.nombre)
-            if (gObj) {
+        } else if (tipoAgrupacion === 'centro_costo') {
+            const ccObj = centrosCostos.find(g => g.nombre === item.nombre)
+            if (ccObj) {
                 nextTitle = `Detalle por Concepto: ${item.nombre}`
                 filterParams.tercero_id = terceroId // Mantener tercero seleccionado si existe
-                filterParams.grupo_id = gObj.id
+                filterParams.centro_costo_id = ccObj.id
                 filterParams.tipo = 'concepto'
             } else {
                 return
@@ -372,21 +375,21 @@ export const ReporteClasificacionesPage = () => {
         }
     }
 
-    // Handle second-level drilldown (from grupo to concepto)
-    const handleDrilldownConcepto = async (grupoItem: ItemReporte) => {
-        const gObj = grupos.find(g => g.nombre === grupoItem.nombre)
-        if (!gObj) return
+    // Handle second-level drilldown (from centro_costo to concepto)
+    const handleDrilldownConcepto = async (centroCostoItem: ItemReporte) => {
+        const ccObj = centrosCostos.find(g => g.nombre === centroCostoItem.nombre)
+        if (!ccObj) return
 
-        const nextTitle = `Detalle por Concepto: ${grupoItem.nombre}`
+        const nextTitle = `Detalle por Concepto: ${centroCostoItem.nombre}`
         const filterParams: any = {
             desde,
             hasta,
             cuenta_id: cuentaId,
             concepto_id: conceptoId,
-            grupos_excluidos: actualGruposExcluidos.length > 0 ? actualGruposExcluidos : undefined,
+            centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined,
             tipo_movimiento: (mostrarIngresos && !mostrarEgresos) ? 'ingresos' : (!mostrarIngresos && mostrarEgresos) ? 'egresos' : undefined,
             tercero_id: drilldownState.terceroId, // Mantener el tercero del primer drilldown
-            grupo_id: gObj.id,
+            centro_costo_id: ccObj.id,
             tipo: 'concepto'
         }
 
@@ -434,7 +437,7 @@ export const ReporteClasificacionesPage = () => {
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">Reporte de Clasificaciones</h1>
                 <p className="text-gray-500 text-sm mt-1">
-                    Análisis detallado: {tipoAgrupacion === 'tercero' ? 'Pareto de Terceros' : tipoAgrupacion === 'grupo' ? 'Grupos por Tercero' : 'Conceptos por Grupo'}
+                    Análisis detallado: {tipoAgrupacion === 'tercero' ? 'Pareto de Terceros' : tipoAgrupacion === 'centro_costo' ? 'Centros de Costo por Tercero' : 'Conceptos por Centro de Costo'}
                 </p>
             </div>
 
@@ -449,12 +452,12 @@ export const ReporteClasificacionesPage = () => {
                 cuentas={cuentas}
                 terceroId={terceroId}
                 onTerceroChange={setTerceroId}
-                grupoId={grupoId}
-                onGrupoChange={setGrupoId}
+                centroCostoId={centroCostoId}
+                onCentroCostoChange={setCentroCostoId}
                 conceptoId={conceptoId}
                 onConceptoChange={setConceptoId}
                 terceros={terceros}
-                grupos={grupos}
+                centrosCostos={centrosCostos}
                 conceptos={conceptos}
                 showClasificacionFilters={true}
                 mostrarIngresos={mostrarIngresos}
@@ -463,8 +466,8 @@ export const ReporteClasificacionesPage = () => {
                 onMostrarEgresosChange={setMostrarEgresos}
                 showIngresosEgresos={false}
                 configuracionExclusion={configuracionExclusion}
-                gruposExcluidos={actualGruposExcluidos}
-                onGruposExcluidosChange={setGruposExcluidos}
+                centrosCostosExcluidos={actualCentrosCostosExcluidos}
+                onCentrosCostosExcluidosChange={setCentrosCostosExcluidos}
                 onLimpiar={handleLimpiar}
             />
 
@@ -481,7 +484,7 @@ export const ReporteClasificacionesPage = () => {
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-[500px]">
                     <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
                         <BarChart2 size={20} className="text-blue-500" />
-                        Distribución ({tipoAgrupacion === 'tercero' ? 'Por Tercero' : tipoAgrupacion === 'grupo' ? 'Por Grupo' : 'Por Concepto'})
+                        Distribución ({tipoAgrupacion === 'tercero' ? 'Por Tercero' : tipoAgrupacion === 'centro_costo' ? 'Por Centro de Costo' : 'Por Concepto'})
                         <span className="text-xs font-normal text-gray-400 ml-auto">(Click en barra para detalle)</span>
                     </h3>
                     <div className="h-[400px] w-full">

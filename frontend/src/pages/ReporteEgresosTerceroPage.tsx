@@ -19,7 +19,7 @@ interface ItemDesglose {
 }
 
 interface DrilldownLevel {
-    level: 'tercero' | 'grupo' | 'concepto'
+    level: 'tercero' | 'centro_costo' | 'concepto'
     title: string
     parentId?: number
     grandParentId?: number
@@ -35,21 +35,21 @@ export const ReporteEgresosTerceroPage = () => {
     const [hasta, setHasta] = useSessionStorage('rep_egresos_hasta', getMesActual().fin)
     const [cuentaId, setCuentaId] = useSessionStorage('rep_egresos_cuentaId', '')
     const [terceroId, setTerceroId] = useSessionStorage('rep_egresos_terceroId', '')
-    const [grupoId, setGrupoId] = useSessionStorage('rep_egresos_grupoId', '')
+    const [centroCostoId, setCentroCostoId] = useSessionStorage('rep_egresos_centroCostoId', '')
     const [conceptoId, setConceptoId] = useSessionStorage('rep_egresos_conceptoId', '')
     const [mostrarIngresos, setMostrarIngresos] = useSessionStorage('rep_egresos_ingresos', false)
     const [mostrarEgresos, setMostrarEgresos] = useSessionStorage('rep_egresos_egresos', true)
 
     // Dynamic Exclusion
-    const [gruposExcluidos, setGruposExcluidos] = useSessionStorage<number[] | null>('rep_egresos_gruposExcluidos', null)
-    const actualGruposExcluidos = gruposExcluidos || []
+    const [centrosCostosExcluidos, setCentrosCostosExcluidos] = useSessionStorage<number[] | null>('rep_egresos_centrosCostosExcluidos', null)
+    const actualCentrosCostosExcluidos = centrosCostosExcluidos || []
 
     // State for Sorting and Modals (Re-added)
     const [sortAscTercero, setSortAscTercero] = useState(false)
     const [sortFieldTercero, setSortFieldTercero] = useState<'nombre' | 'ingresos' | 'egresos' | 'saldo'>('egresos')
 
-    const [grupoModal, setGrupoModal] = useState<DrilldownLevel>({
-        level: 'grupo',
+    const [centroCostoModal, setCentroCostoModal] = useState<DrilldownLevel>({
+        level: 'centro_costo',
         title: '',
         data: [],
         isOpen: false,
@@ -73,63 +73,63 @@ export const ReporteEgresosTerceroPage = () => {
         fecha_fin: hasta,
         cuenta_id: cuentaId ? Number(cuentaId) : undefined,
         tercero_id: terceroId ? Number(terceroId) : undefined,
-        grupo_id: grupoId ? Number(grupoId) : undefined,
+        centro_costo_id: centroCostoId ? Number(centroCostoId) : undefined,
         concepto_id: conceptoId ? Number(conceptoId) : undefined,
-        grupos_excluidos: actualGruposExcluidos.length > 0 ? actualGruposExcluidos : undefined
+        centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined
     }
 
     const { data: tercerosDataRaw, isLoading: loading } = useReporteDesgloseGastos(paramsReporte)
     const tercerosData = (tercerosDataRaw as ItemDesglose[]) || []
 
     // Load Catalogs
-    const { cuentas, terceros, grupos, conceptos } = useCatalogo()
+    const { cuentas, terceros, centrosCostos, conceptos } = useCatalogo()
 
     // Load Exclusion Config
     const { data: configuracionExclusion = [] } = useConfiguracionExclusion()
 
     // Set defaults when config loads
     useEffect(() => {
-        if (configuracionExclusion.length > 0 && gruposExcluidos === null) {
-            const defaults = (configuracionExclusion as ConfigFiltroExclusion[]).filter(d => d.activo_por_defecto).map(d => d.grupo_id)
-            setGruposExcluidos(defaults)
+        if (configuracionExclusion.length > 0 && centrosCostosExcluidos === null) {
+            const defaults = (configuracionExclusion as ConfigFiltroExclusion[]).filter(d => d.activo_por_defecto).map(d => d.centro_costo_id)
+            setCentrosCostosExcluidos(defaults)
         }
-    }, [configuracionExclusion, gruposExcluidos, setGruposExcluidos])
+    }, [configuracionExclusion, centrosCostosExcluidos, setCentrosCostosExcluidos])
 
     const handleTerceroClick = (item: ItemDesglose) => {
-        setGrupoModal({
-            level: 'grupo',
-            title: `Grupos para: ${item.nombre}`,
+        setCentroCostoModal({
+            level: 'centro_costo',
+            title: `Centros de Costo para: ${item.nombre}`,
             parentId: item.id,
             data: [],
             isOpen: true,
             sortAsc: false,
             sortField: 'egresos'
         })
-        fetchGrupos(item.id)
+        fetchCentrosCostos(item.id)
     }
 
     // Manual fetch for modals to keep it simple without too many dependent queries in the main component body
     // Ideally these would be separate components with their own queries, but staying consistent with current structure layout.
-    const fetchGrupos = (tId: number) => {
+    const fetchCentrosCostos = (tId: number) => {
         apiService.movimientos.reporteDesgloseGastos({
-            nivel: 'grupo',
+            nivel: 'centro_costo',
             fecha_inicio: desde,
             fecha_fin: hasta,
             cuenta_id: cuentaId ? Number(cuentaId) : undefined,
             tercero_id: tId,
             concepto_id: conceptoId ? Number(conceptoId) : undefined,
-            grupos_excluidos: actualGruposExcluidos.length > 0 ? actualGruposExcluidos : undefined
+            centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined
         } as any).then(data => {
-            setGrupoModal(prev => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
+            setCentroCostoModal(prev => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
         })
     }
 
-    const handleGrupoClick = (item: ItemDesglose) => {
+    const handleCentroCostoClick = (item: ItemDesglose) => {
         setConceptoModal({
             level: 'concepto',
             title: `Conceptos para: ${item.nombre}`,
             parentId: item.id,
-            grandParentId: grupoModal.parentId,
+            grandParentId: centroCostoModal.parentId,
             data: [],
             isOpen: true,
             sortAsc: false,
@@ -141,10 +141,10 @@ export const ReporteEgresosTerceroPage = () => {
             fecha_inicio: desde,
             fecha_fin: hasta,
             cuenta_id: cuentaId ? Number(cuentaId) : undefined,
-            tercero_id: grupoModal.parentId,
-            grupo_id: item.id,
+            tercero_id: centroCostoModal.parentId,
+            centro_costo_id: item.id,
             concepto_id: conceptoId ? Number(conceptoId) : undefined,
-            grupos_excluidos: actualGruposExcluidos.length > 0 ? actualGruposExcluidos : undefined
+            centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined
         } as any).then(data => {
             setConceptoModal(prev => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
         })
@@ -178,15 +178,15 @@ export const ReporteEgresosTerceroPage = () => {
         setHasta(mesActual.fin)
         setCuentaId('')
         setTerceroId('')
-        setGrupoId('')
+        setCentroCostoId('')
         setConceptoId('')
         setMostrarIngresos(false)
         setMostrarEgresos(true)
         if (configuracionExclusion.length > 0) {
-            const defaults = configuracionExclusion.filter(d => d.activo_por_defecto).map(d => d.grupo_id)
-            setGruposExcluidos(defaults)
+            const defaults = configuracionExclusion.filter(d => d.activo_por_defecto).map(d => d.centro_costo_id)
+            setCentrosCostosExcluidos(defaults)
         } else {
-            setGruposExcluidos([])
+            setCentrosCostosExcluidos([])
         }
     }
 
@@ -368,12 +368,12 @@ export const ReporteEgresosTerceroPage = () => {
                 cuentas={cuentas}
                 terceroId={terceroId}
                 onTerceroChange={setTerceroId}
-                grupoId={grupoId}
-                onGrupoChange={setGrupoId}
+                centroCostoId={centroCostoId}
+                onCentroCostoChange={setCentroCostoId}
                 conceptoId={conceptoId}
                 onConceptoChange={setConceptoId}
                 terceros={terceros}
-                grupos={grupos}
+                centrosCostos={centrosCostos}
                 conceptos={conceptos}
                 showClasificacionFilters={true}
                 mostrarIngresos={mostrarIngresos}
@@ -382,8 +382,8 @@ export const ReporteEgresosTerceroPage = () => {
                 onMostrarEgresosChange={setMostrarEgresos}
                 showIngresosEgresos={false}
                 configuracionExclusion={configuracionExclusion}
-                gruposExcluidos={actualGruposExcluidos}
-                onGruposExcluidosChange={setGruposExcluidos}
+                centrosCostosExcluidos={actualCentrosCostosExcluidos}
+                onCentrosCostosExcluidosChange={setCentrosCostosExcluidos}
                 onLimpiar={handleLimpiar}
             />
 
@@ -490,7 +490,7 @@ export const ReporteEgresosTerceroPage = () => {
             </div>
 
             {/* Modals */}
-            <Modal modalState={grupoModal} setModalState={setGrupoModal} onRowClick={handleGrupoClick} />
+            <Modal modalState={centroCostoModal} setModalState={setCentroCostoModal} onRowClick={handleCentroCostoClick} />
             <Modal modalState={conceptoModal} setModalState={setConceptoModal} />
         </div>
     )

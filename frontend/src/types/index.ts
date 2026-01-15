@@ -12,14 +12,14 @@ export type {
     Moneda,
     TipoMovimiento,
     Tercero,
-    Grupo,
+    CentroCosto,
     Concepto,
     Movimiento,
     SugerenciaClasificacion,
     ContextoClasificacionResponse,
     ClasificacionLoteDTO,
     ReglaClasificacion,
-    ConfigFiltroGrupo,
+    ConfigFiltroCentroCosto,
 } from '../types'
 
 // Tipos de filtros y parámetros
@@ -32,9 +32,9 @@ export type {
     ReporteDesgloseParams,
     ReclasificarLoteParams,
     ClasificarMovimientoParams,
-    GrupoCreateParams,
+    CentroCostoCreateParams,
     TerceroCreateParams,
     ConceptoCreateParams,
-    ConfigFiltroGrupoParams,
+    ConfigFiltroCentroCostoParams,
     ReglaClasificacionParams,
 } from './filters'

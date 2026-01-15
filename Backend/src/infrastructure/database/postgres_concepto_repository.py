@@ -15,20 +15,20 @@ class PostgresConceptoRepository(ConceptoRepository):
                 cursor.execute(
                     """
                     UPDATE conceptos 
-                    SET concepto = %s, grupoid_fk = %s, activa = %s
+                    SET concepto = %s, centro_costo_id = %s, activa = %s
                     WHERE conceptoid = %s
                     """,
-                    (concepto.concepto, concepto.grupoid_fk, concepto.activa, concepto.conceptoid)
+                    (concepto.concepto, concepto.centro_costo_id, concepto.activa, concepto.conceptoid)
                 )
             else:
                 # Insertar
                 cursor.execute(
                     """
-                    INSERT INTO conceptos (concepto, grupoid_fk, activa) 
+                    INSERT INTO conceptos (concepto, centro_costo_id, activa) 
                     VALUES (%s, %s, %s) 
                     RETURNING conceptoid
                     """,
-                    (concepto.concepto, concepto.grupoid_fk, concepto.activa)
+                    (concepto.concepto, concepto.centro_costo_id, concepto.activa)
                 )
                 concepto.conceptoid = cursor.fetchone()[0]
             self.conn.commit()
@@ -42,7 +42,7 @@ class PostgresConceptoRepository(ConceptoRepository):
     def obtener_por_id(self, conceptoid: int) -> Optional[Concepto]:
         cursor = self.conn.cursor()
         cursor.execute(
-            "SELECT conceptoid, concepto, grupoid_fk, activa FROM conceptos WHERE conceptoid = %s AND activa = TRUE",
+            "SELECT conceptoid, concepto, centro_costo_id, activa FROM conceptos WHERE conceptoid = %s AND activa = TRUE",
             (conceptoid,)
         )
         row = cursor.fetchone()
@@ -51,36 +51,36 @@ class PostgresConceptoRepository(ConceptoRepository):
             return Concepto(
                 conceptoid=row[0], 
                 concepto=row[1], 
-                grupoid_fk=row[2],
+                centro_costo_id=row[2],
                 activa=row[3]
             )
         return None
 
     def obtener_todos(self) -> List[Concepto]:
         cursor = self.conn.cursor()
-        cursor.execute("SELECT conceptoid, concepto, grupoid_fk, activa FROM conceptos WHERE activa = TRUE ORDER BY concepto")
+        cursor.execute("SELECT conceptoid, concepto, centro_costo_id, activa FROM conceptos WHERE activa = TRUE ORDER BY concepto")
         rows = cursor.fetchall()
         cursor.close()
         return [
             Concepto(
                 conceptoid=r[0], 
                 concepto=r[1], 
-                grupoid_fk=r[2],
+                centro_costo_id=r[2],
                 activa=r[3]
             ) for r in rows
         ]
     
-    def buscar_por_grupoid(self, grupoid: int) -> List[Concepto]:
-        """Busca conceptos por grupoid_fk"""
+    def buscar_por_centro_costo_id(self, centro_costo_id: int) -> List[Concepto]:
+        """Busca conceptos por centro_costo_id"""
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            SELECT conceptoid, concepto, grupoid_fk, activa 
+            SELECT conceptoid, concepto, centro_costo_id, activa 
             FROM conceptos 
-            WHERE grupoid_fk = %s AND activa = TRUE
+            WHERE centro_costo_id = %s AND activa = TRUE
             ORDER BY concepto
             """, 
-            (grupoid,)
+            (centro_costo_id,)
         )
         rows = cursor.fetchall()
         cursor.close()
@@ -88,7 +88,7 @@ class PostgresConceptoRepository(ConceptoRepository):
             Concepto(
                 conceptoid=r[0], 
                 concepto=r[1], 
-                grupoid_fk=r[2],
+                centro_costo_id=r[2],
                 activa=r[3]
             ) for r in rows
         ]
@@ -105,14 +105,14 @@ class PostgresConceptoRepository(ConceptoRepository):
         finally:
             cursor.close()
 
-    def buscar_por_nombre(self, nombre: str, grupoid: Optional[int] = None) -> Optional[Concepto]:
+    def buscar_por_nombre(self, nombre: str, centro_costo_id: Optional[int] = None) -> Optional[Concepto]:
         cursor = self.conn.cursor()
-        query = "SELECT conceptoid, concepto, grupoid_fk, activa FROM conceptos WHERE LOWER(concepto) = LOWER(%s) AND activa = TRUE"
+        query = "SELECT conceptoid, concepto, centro_costo_id, activa FROM conceptos WHERE LOWER(concepto) = LOWER(%s) AND activa = TRUE"
         params = [nombre]
         
-        if grupoid:
-            query += " AND grupoid_fk = %s"
-            params.append(grupoid)
+        if centro_costo_id:
+            query += " AND centro_costo_id = %s"
+            params.append(centro_costo_id)
             
         cursor.execute(query, tuple(params))
         row = cursor.fetchone()
@@ -122,18 +122,17 @@ class PostgresConceptoRepository(ConceptoRepository):
             return Concepto(
                 conceptoid=row[0], 
                 concepto=row[1], 
-                grupoid_fk=row[2],
+                centro_costo_id=row[2],
                 activa=row[3]
             )
         return None
 
-    def obtener_id_traslados(self, grupoid: int) -> Optional[int]:
+    def obtener_id_traslados(self, centro_costo_id: int) -> Optional[int]:
         cursor = self.conn.cursor()
         cursor.execute(
-            "SELECT conceptoid FROM conceptos WHERE grupoid_fk = %s AND concepto ILIKE '%%traslado%%' LIMIT 1", 
-            (grupoid,)
+            "SELECT conceptoid FROM conceptos WHERE centro_costo_id = %s AND concepto ILIKE '%%traslado%%' LIMIT 1", 
+            (centro_costo_id,)
         )
         row = cursor.fetchone()
         cursor.close()
         return row[0] if row else None
-

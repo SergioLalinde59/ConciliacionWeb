@@ -6,47 +6,47 @@ import { Input } from '../../atoms/Input'
 import { Select } from '../../atoms/Select'
 import { Checkbox } from '../../atoms/Checkbox'
 
-interface ConfigFiltroGrupo {
+interface ConfigFiltroCentroCosto {
     id: number
-    grupo_id: number
+    centro_costo_id: number
     etiqueta: string
     activo_por_defecto: boolean
 }
 
-interface ConfigFiltroGrupoModalProps {
+interface ConfigFiltroCentroCostoModalProps {
     isOpen: boolean
-    config: ConfigFiltroGrupo | null
-    grupos: { id: number, nombre: string }[]
+    config: ConfigFiltroCentroCosto | null
+    centrosCostos: { id: number, nombre: string }[]
     onClose: () => void
-    onSave: (grupo_id: number, etiqueta: string, activo_por_defecto: boolean) => void
+    onSave: (centro_costo_id: number, etiqueta: string, activo_por_defecto: boolean) => void
 }
 
 /**
- * Modal para crear/editar configuración de filtros de grupos - Refactorizado con Modal base
+ * Modal para crear/editar configuración de filtros de centros de costos - Refactorizado con Modal base
  */
-export const ConfigFiltroGrupoModal = ({ isOpen, config, grupos, onClose, onSave }: ConfigFiltroGrupoModalProps) => {
-    const [grupoId, setGrupoId] = useState<number>(0)
+export const ConfigFiltroCentroCostoModal = ({ isOpen, config, centrosCostos, onClose, onSave }: ConfigFiltroCentroCostoModalProps) => {
+    const [centroCostoId, setCentroCostoId] = useState<number>(0)
     const [etiqueta, setEtiqueta] = useState('')
     const [activoPorDefecto, setActivoPorDefecto] = useState(true)
 
     useEffect(() => {
         if (config) {
-            setGrupoId(config.grupo_id)
+            setCentroCostoId(config.centro_costo_id)
             setEtiqueta(config.etiqueta)
             setActivoPorDefecto(config.activo_por_defecto)
         } else {
-            setGrupoId(0)
+            setCentroCostoId(0)
             setEtiqueta('')
             setActivoPorDefecto(true)
         }
     }, [config, isOpen])
 
     const handleSubmit = () => {
-        if (!grupoId || !etiqueta.trim()) return
-        onSave(grupoId, etiqueta.trim(), activoPorDefecto)
+        if (!centroCostoId || !etiqueta.trim()) return
+        onSave(centroCostoId, etiqueta.trim(), activoPorDefecto)
     }
 
-    const isValid = grupoId > 0 && etiqueta.trim()
+    const isValid = centroCostoId > 0 && etiqueta.trim()
 
     return (
         <Modal
@@ -70,14 +70,14 @@ export const ConfigFiltroGrupoModal = ({ isOpen, config, grupos, onClose, onSave
         >
             <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }} className="space-y-4">
                 <Select
-                    label="Grupo *"
-                    value={grupoId}
-                    onChange={(e) => setGrupoId(Number(e.target.value))}
+                    label="Centro de Costo *"
+                    value={centroCostoId}
+                    onChange={(e) => setCentroCostoId(Number(e.target.value))}
                 >
-                    <option value={0}>Seleccione un grupo...</option>
-                    {grupos.map((grupo) => (
-                        <option key={grupo.id} value={grupo.id}>
-                            {grupo.nombre}
+                    <option value={0}>Seleccione un centro de costo...</option>
+                    {centrosCostos.map((centro) => (
+                        <option key={centro.id} value={centro.id}>
+                            {centro.nombre}
                         </option>
                     ))}
                 </Select>

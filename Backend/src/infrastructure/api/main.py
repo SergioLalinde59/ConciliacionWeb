@@ -14,13 +14,14 @@ from src.infrastructure.api.routers import (
     monedas, 
     tipos_movimiento, 
     terceros, 
-    grupos, 
+    terceros, 
+    centros_costos, 
     conceptos,
     catalogos,
     clasificacion,
     archivos,
     reglas,
-    config_filtros_grupos,
+    config_filtros_centros_costos,
     tercero_descripciones
 )
 
@@ -90,12 +91,12 @@ app.include_router(cuentas.router)
 app.include_router(monedas.router)
 app.include_router(tipos_movimiento.router)
 app.include_router(terceros.router)
-app.include_router(grupos.router)
+app.include_router(centros_costos.router)
 app.include_router(conceptos.router)
 app.include_router(clasificacion.router)
 app.include_router(archivos.router)
 app.include_router(reglas.router)
-app.include_router(config_filtros_grupos.router)
+app.include_router(config_filtros_centros_costos.router)
 app.include_router(tercero_descripciones.router)
 
 logger.info("Todos los routers registrados")

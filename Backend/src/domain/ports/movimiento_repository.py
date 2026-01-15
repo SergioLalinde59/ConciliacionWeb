@@ -27,7 +27,7 @@ class MovimientoRepository(ABC):
     def buscar_pendientes_clasificacion(
         self,
         terceros_pendientes: List[int] = None,
-        grupos_pendientes: List[int] = None,
+        centros_costos_pendientes: List[int] = None,
         conceptos_pendientes: List[int] = None
     ) -> List[Movimiento]:
         """
@@ -61,9 +61,9 @@ class MovimientoRepository(ABC):
                        fecha_fin: Optional[date] = None,
                        cuenta_id: Optional[int] = None,
                        tercero_id: Optional[int] = None,
-                       grupo_id: Optional[int] = None,
+                       centro_costo_id: Optional[int] = None,
                        concepto_id: Optional[int] = None,
-                       grupos_excluidos: Optional[List[int]] = None,
+                       centros_costos_excluidos: Optional[List[int]] = None,
                        solo_pendientes: bool = False,
                        tipo_movimiento: Optional[str] = None,
                        skip: int = 0,
@@ -84,9 +84,9 @@ class MovimientoRepository(ABC):
                                  fecha_fin: Optional[date] = None,
                                  cuenta_id: Optional[int] = None,
                                  tercero_id: Optional[int] = None,
-                                 grupo_id: Optional[int] = None,
+                                 centro_costo_id: Optional[int] = None,
                                  concepto_id: Optional[int] = None,
-                                 grupos_excluidos: Optional[List[int]] = None,
+                                 centros_costos_excluidos: Optional[List[int]] = None,
                                  tipo_movimiento: Optional[str] = None
     ) -> List[dict]:
         """Agrupa y resume movimientos por tercero o grupo"""
@@ -101,7 +101,7 @@ class MovimientoRepository(ABC):
         pass
 
     @abstractmethod
-    def actualizar_clasificacion_lote(self, patron: str, tercero_id: int, grupo_id: int, concepto_id: int) -> int:
+    def actualizar_clasificacion_lote(self, patron: str, tercero_id: int, centro_costo_id: int, concepto_id: int) -> int:
         """
         Actualiza (UPDATE) todos los movimientos que coincidan con el patrón (ILIKE)
         y que estén PENDIENTES de clasificación (alguno de los 3 campos es NULL).
@@ -116,9 +116,9 @@ class MovimientoRepository(ABC):
                                fecha_fin: Optional[date] = None,
                                cuenta_id: Optional[int] = None,
                                tercero_id: Optional[int] = None,
-                               grupo_id: Optional[int] = None,
+                               centro_costo_id: Optional[int] = None,
                                concepto_id: Optional[int] = None,
-                               grupos_excluidos: Optional[List[int]] = None
+                               centros_costos_excluidos: Optional[List[int]] = None
     ) -> List[dict]:
         """
         Obtiene el desglose de gastos para el reporte jerárquico.

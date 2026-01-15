@@ -3,7 +3,7 @@ import { Save, X } from 'lucide-react'
 import { Button } from '../../atoms/Button'
 import { Input } from '../../atoms/Input'
 import { Select } from '../../atoms/Select'
-import type { Movimiento, Cuenta, Moneda, Tercero, Grupo, Concepto } from '../../../types'
+import type { Movimiento, Cuenta, Moneda, Tercero, CentroCosto, Concepto } from '../../../types'
 import { API_BASE_URL } from '../../../config'
 
 interface MovimientoModalProps {
@@ -24,14 +24,14 @@ export const MovimientoModal = ({ isOpen, movimiento, onClose, onSave }: Movimie
         moneda_id: '',
         cuenta_id: '',
         tercero_id: '',
-        grupo_id: '',
+        centro_costo_id: '',
         concepto_id: ''
     })
 
     const [cuentas, setCuentas] = useState<Cuenta[]>([])
     const [monedas, setMonedas] = useState<Moneda[]>([])
     const [terceros, setTerceros] = useState<Tercero[]>([])
-    const [grupos, setGrupos] = useState<Grupo[]>([])
+    const [centrosCostos, setCentrosCostos] = useState<CentroCosto[]>([])
     const [conceptos, setConceptos] = useState<Concepto[]>([])
     const [loading, setLoading] = useState(false)
 
@@ -49,7 +49,7 @@ export const MovimientoModal = ({ isOpen, movimiento, onClose, onSave }: Movimie
                     moneda_id: movimiento.moneda_id.toString(),
                     cuenta_id: movimiento.cuenta_id.toString(),
                     tercero_id: movimiento.tercero_id?.toString() || '',
-                    grupo_id: movimiento.grupo_id?.toString() || '',
+                    centro_costo_id: movimiento.centro_costo_id?.toString() || '',
                     concepto_id: movimiento.concepto_id?.toString() || ''
                 })
             } else {
@@ -65,7 +65,7 @@ export const MovimientoModal = ({ isOpen, movimiento, onClose, onSave }: Movimie
                     moneda_id: '',
                     cuenta_id: '',
                     tercero_id: '',
-                    grupo_id: '',
+                    centro_costo_id: '',
                     concepto_id: ''
                 })
             }
@@ -74,18 +74,18 @@ export const MovimientoModal = ({ isOpen, movimiento, onClose, onSave }: Movimie
 
     const cargarMaestros = async () => {
         try {
-            const [cuentasRes, monedasRes, tercerosRes, gruposRes, conceptosRes] = await Promise.all([
+            const [cuentasRes, monedasRes, tercerosRes, centrosCostosRes, conceptosRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/cuentas`),
                 fetch(`${API_BASE_URL}/api/monedas`),
                 fetch(`${API_BASE_URL}/api/terceros`),
-                fetch(`${API_BASE_URL}/api/grupos`),
+                fetch(`${API_BASE_URL}/api/centros-costos`),
                 fetch(`${API_BASE_URL}/api/conceptos`)
             ])
 
             setCuentas(await cuentasRes.json())
             setMonedas(await monedasRes.json())
             setTerceros(await tercerosRes.json())
-            setGrupos(await gruposRes.json())
+            setCentrosCostos(await centrosCostosRes.json())
             setConceptos(await conceptosRes.json())
         } catch (err) {
             console.error("Error cargando maestros:", err)
@@ -106,7 +106,7 @@ export const MovimientoModal = ({ isOpen, movimiento, onClose, onSave }: Movimie
             moneda_id: parseInt(formData.moneda_id),
             cuenta_id: parseInt(formData.cuenta_id),
             tercero_id: formData.tercero_id ? parseInt(formData.tercero_id) : null,
-            grupo_id: formData.grupo_id ? parseInt(formData.grupo_id) : null,
+            centro_costo_id: formData.centro_costo_id ? parseInt(formData.centro_costo_id) : null,
             concepto_id: formData.concepto_id ? parseInt(formData.concepto_id) : null
         }
 
@@ -247,12 +247,12 @@ export const MovimientoModal = ({ isOpen, movimiento, onClose, onSave }: Movimie
 
                     <div className="grid grid-cols-2 gap-4">
                         <Select
-                            label="Grupo"
-                            value={formData.grupo_id}
-                            onChange={e => setFormData({ ...formData, grupo_id: e.target.value })}
+                            label="Centro de Costo"
+                            value={formData.centro_costo_id}
+                            onChange={e => setFormData({ ...formData, centro_costo_id: e.target.value })}
                         >
                             <option value="">Seleccione...</option>
-                            {grupos.map(g => (
+                            {centrosCostos.map(g => (
                                 <option key={g.id} value={g.id}>{g.id} - {g.nombre}</option>
                             ))}
                         </Select>

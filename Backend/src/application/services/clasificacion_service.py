@@ -5,7 +5,7 @@ from src.domain.ports.movimiento_repository import MovimientoRepository
 from src.domain.ports.reglas_repository import ReglasRepository
 from src.domain.ports.tercero_repository import TerceroRepository
 from src.domain.ports.tercero_descripcion_repository import TerceroDescripcionRepository
-from src.domain.ports.grupo_repository import GrupoRepository
+from src.domain.ports.centro_costo_repository import CentroCostoRepository
 from src.domain.ports.concepto_repository import ConceptoRepository
 
 class ClasificacionService:
@@ -20,13 +20,13 @@ class ClasificacionService:
                  tercero_repo: TerceroRepository,
                  tercero_descripcion_repo: TerceroDescripcionRepository = None,
                  concepto_repo: ConceptoRepository = None,
-                 grupo_repo: GrupoRepository = None):
+                 centro_costo_repo: CentroCostoRepository = None):
         self.movimiento_repo = movimiento_repo
         self.reglas_repo = reglas_repo
         self.tercero_repo = tercero_repo
         self.tercero_descripcion_repo = tercero_descripcion_repo
         self.concepto_repo = concepto_repo
-        self.grupo_repo = grupo_repo
+        self.centro_costo_repo = centro_costo_repo
 
     def clasificar_movimiento(self, movimiento: Movimiento) -> Tuple[bool, str]:
         """
@@ -58,8 +58,8 @@ class ClasificacionService:
                 if regla.tercero_id and not movimiento.tercero_id:
                     movimiento.tercero_id = regla.tercero_id
                     modificado = True
-                if regla.grupo_id and not movimiento.grupo_id:
-                    movimiento.grupo_id = regla.grupo_id
+                if regla.centro_costo_id and not movimiento.centro_costo_id:
+                    movimiento.centro_costo_id = regla.centro_costo_id
                     modificado = True
                 if regla.concepto_id and not movimiento.concepto_id:
                     movimiento.concepto_id = regla.concepto_id
@@ -86,7 +86,9 @@ class ClasificacionService:
                 mejor_candidato = candidatos[0] # Asumimos que repo devuelve ordenados, sino ordenar
                 
                 movimiento.tercero_id = mejor_candidato.tercero_id
-                movimiento.grupo_id = mejor_candidato.grupo_id
+                movimiento.tercero_id = mejor_candidato.tercero_id
+                movimiento.centro_costo_id = mejor_candidato.centro_costo_id
+                movimiento.concepto_id = mejor_candidato.concepto_id
                 movimiento.concepto_id = mejor_candidato.concepto_id
                 return True, f"Histórico por Referencia ({movimiento.referencia})"
 
@@ -125,7 +127,7 @@ class ClasificacionService:
             
         sugerencia = {
             'tercero_id': None, 
-            'grupo_id': None, 
+            'centro_costo_id': None, 
             'concepto_id': None,
             'razon': None,
             'tipo_match': None
@@ -149,15 +151,15 @@ class ClasificacionService:
                 
                 # Para valores pequeños, auto-asignar Impuestos/Rte Fuente
                 if (movimiento.valor is not None and abs(movimiento.valor) < 100000 
-                    and self.grupo_repo and self.concepto_repo):
+                    and self.centro_costo_repo and self.concepto_repo):
                     
                     # Buscar grupo Impuestos
-                    grupo_imp = self.grupo_repo.buscar_por_nombre("Impuestos")
-                    if grupo_imp:
+                    centro_costo_imp = self.centro_costo_repo.buscar_por_nombre("Impuestos")
+                    if centro_costo_imp:
                         # Buscar concepto Rte Fuente dentro de ese grupo
-                        concepto_rf = self.concepto_repo.buscar_por_nombre("Rte Fuente", grupoid=grupo_imp.grupoid)
+                        concepto_rf = self.concepto_repo.buscar_por_nombre("Rte Fuente", centro_costo_id=centro_costo_imp.centro_costo_id)
                         if concepto_rf:
-                            sugerencia['grupo_id'] = grupo_imp.grupoid
+                            sugerencia['centro_costo_id'] = centro_costo_imp.centro_costo_id
                             sugerencia['concepto_id'] = concepto_rf.conceptoid
                             sugerencia['razon'] = "Fondo Renta (valor < $100.000) → Impuestos / Rte Fuente"
         
@@ -237,7 +239,7 @@ class ClasificacionService:
                 m for m in movs_cuenta 
                 if m.id != movimiento.id 
                 and m.tercero_id is not None
-                and m.grupo_id is not None
+                and m.centro_costo_id is not None
                 and m.concepto_id is not None
             ]
         elif sugerencia['tercero_id'] and not referencia_no_existe:
@@ -262,9 +264,9 @@ class ClasificacionService:
             if movimiento.valor is not None:
                 for m in contexto_movimientos:
                     if (m.valor == movimiento.valor 
-                        and m.grupo_id is not None 
+                        and m.centro_costo_id is not None 
                         and m.concepto_id is not None):
-                        sugerencia['grupo_id'] = m.grupo_id
+                        sugerencia['centro_costo_id'] = m.centro_costo_id
                         sugerencia['concepto_id'] = m.concepto_id
                         # Actualizar la razón para indicar que también coincidió por valor
                         razon_actual = sugerencia.get('razon') or ''
@@ -308,9 +310,9 @@ class ClasificacionService:
             'referencia': movimiento.referencia if referencia_no_existe else None
         }
 
-    def aplicar_regla_lote(self, patron: str, tercero_id: int, grupo_id: int, concepto_id: int) -> int:
+    def aplicar_regla_lote(self, patron: str, tercero_id: int, centro_costo_id: int, concepto_id: int) -> int:
         """
         Aplica una clasificación a todos los movimientos pendientes que coinciden con un patrón.
         """
         # Delegar al repositorio para eficiencia (UPDATE masivo)
-        return self.movimiento_repo.actualizar_clasificacion_lote(patron, tercero_id, grupo_id, concepto_id)
+        return self.movimiento_repo.actualizar_clasificacion_lote(patron, tercero_id, centro_costo_id, concepto_id)

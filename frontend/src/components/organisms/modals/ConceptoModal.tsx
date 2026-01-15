@@ -4,46 +4,46 @@ import { Modal } from '../../molecules/Modal'
 import { Button } from '../../atoms/Button'
 import { Input } from '../../atoms/Input'
 import { ComboBox } from '../../molecules/ComboBox'
-import type { Concepto, Grupo } from '../../../types'
+import type { Concepto, CentroCosto } from '../../../types'
 
 interface Props {
     isOpen: boolean
     concepto: Concepto | null
-    grupos: Grupo[]
+    centrosCostos: CentroCosto[]
     conceptos: Concepto[]
     onClose: () => void
-    onSave: (data: { nombre: string, grupo_id: number }) => void
+    onSave: (data: { nombre: string, centro_costo_id: number }) => void
 }
 
 /**
  * Modal para crear/editar conceptos - Refactorizado con Modal base
  */
-export const ConceptoModal = ({ isOpen, concepto, grupos, conceptos, onClose, onSave }: Props) => {
+export const ConceptoModal = ({ isOpen, concepto, centrosCostos, conceptos, onClose, onSave }: Props) => {
     const [nombre, setNombre] = useState('')
-    const [grupoId, setGrupoId] = useState<string>('')
+    const [centroCostoId, setCentroCostoId] = useState<string>('')
     const [errorNombre, setErrorNombre] = useState('')
 
     useEffect(() => {
         if (isOpen) {
             setNombre(concepto ? concepto.nombre : '')
-            setGrupoId(concepto?.grupo_id?.toString() || '')
+            setCentroCostoId(concepto?.centro_costo_id?.toString() || '')
             setErrorNombre('')
         }
     }, [isOpen, concepto])
 
     const validarNombreUnico = () => {
-        if (!nombre.trim() || !grupoId) return true
+        if (!nombre.trim() || !centroCostoId) return true
 
         const nombreNormalizado = nombre.trim().toLowerCase()
-        const grupoIdInt = parseInt(grupoId)
+        const centroCostoIdInt = parseInt(centroCostoId)
 
         const existeConcepto = conceptos.some(c => {
             if (concepto && c.id === concepto.id) return false
-            return c.nombre.toLowerCase() === nombreNormalizado && c.grupo_id === grupoIdInt
+            return c.nombre.toLowerCase() === nombreNormalizado && c.centro_costo_id === centroCostoIdInt
         })
 
         if (existeConcepto) {
-            setErrorNombre('Ya existe un concepto con este nombre en el grupo seleccionado')
+            setErrorNombre('Ya existe un concepto con este nombre en el centro de costo seleccionado')
             return false
         }
 
@@ -52,16 +52,16 @@ export const ConceptoModal = ({ isOpen, concepto, grupos, conceptos, onClose, on
     }
 
     const handleSubmit = () => {
-        if (!nombre.trim() || !grupoId) return
+        if (!nombre.trim() || !centroCostoId) return
         if (!validarNombreUnico()) return
 
         onSave({
             nombre: nombre.trim(),
-            grupo_id: parseInt(grupoId)
+            centro_costo_id: parseInt(centroCostoId)
         })
     }
 
-    const isValid = nombre.trim() && grupoId && !errorNombre
+    const isValid = nombre.trim() && centroCostoId && !errorNombre
 
     return (
         <Modal
@@ -84,13 +84,13 @@ export const ConceptoModal = ({ isOpen, concepto, grupos, conceptos, onClose, on
             }
         >
             <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }} className="space-y-4">
-                {/* 1. Grupo (primero) */}
+                {/* 1. Centro de Costo (primero) */}
                 <ComboBox
-                    label="Grupo"
-                    value={grupoId}
-                    onChange={value => setGrupoId(value)}
-                    options={grupos}
-                    placeholder="Seleccione o busque grupo..."
+                    label="Centro de Costo"
+                    value={centroCostoId}
+                    onChange={value => setCentroCostoId(value)}
+                    options={centrosCostos}
+                    placeholder="Seleccione o busque centro de costo..."
                     required
                     autoFocus
                 />

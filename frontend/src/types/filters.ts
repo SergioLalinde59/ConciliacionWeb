@@ -24,7 +24,7 @@ export interface MovimientoFilterParams extends PaginationParams {
     // Filtros de clasificación
     cuenta_id?: number
     tercero_id?: number
-    grupo_id?: number
+    centro_costo_id?: number
     concepto_id?: number
 
     // Filtros de estado
@@ -34,7 +34,7 @@ export interface MovimientoFilterParams extends PaginationParams {
 
     // Filtros de exclusión
     excluir_traslados?: boolean
-    grupos_excluidos?: number[]
+    centros_costos_excluidos?: number[]
 
     // Búsqueda
     busqueda?: string
@@ -48,14 +48,14 @@ export interface ReporteFilterParams {
     fecha_fin?: string
     cuenta_id?: number
     excluir_traslados?: boolean
-    grupos_excluidos?: number[]
+    centros_costos_excluidos?: number[]
 }
 
 /**
  * Parámetros para el reporte de clasificación
  */
 export interface ReporteClasificacionParams extends ReporteFilterParams {
-    tipo?: 'tercero' | 'grupo' | 'concepto'
+    tipo?: 'tercero' | 'centro_costo' | 'concepto'
     limite?: number
 }
 
@@ -70,7 +70,7 @@ export interface ReporteIngresosMesParams extends ReporteFilterParams {
  * Parámetros para el reporte de desglose de gastos
  */
 export interface ReporteDesgloseParams extends ReporteFilterParams {
-    agrupar_por?: 'tercero' | 'grupo'
+    agrupar_por?: 'tercero' | 'centro_costo'
 }
 
 /**
@@ -78,7 +78,7 @@ export interface ReporteDesgloseParams extends ReporteFilterParams {
  */
 export interface ReclasificarLoteParams {
     tercero_id: number
-    grupo_id?: number
+    centro_costo_id?: number
     concepto_id?: number
     fecha_inicio?: string
     fecha_fin?: string
@@ -90,15 +90,15 @@ export interface ReclasificarLoteParams {
  */
 export interface ClasificarMovimientoParams {
     tercero_id: number
-    grupo_id: number
+    centro_costo_id: number
     concepto_id: number
 }
 
 /**
- * DTO para crear/actualizar grupo
+ * DTO para crear/actualizar centro_costo
  */
-export interface GrupoCreateParams {
-    grupo: string
+export interface CentroCostoCreateParams {
+    centro_costo: string
 }
 
 /**
@@ -115,15 +115,15 @@ export interface TerceroCreateParams {
  */
 export interface ConceptoCreateParams {
     concepto: string
-    grupo_id: number
+    centro_costo_id: number
     clave?: string
 }
 
 /**
- * DTO para configuración de filtros de grupos
+ * DTO para configuración de filtros de centros de costos
  */
-export interface ConfigFiltroGrupoParams {
-    grupo_id: number
+export interface ConfigFiltroCentroCostoParams {
+    centro_costo_id: number
     etiqueta: string
     activo_por_defecto: boolean
 }
@@ -134,7 +134,7 @@ export interface ConfigFiltroGrupoParams {
 export interface ReglaClasificacionParams {
     patron?: string
     tercero_id?: number
-    grupo_id?: number
+    centro_costo_id?: number
     concepto_id?: number
     activo?: boolean
 }
@@ -143,7 +143,7 @@ export interface ReglaClasificacionParams {
  * Respuesta de configuración de filtros de exclusión
  */
 export interface ConfigFiltroExclusion {
-    grupo_id: number
+    centro_costo_id: number
     etiqueta: string
     activo_por_defecto: boolean
 }

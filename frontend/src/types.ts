@@ -1,12 +1,12 @@
 export interface ItemCatalogo {
     id: number
     nombre: string
-    grupo_id?: number // Solo para conceptos
+    centro_costo_id?: number // Solo para conceptos
 }
 
 export interface ClasificacionManual {
     tercero_id: number
-    grupo_id: number
+    centro_costo_id: number
     concepto_id: number
 }
 
@@ -40,7 +40,7 @@ export interface TerceroDescripcion {
     activa: boolean
 }
 
-export interface Grupo {
+export interface CentroCosto {
     id: number
     nombre: string
 }
@@ -48,7 +48,7 @@ export interface Grupo {
 export interface Concepto {
     id: number
     nombre: string
-    grupo_id?: number
+    centro_costo_id?: number
 }
 
 export interface Movimiento {
@@ -62,21 +62,21 @@ export interface Movimiento {
     moneda_id: number
     cuenta_id: number
     tercero_id?: number | null
-    grupo_id?: number | null
+    centro_costo_id?: number | null
     concepto_id?: number | null
     created_at?: string | null
     // Campos de visualización en formato "id - descripción"
     cuenta_display: string
     moneda_display: string
     tercero_display?: string
-    grupo_display?: string
+    centro_costo_display?: string
     concepto_display?: string
     detalle?: string // Campo adicional de BD
 }
 
 export interface SugerenciaClasificacion {
     tercero_id: number | null
-    grupo_id: number | null
+    centro_costo_id: number | null
     concepto_id: number | null
     razon: string | null
     tipo_match: string | null
@@ -93,7 +93,7 @@ export interface ContextoClasificacionResponse {
 export interface ClasificacionLoteDTO {
     patron: string
     tercero_id: number
-    grupo_id: number
+    centro_costo_id: number
     concepto_id: number
 }
 
@@ -102,16 +102,16 @@ export interface ReglaClasificacion {
     patron?: string
     patron_descripcion?: string
     tercero_id?: number
-    grupo_id?: number
+    centro_costo_id?: number
     concepto_id?: number
     activa?: boolean
     prioridad?: number
     tipo_match?: string
 }
 
-export interface ConfigFiltroGrupo {
+export interface ConfigFiltroCentroCosto {
     id: number
-    grupo_id: number
+    centro_costo_id: number
     etiqueta: string
     activo_por_defecto: boolean
 }

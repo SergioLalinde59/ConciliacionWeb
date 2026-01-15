@@ -46,7 +46,7 @@ export const useCatalogos = () => {
         // Datos desestructurados para compatibilidad con useCatalogo anterior
         cuentas: data?.cuentas ?? [],
         terceros: data?.terceros ?? [],
-        grupos: data?.grupos ?? [],
+        centrosCostos: data?.centros_costos ?? [],
         conceptos: data?.conceptos ?? [],
         monedas: data?.monedas ?? [],
 

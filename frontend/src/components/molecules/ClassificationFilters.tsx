@@ -4,28 +4,28 @@ import { ComboBox } from './ComboBox'
 interface ClassificationFiltersProps {
     terceroId?: string
     onTerceroChange?: (value: string) => void
-    grupoId?: string
-    onGrupoChange?: (value: string) => void
+    centroCostoId?: string
+    onCentroCostoChange?: (value: string) => void
     conceptoId?: string
     onConceptoChange?: (value: string) => void
     terceros?: Array<{ id: number; nombre: string }>
-    grupos?: Array<{ id: number; nombre: string }>
-    conceptos?: Array<{ id: number; nombre: string; grupo_id?: number }>
+    centrosCostos?: Array<{ id: number; nombre: string }>
+    conceptos?: Array<{ id: number; nombre: string; centro_costo_id?: number }>
 }
 
 export const ClassificationFilters = ({
     terceroId = '',
     onTerceroChange,
-    grupoId = '',
-    onGrupoChange,
+    centroCostoId = '',
+    onCentroCostoChange,
     conceptoId = '',
     onConceptoChange,
     terceros = [],
-    grupos = [],
+    centrosCostos = [],
     conceptos = []
 }: ClassificationFiltersProps) => {
 
-    if (!onTerceroChange || !onGrupoChange || !onConceptoChange) return null;
+    if (!onTerceroChange || !onCentroCostoChange || !onConceptoChange) return null;
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -39,18 +39,18 @@ export const ClassificationFilters = ({
                 />
             </div>
             <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-500 uppercase">2. Grupo</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase">2. Centro de Costo</label>
                 <ComboBox
-                    options={grupos}
-                    value={grupoId}
-                    onChange={(val) => { onGrupoChange(val); onConceptoChange('') }}
+                    options={centrosCostos}
+                    value={centroCostoId}
+                    onChange={(val) => { onCentroCostoChange(val); onConceptoChange('') }}
                     placeholder="Todos"
                 />
             </div>
             <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-500 uppercase">Concepto (Opcional)</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase">Concepto</label>
                 <ComboBox
-                    options={grupoId ? conceptos.filter(c => c.grupo_id === parseInt(grupoId)) : conceptos}
+                    options={centroCostoId ? conceptos.filter(c => c.centro_costo_id === parseInt(centroCostoId)) : conceptos}
                     value={conceptoId}
                     onChange={onConceptoChange}
                     placeholder="Filtrar concepto..."

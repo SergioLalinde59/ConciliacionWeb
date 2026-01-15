@@ -18,9 +18,9 @@ export interface FiltrosReporteProps {
     cuentas: Array<{ id: number; nombre: string }>
 
     // Dynamic Exclusion Filters - ALL exclusion filters come from here
-    configuracionExclusion?: Array<{ grupo_id: number; etiqueta: string }>;
-    gruposExcluidos?: number[];
-    onGruposExcluidosChange?: (ids: number[]) => void
+    configuracionExclusion?: Array<{ centro_costo_id: number; etiqueta: string }>;
+    centrosCostosExcluidos?: number[];
+    onCentrosCostosExcluidosChange?: (ids: number[]) => void
 
     // Pending classification filter
     soloPendientes?: boolean
@@ -30,13 +30,13 @@ export interface FiltrosReporteProps {
     // Classification filters
     terceroId?: string
     onTerceroChange?: (value: string) => void
-    grupoId?: string
-    onGrupoChange?: (value: string) => void
+    centroCostoId?: string
+    onCentroCostoChange?: (value: string) => void
     conceptoId?: string
     onConceptoChange?: (value: string) => void
     terceros?: Array<{ id: number; nombre: string }>
-    grupos?: Array<{ id: number; nombre: string }>
-    conceptos?: Array<{ id: number; nombre: string; grupo_id?: number }>
+    centrosCostos?: Array<{ id: number; nombre: string }>
+    conceptos?: Array<{ id: number; nombre: string; centro_costo_id?: number }>
     showClasificacionFilters?: boolean
 
     // Income/Expense filters
@@ -63,12 +63,12 @@ export const FiltrosReporte = ({
     showSoloPendientes = false,
     terceroId = '',
     onTerceroChange,
-    grupoId = '',
-    onGrupoChange,
+    centroCostoId = '',
+    onCentroCostoChange,
     conceptoId = '',
     onConceptoChange,
     terceros = [],
-    grupos = [],
+    centrosCostos = [],
     conceptos = [],
     showClasificacionFilters = false,
     mostrarIngresos = true,
@@ -77,8 +77,8 @@ export const FiltrosReporte = ({
     onMostrarEgresosChange,
     showIngresosEgresos = false,
 
-    gruposExcluidos = [],
-    onGruposExcluidosChange,
+    centrosCostosExcluidos = [],
+    onCentrosCostosExcluidosChange,
     configuracionExclusion = [],
     onLimpiar
 }: FiltrosReporteProps) => {
@@ -119,12 +119,12 @@ export const FiltrosReporte = ({
                     <ClassificationFilters
                         terceroId={terceroId}
                         onTerceroChange={onTerceroChange}
-                        grupoId={grupoId}
-                        onGrupoChange={onGrupoChange}
+                        centroCostoId={centroCostoId}
+                        onCentroCostoChange={onCentroCostoChange}
                         conceptoId={conceptoId}
                         onConceptoChange={onConceptoChange}
                         terceros={terceros}
-                        grupos={grupos}
+                        centrosCostos={centrosCostos}
                         conceptos={conceptos}
                     />
                 </div>
@@ -144,8 +144,8 @@ export const FiltrosReporte = ({
                         showIngresosEgresos={showIngresosEgresos}
 
                         configuracionExclusion={configuracionExclusion}
-                        gruposExcluidos={gruposExcluidos}
-                        onGruposExcluidosChange={onGruposExcluidosChange}
+                        centrosCostosExcluidos={centrosCostosExcluidos}
+                        onCentrosCostosExcluidosChange={onCentrosCostosExcluidosChange}
                     />
                 </div>
                 <div>

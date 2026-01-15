@@ -14,23 +14,23 @@ class PostgresMovimientoRepository(MovimientoRepository):
         self.conn = connection
 
     def _get_ids_traslados(self) -> tuple[Optional[int], Optional[int]]:
-        """Busca dinámicamente el ID de grupo y concepto para 'Traslados'"""
+        """Busca dinámicamente el ID de centro_costo y concepto para 'Traslados'"""
         cursor = self.conn.cursor()
         try:
-            # 1. Buscar grupo en config_filtros_grupos (label 'Excluir Traslados')
-            cursor.execute("SELECT grupo_id FROM config_filtros_grupos WHERE etiqueta ILIKE %s LIMIT 1", ('%traslado%',))
+            # 1. Buscar centro_costo en config_filtros_centro_costos (label 'Excluir Traslados')
+            cursor.execute("SELECT centro_costo_id FROM config_filtros_centro_costos WHERE etiqueta ILIKE %s LIMIT 1", ('%traslado%',))
             row_grupo = cursor.fetchone()
-            grupoid = row_grupo[0] if row_grupo else None
+            centro_costo_id = row_grupo[0] if row_grupo else None
             
-            if not grupoid:
+            if not centro_costo_id:
                 return None, None
                 
-            # 2. Buscar concepto 'Traslado' en ese grupo
-            cursor.execute("SELECT conceptoid FROM conceptos WHERE grupoid_fk = %s AND concepto ILIKE %s LIMIT 1", (grupoid, '%traslado%'))
+            # 2. Buscar concepto 'Traslado' en ese centro_costo
+            cursor.execute("SELECT conceptoid FROM conceptos WHERE centro_costo_id = %s AND concepto ILIKE %s LIMIT 1", (centro_costo_id, '%traslado%'))
             row_concepto = cursor.fetchone()
             conceptoid = row_concepto[0] if row_concepto else None
             
-            return grupoid, conceptoid
+            return centro_costo_id, conceptoid
         finally:
             cursor.close()
 
@@ -39,16 +39,16 @@ class PostgresMovimientoRepository(MovimientoRepository):
                            fecha_fin: Optional[date] = None,
                            cuenta_id: Optional[int] = None,
                            tercero_id: Optional[int] = None,
-                           grupo_id: Optional[int] = None,
+                           centro_costo_id: Optional[int] = None,
                            concepto_id: Optional[int] = None,
-                           grupos_excluidos: Optional[List[int]] = None,
+                           centros_costos_excluidos: Optional[List[int]] = None,
                            solo_pendientes: bool = False,
                            tipo_movimiento: Optional[str] = None
     ) -> tuple[str, list]:
         """
         Construye la cláusula WHERE y los parámetros para los filtros comunes.
         Asume que la consulta base tiene JOINs con los alias:
-        m (movimientos), g (grupos)
+        m (movimientos), cc (centro_costos)
         """
         conditions = []
         params = []
@@ -65,19 +65,19 @@ class PostgresMovimientoRepository(MovimientoRepository):
         if tercero_id:
             conditions.append("m.TerceroID = %s")
             params.append(tercero_id)
-        if grupo_id:
-            conditions.append("m.GrupoID = %s")
-            params.append(grupo_id)
+        if centro_costo_id:
+            conditions.append("m.centro_costo_id = %s")
+            params.append(centro_costo_id)
         if concepto_id:
             conditions.append("m.ConceptoID = %s")
             params.append(concepto_id)
              
-        if grupos_excluidos and len(grupos_excluidos) > 0:
-            conditions.append("(m.GrupoID IS NULL OR m.GrupoID NOT IN %s)")
-            params.append(tuple(grupos_excluidos))
+        if centros_costos_excluidos and len(centros_costos_excluidos) > 0:
+            conditions.append("(m.centro_costo_id IS NULL OR m.centro_costo_id NOT IN %s)")
+            params.append(tuple(centros_costos_excluidos))
              
         if solo_pendientes:
-            conditions.append("(m.TerceroID IS NULL OR m.GrupoID IS NULL OR m.ConceptoID IS NULL)")
+            conditions.append("(m.TerceroID IS NULL OR m.centro_costo_id IS NULL OR m.ConceptoID IS NULL)")
             
         if tipo_movimiento:
             if tipo_movimiento == 'ingresos':
@@ -93,8 +93,8 @@ class PostgresMovimientoRepository(MovimientoRepository):
     def _row_to_movimiento(self, row) -> Movimiento:
         """Helper para convertir fila de BD a objeto Movimiento"""
         # Orden esperado con JOINs: id, fecha, descripcion, referencia, valor, usd, trm, 
-        # moneda_id, cuenta_id, tercero_id, grupo_id, concepto_id, created_at,
-        # cuenta_nombre, moneda_nombre, tercero_nombre, grupo_nombre, concepto_nombre
+        # moneda_id, cuenta_id, tercero_id, centro_costo_id, concepto_id, created_at,
+        # cuenta_nombre, moneda_nombre, tercero_nombre, centro_costo_nombre, concepto_nombre
         
         # Asegurar que valor no sea None
         valor = row[4] if row[4] is not None else Decimal('0')
@@ -110,14 +110,14 @@ class PostgresMovimientoRepository(MovimientoRepository):
             moneda_id=row[7],
             cuenta_id=row[8],
             tercero_id=row[9] if row[9] is not None else None,
-            grupo_id=row[10] if row[10] is not None else None,
+            centro_costo_id=row[10] if row[10] is not None else None,
             concepto_id=row[11] if row[11] is not None else None,
             created_at=row[12] if row[12] is not None else None,
             detalle=row[13] if row[13] else None, # New field
             cuenta_nombre=row[14] if len(row) > 14 and row[14] else None,
             moneda_nombre=row[15] if len(row) > 15 and row[15] else None,
             tercero_nombre=row[16] if len(row) > 16 and row[16] else None,
-            grupo_nombre=row[17] if len(row) > 17 and row[17] else None,
+            centro_costo_nombre=row[17] if len(row) > 17 and row[17] else None,
             concepto_nombre=row[18] if len(row) > 18 and row[18] else None
         )
 
@@ -129,12 +129,12 @@ class PostgresMovimientoRepository(MovimientoRepository):
                 query = """
                     UPDATE movimientos 
                     SET Fecha=%s, Descripcion=%s, Referencia=%s, Valor=%s, USD=%s, TRM=%s,
-                        MonedaID=%s, CuentaID=%s, TerceroID=%s, GrupoID=%s, ConceptoID=%s, Detalle=%s
+                        MonedaID=%s, CuentaID=%s, TerceroID=%s, centro_costo_id=%s, ConceptoID=%s, Detalle=%s
                     WHERE Id=%s
                 """
                 cursor.execute(query, (
                     mov.fecha, mov.descripcion, mov.referencia, mov.valor, mov.usd, mov.trm,
-                    mov.moneda_id, mov.cuenta_id, mov.tercero_id, mov.grupo_id, mov.concepto_id, mov.detalle,
+                    mov.moneda_id, mov.cuenta_id, mov.tercero_id, mov.centro_costo_id, mov.concepto_id, mov.detalle,
                     mov.id
                 ))
             else:
@@ -142,13 +142,13 @@ class PostgresMovimientoRepository(MovimientoRepository):
                 query = """
                     INSERT INTO movimientos (
                         Fecha, Descripcion, Referencia, Valor, USD, TRM,
-                        MonedaID, CuentaID, TerceroID, GrupoID, ConceptoID, Detalle
+                        MonedaID, CuentaID, TerceroID, centro_costo_id, ConceptoID, Detalle
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING Id, created_at
                 """
                 cursor.execute(query, (
                     mov.fecha, mov.descripcion, mov.referencia, mov.valor, mov.usd, mov.trm,
-                    mov.moneda_id, mov.cuenta_id, mov.tercero_id, mov.grupo_id, mov.concepto_id, mov.detalle
+                    mov.moneda_id, mov.cuenta_id, mov.tercero_id, mov.centro_costo_id, mov.concepto_id, mov.detalle
                 ))
                 result = cursor.fetchone()
                 mov.id = result[0]
@@ -166,17 +166,17 @@ class PostgresMovimientoRepository(MovimientoRepository):
         cursor = self.conn.cursor()
         query = """
             SELECT m.Id, m.Fecha, m.Descripcion, m.Referencia, m.Valor, m.USD, m.TRM, 
-                   m.MonedaID, m.CuentaID, m.TerceroID, m.GrupoID, m.ConceptoID, m.created_at, m.Detalle,
+                   m.MonedaID, m.CuentaID, m.TerceroID, m.centro_costo_id, m.ConceptoID, m.created_at, m.Detalle,
                    c.cuenta AS cuenta_nombre,
                    mon.moneda AS moneda_nombre,
                    t.tercero AS tercero_nombre,
-                   g.grupo AS grupo_nombre,
+                   g.centro_costo AS centro_costo_nombre,
                    con.concepto AS concepto_nombre
             FROM movimientos m
             LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
             LEFT JOIN monedas mon ON m.MonedaID = mon.monedaid
             LEFT JOIN terceros t ON m.TerceroID = t.terceroid
-            LEFT JOIN grupos g ON m.GrupoID = g.grupoid
+            LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id
             LEFT JOIN conceptos con ON m.ConceptoID = con.conceptoid
             WHERE m.Id=%s
         """
@@ -189,17 +189,17 @@ class PostgresMovimientoRepository(MovimientoRepository):
         cursor = self.conn.cursor()
         query = """
             SELECT m.Id, m.Fecha, m.Descripcion, m.Referencia, m.Valor, m.USD, m.TRM, 
-                   m.MonedaID, m.CuentaID, m.TerceroID, m.GrupoID, m.ConceptoID, m.created_at, m.Detalle,
+                   m.MonedaID, m.CuentaID, m.TerceroID, m.centro_costo_id, m.ConceptoID, m.created_at, m.Detalle,
                    c.cuenta AS cuenta_nombre,
                    mon.moneda AS moneda_nombre,
                    t.tercero AS tercero_nombre,
-                   g.grupo AS grupo_nombre,
+                   g.centro_costo AS centro_costo_nombre,
                    con.concepto AS concepto_nombre
             FROM movimientos m
             LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
             LEFT JOIN monedas mon ON m.MonedaID = mon.monedaid
             LEFT JOIN terceros t ON m.TerceroID = t.terceroid
-            LEFT JOIN grupos g ON m.GrupoID = g.grupoid
+            LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id
             LEFT JOIN conceptos con ON m.ConceptoID = con.conceptoid
             ORDER BY m.Fecha DESC, ABS(m.Valor) DESC
         """
@@ -212,17 +212,17 @@ class PostgresMovimientoRepository(MovimientoRepository):
         cursor = self.conn.cursor()
         query = """
             SELECT m.Id, m.Fecha, m.Descripcion, m.Referencia, m.Valor, m.USD, m.TRM, 
-                   m.MonedaID, m.CuentaID, m.TerceroID, m.GrupoID, m.ConceptoID, m.created_at, m.Detalle,
+                   m.MonedaID, m.CuentaID, m.TerceroID, m.centro_costo_id, m.ConceptoID, m.created_at, m.Detalle,
                    c.cuenta AS cuenta_nombre,
                    mon.moneda AS moneda_nombre,
                    t.tercero AS tercero_nombre,
-                   g.grupo AS grupo_nombre,
+                   g.centro_costo AS centro_costo_nombre,
                    con.concepto AS concepto_nombre
             FROM movimientos m
             LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
             LEFT JOIN monedas mon ON m.MonedaID = mon.monedaid
             LEFT JOIN terceros t ON m.TerceroID = t.terceroid
-            LEFT JOIN grupos g ON m.GrupoID = g.grupoid
+            LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id
             LEFT JOIN conceptos con ON m.ConceptoID = con.conceptoid
             WHERE m.Fecha BETWEEN %s AND %s
             ORDER BY m.Fecha DESC, ABS(m.Valor) DESC
@@ -235,26 +235,26 @@ class PostgresMovimientoRepository(MovimientoRepository):
     def buscar_pendientes_clasificacion(
         self, 
         terceros_pendientes: List[int] = None,
-        grupos_pendientes: List[int] = None,
+        centros_costos_pendientes: List[int] = None,
         conceptos_pendientes: List[int] = None
     ) -> List[Movimiento]:
         """
         Busca movimientos pendientes de clasificación.
         
         Un movimiento está pendiente si:
-        - TerceroID, GrupoID o ConceptoID son NULL
+        - TerceroID, centro_costo_id o ConceptoID son NULL
         - O si tienen valores que semánticamente significan "pendiente" (ej: "Por identificar")
         
         Args:
             terceros_pendientes: IDs de terceros que significan "pendiente"
-            grupos_pendientes: IDs de grupos que significan "pendiente"
+            centros_costos_pendientes: IDs de centros_costos que significan "pendiente"
             conceptos_pendientes: IDs de conceptos que significan "pendiente"
         """
         cursor = self.conn.cursor()
         
         # Construir condiciones dinámicas
         tercero_conditions = ["m.TerceroID IS NULL"]
-        grupo_conditions = ["m.GrupoID IS NULL"]
+        centro_costo_conditions = ["m.centro_costo_id IS NULL"]
         concepto_conditions = ["m.ConceptoID IS NULL"]
         params = []
         
@@ -262,9 +262,9 @@ class PostgresMovimientoRepository(MovimientoRepository):
             tercero_conditions.append("m.TerceroID IN %s")
             params.append(tuple(terceros_pendientes))
         
-        if grupos_pendientes and len(grupos_pendientes) > 0:
-            grupo_conditions.append("m.GrupoID IN %s")
-            params.append(tuple(grupos_pendientes))
+        if centros_costos_pendientes and len(centros_costos_pendientes) > 0:
+            centro_costo_conditions.append("m.centro_costo_id IN %s")
+            params.append(tuple(centros_costos_pendientes))
             
         if conceptos_pendientes and len(conceptos_pendientes) > 0:
             concepto_conditions.append("m.ConceptoID IN %s")
@@ -273,23 +273,23 @@ class PostgresMovimientoRepository(MovimientoRepository):
         # Combinar condiciones: cualquier campo pendiente hace que el movimiento sea pendiente
         where_clause = f"""
             (({' OR '.join(tercero_conditions)})
-            OR ({' OR '.join(grupo_conditions)})
+            OR ({' OR '.join(centro_costo_conditions)})
             OR ({' OR '.join(concepto_conditions)}))
         """
         
         query = f"""
             SELECT m.Id, m.Fecha, m.Descripcion, m.Referencia, m.Valor, m.USD, m.TRM, 
-                   m.MonedaID, m.CuentaID, m.TerceroID, m.GrupoID, m.ConceptoID, m.created_at, m.Detalle,
+                   m.MonedaID, m.CuentaID, m.TerceroID, m.centro_costo_id, m.ConceptoID, m.created_at, m.Detalle,
                    c.cuenta AS cuenta_nombre,
                    mon.moneda AS moneda_nombre,
                    t.tercero AS tercero_nombre,
-                   g.grupo AS grupo_nombre,
+                   g.centro_costo AS centro_costo_nombre,
                    con.concepto AS concepto_nombre
             FROM movimientos m
             LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
             LEFT JOIN monedas mon ON m.MonedaID = mon.monedaid
             LEFT JOIN terceros t ON m.TerceroID = t.terceroid
-            LEFT JOIN grupos g ON m.GrupoID = g.grupoid
+            LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id
             LEFT JOIN conceptos con ON m.ConceptoID = con.conceptoid
             WHERE {where_clause}
             ORDER BY m.Fecha DESC, ABS(m.Valor) DESC
@@ -305,17 +305,17 @@ class PostgresMovimientoRepository(MovimientoRepository):
         referencia_normalizada = referencia.lstrip('0') if referencia else referencia
         query = """
             SELECT m.Id, m.Fecha, m.Descripcion, m.Referencia, m.Valor, m.USD, m.TRM, 
-                   m.MonedaID, m.CuentaID, m.TerceroID, m.GrupoID, m.ConceptoID, m.created_at, m.Detalle,
+                   m.MonedaID, m.CuentaID, m.TerceroID, m.centro_costo_id, m.ConceptoID, m.created_at, m.Detalle,
                    c.cuenta AS cuenta_nombre,
                    mon.moneda AS moneda_nombre,
                    t.tercero AS tercero_nombre,
-                   g.grupo AS grupo_nombre,
+                   g.centro_costo AS centro_costo_nombre,
                    con.concepto AS concepto_nombre
             FROM movimientos m
             LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
             LEFT JOIN monedas mon ON m.MonedaID = mon.monedaid
             LEFT JOIN terceros t ON m.TerceroID = t.terceroid
-            LEFT JOIN grupos g ON m.GrupoID = g.grupoid
+            LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id
             LEFT JOIN conceptos con ON m.ConceptoID = con.conceptoid
             WHERE LTRIM(m.Referencia, '0') = %s
             ORDER BY m.Fecha DESC
@@ -363,9 +363,9 @@ class PostgresMovimientoRepository(MovimientoRepository):
                        fecha_fin: Optional[date] = None,
                        cuenta_id: Optional[int] = None,
                        tercero_id: Optional[int] = None,
-                       grupo_id: Optional[int] = None,
+                       centro_costo_id: Optional[int] = None,
                        concepto_id: Optional[int] = None,
-                       grupos_excluidos: Optional[List[int]] = None,
+                       centros_costos_excluidos: Optional[List[int]] = None,
                        solo_pendientes: bool = False,
                        tipo_movimiento: Optional[str] = None,
                        skip: int = 0,
@@ -382,17 +382,17 @@ class PostgresMovimientoRepository(MovimientoRepository):
         # Query base para los datos
         query = """
             SELECT m.Id, m.Fecha, m.Descripcion, m.Referencia, m.Valor, m.USD, m.TRM, 
-                   m.MonedaID, m.CuentaID, m.TerceroID, m.GrupoID, m.ConceptoID, m.created_at, m.Detalle,
+                   m.MonedaID, m.CuentaID, m.TerceroID, m.centro_costo_id, m.ConceptoID, m.created_at, m.Detalle,
                    c.cuenta AS cuenta_nombre,
                    mon.moneda AS moneda_nombre,
                    t.tercero AS tercero_nombre,
-                   g.grupo AS grupo_nombre,
+                   g.centro_costo AS centro_costo_nombre,
                    con.concepto AS concepto_nombre
             FROM movimientos m
             LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
             LEFT JOIN monedas mon ON m.MonedaID = mon.monedaid
             LEFT JOIN terceros t ON m.TerceroID = t.terceroid
-            LEFT JOIN grupos g ON m.GrupoID = g.grupoid
+            LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id
             LEFT JOIN conceptos con ON m.ConceptoID = con.conceptoid
             WHERE 1=1
         """
@@ -402,9 +402,9 @@ class PostgresMovimientoRepository(MovimientoRepository):
             fecha_fin=fecha_fin,
             cuenta_id=cuenta_id,
             tercero_id=tercero_id,
-            grupo_id=grupo_id,
+            centro_costo_id=centro_costo_id,
             concepto_id=concepto_id,
-            grupos_excluidos=grupos_excluidos,
+            centros_costos_excluidos=centros_costos_excluidos,
             solo_pendientes=solo_pendientes,
             tipo_movimiento=tipo_movimiento
         )
@@ -416,7 +416,7 @@ class PostgresMovimientoRepository(MovimientoRepository):
         count_query = """
             SELECT COUNT(*)
             FROM movimientos m
-            LEFT JOIN grupos g ON m.GrupoID = g.grupoid
+            LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id
             WHERE 1=1
         """ + where_clause
         
@@ -440,22 +440,22 @@ class PostgresMovimientoRepository(MovimientoRepository):
                                  fecha_fin: Optional[date] = None,
                                  cuenta_id: Optional[int] = None,
                                  tercero_id: Optional[int] = None,
-                                 grupo_id: Optional[int] = None,
+                                 centro_costo_id: Optional[int] = None,
                                  concepto_id: Optional[int] = None,
-                                 grupos_excluidos: Optional[List[int]] = None,
+                                 centros_costos_excluidos: Optional[List[int]] = None,
                                  tipo_movimiento: Optional[str] = None
     ) -> List[dict]:
         cursor = self.conn.cursor()
         
         # Determinar campo de agrupación
-        if tipo_agrupacion == 'grupo':
-            group_field = "COALESCE(g.grupo, 'Sin Grupo')"
+        if tipo_agrupacion == 'centro_costo':
+            group_field = "COALESCE(g.centro_costo, 'Sin Centro de Costo')"
         elif tipo_agrupacion == 'tercero':
             group_field = "COALESCE(t.tercero, 'Sin Tercero')"
         elif tipo_agrupacion == 'concepto':
             group_field = "COALESCE(con.concepto, 'Sin Concepto')"
         else:
-             raise ValueError("Tipo de agrupación debe ser 'grupo', 'tercero' o 'concepto'")
+             raise ValueError("Tipo de agrupación debe ser 'centro_costo', 'tercero' o 'concepto'")
 
         query = f"""
             SELECT 
@@ -467,7 +467,7 @@ class PostgresMovimientoRepository(MovimientoRepository):
             LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
             LEFT JOIN monedas mon ON m.MonedaID = mon.monedaid
             LEFT JOIN terceros t ON m.TerceroID = t.terceroid
-            LEFT JOIN grupos g ON m.GrupoID = g.grupoid
+            LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id
             LEFT JOIN conceptos con ON m.ConceptoID = con.conceptoid
             WHERE 1=1
         """
@@ -477,9 +477,9 @@ class PostgresMovimientoRepository(MovimientoRepository):
             fecha_fin=fecha_fin,
             cuenta_id=cuenta_id,
             tercero_id=tercero_id,
-            grupo_id=grupo_id,
+            centro_costo_id=centro_costo_id,
             concepto_id=concepto_id,
-            grupos_excluidos=grupos_excluidos,
+            centros_costos_excluidos=centros_costos_excluidos,
             tipo_movimiento=tipo_movimiento
         )
         
@@ -504,17 +504,17 @@ class PostgresMovimientoRepository(MovimientoRepository):
         cursor = self.conn.cursor()
         query = """
             SELECT m.Id, m.Fecha, m.Descripcion, m.Referencia, m.Valor, m.USD, m.TRM, 
-                   m.MonedaID, m.CuentaID, m.TerceroID, m.GrupoID, m.ConceptoID, m.created_at, m.Detalle,
+                   m.MonedaID, m.CuentaID, m.TerceroID, m.centro_costo_id, m.ConceptoID, m.created_at, m.Detalle,
                    c.cuenta AS cuenta_nombre,
                    mon.moneda AS moneda_nombre,
                    t.tercero AS tercero_nombre,
-                   g.grupo AS grupo_nombre,
+                   g.centro_costo AS centro_costo_nombre,
                    con.concepto AS concepto_nombre
             FROM movimientos m
             LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
             LEFT JOIN monedas mon ON m.MonedaID = mon.monedaid
             LEFT JOIN terceros t ON m.TerceroID = t.terceroid
-            LEFT JOIN grupos g ON m.GrupoID = g.grupoid
+            LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id
             LEFT JOIN conceptos con ON m.ConceptoID = con.conceptoid
             WHERE m.Descripcion ILIKE %s
               AND m.TerceroID IS NOT NULL
@@ -526,19 +526,19 @@ class PostgresMovimientoRepository(MovimientoRepository):
         cursor.close()
         return [self._row_to_movimiento(row) for row in rows]
 
-    def actualizar_clasificacion_lote(self, patron: str, tercero_id: int, grupo_id: int, concepto_id: int) -> int:
+    def actualizar_clasificacion_lote(self, patron: str, tercero_id: int, centro_costo_id: int, concepto_id: int) -> int:
         cursor = self.conn.cursor()
         try:
             # Seguridad: update solo donde hay campos vacíos para no sobrescribir trabajo manual previo
             query = """
                 UPDATE movimientos
-                SET TerceroID = %s, GrupoID = %s, ConceptoID = %s
+                SET TerceroID = %s, centro_costo_id = %s, ConceptoID = %s
                 WHERE Descripcion ILIKE %s
-                  AND (TerceroID IS NULL OR GrupoID IS NULL OR ConceptoID IS NULL)
+                  AND (TerceroID IS NULL OR centro_costo_id IS NULL OR ConceptoID IS NULL)
             """
             # Usar %patron%
             like_pattern = f"%{patron}%"
-            cursor.execute(query, (tercero_id, grupo_id, concepto_id, like_pattern))
+            cursor.execute(query, (tercero_id, centro_costo_id, concepto_id, like_pattern))
             
             affected = cursor.rowcount
             self.conn.commit()
@@ -556,7 +556,7 @@ class PostgresMovimientoRepository(MovimientoRepository):
             query = """
                 SELECT 
                     Id, Fecha, Descripcion, Referencia, Valor, USD, TRM,
-                    MonedaID, CuentaID, TerceroID, GrupoID, ConceptoID, created_at
+                    MonedaID, CuentaID, TerceroID, centro_costo_id, ConceptoID, created_at
                 FROM movimientos
                 ORDER BY Fecha DESC, ABS(Valor) DESC
             """
@@ -567,14 +567,14 @@ class PostgresMovimientoRepository(MovimientoRepository):
                     m.MonedaID, mon.moneda as Moneda,
                     m.CuentaID, c.cuenta as Cuenta,
                     m.TerceroID, t.tercero as Tercero,
-                    m.GrupoID, g.grupo as Grupo,
+                    m.centro_costo_id, g.centro_costo as CentroCosto,
                     m.ConceptoID, con.concepto as Concepto,
                     m.created_at, m.Detalle
                 FROM movimientos m
                 LEFT JOIN monedas mon ON m.MonedaID = mon.monedaid
                 LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
                 LEFT JOIN terceros t ON m.TerceroID = t.terceroid
-                LEFT JOIN grupos g ON m.GrupoID = g.grupoid
+                LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id
                 LEFT JOIN conceptos con ON m.ConceptoID = con.conceptoid
                 ORDER BY m.Fecha DESC, ABS(m.Valor) DESC
             """
@@ -602,9 +602,9 @@ class PostgresMovimientoRepository(MovimientoRepository):
                                  fecha_fin: Optional[date] = None,
                                  cuenta_id: Optional[int] = None,
                                  tercero_id: Optional[int] = None,
-                                 grupo_id: Optional[int] = None,
+                                 centro_costo_id: Optional[int] = None,
                                  concepto_id: Optional[int] = None,
-                                 grupos_excluidos: Optional[List[int]] = None
+                                 centros_costos_excluidos: Optional[List[int]] = None
     ) -> List[dict]:
         cursor = self.conn.cursor()
         
@@ -618,7 +618,7 @@ class PostgresMovimientoRepository(MovimientoRepository):
             LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
             LEFT JOIN monedas mon ON m.MonedaID = mon.monedaid
             LEFT JOIN terceros t ON m.TerceroID = t.terceroid
-            LEFT JOIN grupos g ON m.GrupoID = g.grupoid
+            LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id
             LEFT JOIN conceptos con ON m.ConceptoID = con.conceptoid
             WHERE 1=1
         """
@@ -628,9 +628,9 @@ class PostgresMovimientoRepository(MovimientoRepository):
             fecha_fin=fecha_fin,
             cuenta_id=cuenta_id,
             tercero_id=tercero_id,
-            grupo_id=grupo_id,
+            centro_costo_id=centro_costo_id,
             concepto_id=concepto_id,
-            grupos_excluidos=grupos_excluidos
+            centros_costos_excluidos=centros_costos_excluidos
         )
         
         query += where_clause
@@ -672,7 +672,7 @@ class PostgresMovimientoRepository(MovimientoRepository):
         # Exclude traslados dynamically
         grupoid_t, _ = self._get_ids_traslados()
         if grupoid_t:
-            query += " AND (m.GrupoID IS NULL OR m.GrupoID != %s)"
+            query += " AND (m.centro_costo_id IS NULL OR m.centro_costo_id != %s)"
             params.append(grupoid_t)
         
         if fecha_inicio:
@@ -697,8 +697,10 @@ class PostgresMovimientoRepository(MovimientoRepository):
             {
                 "tercero_id": row[0],
                 "tercero_nombre": row[1],
-                "grupo_id": None, # Ya no agrupamos por esto
-                "grupo_nombre": "Varios",
+                "tercero_id": row[0],
+                "tercero_nombre": row[1],
+                "centro_costo_id": None, # Ya no agrupamos por esto
+                "centro_costo_nombre": "Varios",
                 "concepto_id": None, # Ya no agrupamos por esto
                 "concepto_nombre": "Varios",
                 "cantidad": row[2],
@@ -709,24 +711,24 @@ class PostgresMovimientoRepository(MovimientoRepository):
             for row in rows
         ]
 
-    def obtener_movimientos_grupo(self, tercero_id: int, grupo_id: Optional[int] = None, concepto_id: Optional[int] = None, fecha_inicio: Optional[date] = None, fecha_fin: Optional[date] = None) -> List[Movimiento]:
+    def obtener_movimientos_centro_costo(self, tercero_id: int, centro_costo_id: Optional[int] = None, concepto_id: Optional[int] = None, fecha_inicio: Optional[date] = None, fecha_fin: Optional[date] = None) -> List[Movimiento]:
         """
-        Obtiene los movimientos de un Tercero sugerido (ignora grupo/concepto específicos).
+        Obtiene los movimientos de un Tercero sugerido (ignora centro_costo/concepto específicos).
         """
         cursor = self.conn.cursor()
         query = """
             SELECT m.Id, m.Fecha, m.Descripcion, m.Referencia, m.Valor, m.USD, m.TRM, 
-                   m.MonedaID, m.CuentaID, m.TerceroID, m.GrupoID, m.ConceptoID, m.created_at, m.Detalle,
+                   m.MonedaID, m.CuentaID, m.TerceroID, m.centro_costo_id, m.ConceptoID, m.created_at, m.Detalle,
                    c.cuenta AS cuenta_nombre,
                    mon.moneda AS moneda_nombre,
                    t.tercero AS tercero_nombre,
-                   g.grupo AS grupo_nombre,
+                   g.centro_costo AS centro_costo_nombre,
                    con.concepto AS concepto_nombre
             FROM movimientos m
             LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
             LEFT JOIN monedas mon ON m.MonedaID = mon.monedaid
             LEFT JOIN terceros t ON m.TerceroID = t.terceroid
-            LEFT JOIN grupos g ON m.GrupoID = g.grupoid
+            LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id
             LEFT JOIN conceptos con ON m.ConceptoID = con.conceptoid
             WHERE m.TerceroID = %s
         """
@@ -734,7 +736,7 @@ class PostgresMovimientoRepository(MovimientoRepository):
         
         grupoid_t, _ = self._get_ids_traslados()
         if grupoid_t:
-            query += " AND (m.GrupoID IS NULL OR m.GrupoID != %s)"
+            query += " AND (m.centro_costo_id IS NULL OR m.centro_costo_id != %s)"
             params.append(grupoid_t)
         
         if fecha_inicio:
@@ -751,7 +753,7 @@ class PostgresMovimientoRepository(MovimientoRepository):
         cursor.close()
         return [self._row_to_movimiento(row) for row in rows]
 
-    def reclasificar_movimientos_grupo(self, tercero_id: int, grupo_id_anterior: Optional[int] = None, concepto_id_anterior: Optional[int] = None, fecha_inicio: Optional[date] = None, fecha_fin: Optional[date] = None, movimiento_ids: Optional[List[int]] = None) -> int:
+    def reclasificar_movimientos_centro_costo(self, tercero_id: int, centro_costo_id_anterior: Optional[int] = None, concepto_id_anterior: Optional[int] = None, fecha_inicio: Optional[date] = None, fecha_fin: Optional[date] = None, movimiento_ids: Optional[List[int]] = None) -> int:
         """
         Actualiza los movimientos de un Tercero para ser Traslado.
         Si se proporcionan movimiento_ids, solo actualiza esos.
@@ -762,19 +764,19 @@ class PostgresMovimientoRepository(MovimientoRepository):
         if not grupoid_t or not conceptoid_t:
             # Si no hay configuración, no podemos reclasificar dinámicamente
             # Podríamos lanzar error o usar fallback hardcoded (no recomendado por el usuario)
-            raise ValueError("No se encontró la configuración del grupo/concepto de Traslados en la base de datos.")
+            raise ValueError("No se encontró la configuración del centro_costo/concepto de Traslados en la base de datos.")
 
         try:
-            NEW_GRUPO_ID = grupoid_t
+            NEW_CENTRO_COSTO_ID = grupoid_t
             NEW_CONCEPTO_ID = conceptoid_t
             
             query = """
                 UPDATE movimientos
-                SET GrupoID = %s, ConceptoID = %s
+                SET centro_costo_id = %s, ConceptoID = %s
                 WHERE TerceroID = %s 
-                  AND (GrupoID IS NULL OR GrupoID != %s)
+                  AND (centro_costo_id IS NULL OR centro_costo_id != %s)
             """
-            params = [NEW_GRUPO_ID, NEW_CONCEPTO_ID, tercero_id, NEW_GRUPO_ID] # Evitar updates redundantes
+            params = [NEW_CENTRO_COSTO_ID, NEW_CONCEPTO_ID, tercero_id, NEW_CENTRO_COSTO_ID] # Evitar updates redundantes
             
             if movimiento_ids is not None:
                 # Si se especifican IDs (incluso vacio), usamos esos especificamente
@@ -805,9 +807,9 @@ class PostgresMovimientoRepository(MovimientoRepository):
                                fecha_fin: Optional[date] = None,
                                cuenta_id: Optional[int] = None,
                                tercero_id: Optional[int] = None,
-                               grupo_id: Optional[int] = None,
+                               centro_costo_id: Optional[int] = None,
                                concepto_id: Optional[int] = None,
-                               grupos_excluidos: Optional[List[int]] = None
+                               centros_costos_excluidos: Optional[List[int]] = None
     ) -> List[dict]:
         cursor = self.conn.cursor()
         
@@ -817,10 +819,10 @@ class PostgresMovimientoRepository(MovimientoRepository):
             col_name = "t.tercero"
             join_clause = "LEFT JOIN terceros t ON m.TerceroID = t.terceroid"
             order_clause = "ORDER BY egresos DESC"
-        elif nivel == 'grupo':
-            col_id = "m.GrupoID"
-            col_name = "g.grupo"
-            join_clause = "LEFT JOIN grupos g ON m.GrupoID = g.grupoid"
+        elif nivel == 'centro_costo':
+            col_id = "m.centro_costo_id"
+            col_name = "g.centro_costo"
+            join_clause = "LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id"
             order_clause = "ORDER BY egresos ASC" # Requested: menor a mayor
         elif nivel == 'concepto':
             col_id = "m.ConceptoID"
@@ -842,10 +844,10 @@ class PostgresMovimientoRepository(MovimientoRepository):
             WHERE 1=1
         """
         
-        # SOLUCION: Agregar el JOIN con grupos siempre para poder filtrar por ID de grupo.
+        # SOLUCION: Agregar el JOIN con centro_costos siempre para poder filtrar por ID de centro_costo.
         joins_extra = ""
-        if 'JOIN grupos' not in join_clause:
-            joins_extra = " LEFT JOIN grupos g ON m.GrupoID = g.grupoid"
+        if 'JOIN centro_costos' not in join_clause:
+            joins_extra = " LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id"
             
         query = f"""
             SELECT 
@@ -865,9 +867,9 @@ class PostgresMovimientoRepository(MovimientoRepository):
             fecha_fin=fecha_fin,
             cuenta_id=cuenta_id,
             tercero_id=tercero_id,
-            grupo_id=grupo_id,
+            centro_costo_id=centro_costo_id,
             concepto_id=concepto_id,
-            grupos_excluidos=grupos_excluidos
+            centros_costos_excluidos=centros_costos_excluidos
         )
         
         query += where_clause

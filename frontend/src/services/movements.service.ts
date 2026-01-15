@@ -106,10 +106,10 @@ export const movimientosService = {
         return fetch(`${API_BASE_URL}/api/movimientos/sugerencias/reclasificacion?${queryParams}`).then(handleResponse)
     },
 
-    obtenerDetallesSugerencia: (tercero_id: number, grupo_id?: number, concepto_id?: number, desde?: string, hasta?: string): Promise<unknown[]> => {
+    obtenerDetallesSugerencia: (tercero_id: number, centro_costo_id?: number, concepto_id?: number, desde?: string, hasta?: string): Promise<unknown[]> => {
         const queryParams = new URLSearchParams()
         queryParams.append('tercero_id', tercero_id.toString())
-        if (grupo_id) queryParams.append('grupo_id', grupo_id.toString())
+        if (centro_costo_id) queryParams.append('centro_costo_id', centro_costo_id.toString())
         if (concepto_id) queryParams.append('concepto_id', concepto_id.toString())
         if (desde) queryParams.append('desde', desde)
         if (hasta) queryParams.append('hasta', hasta)
@@ -134,7 +134,7 @@ export const clasificacionService = {
     obtenerSugerencia: (id: number): Promise<unknown> =>
         fetch(`${API_BASE_URL}/api/clasificacion/sugerencia/${id}`).then(handleResponse),
 
-    clasificarLote: (dto: { patron: string; tercero_id: number; grupo_id: number; concepto_id: number }): Promise<{ mensaje: string; clasificados: number }> =>
+    clasificarLote: (dto: { patron: string; tercero_id: number; centro_costo_id: number; concepto_id: number }): Promise<{ mensaje: string; clasificados: number }> =>
         fetch(`${API_BASE_URL}/api/clasificacion/clasificar-lote`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

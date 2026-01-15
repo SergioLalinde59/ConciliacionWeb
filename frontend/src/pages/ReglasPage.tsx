@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { apiService } from '../services/api'
-import type { ReglaClasificacion, Tercero, Grupo, Concepto } from '../types'
+import type { ReglaClasificacion, Tercero, CentroCosto, Concepto } from '../types'
 import { Trash2, Plus, Zap, Edit, X } from 'lucide-react'
 import { ComboBox } from '../components/molecules/ComboBox'
 import { CsvExportButton } from '../components/molecules/CsvExportButton'
@@ -11,13 +11,13 @@ export const ReglasPage: React.FC = () => {
 
     // Data catalogs
     const [terceros, setTerceros] = useState<Tercero[]>([])
-    const [grupos, setGrupos] = useState<Grupo[]>([])
+    const [centrosCostos, setCentrosCostos] = useState<CentroCosto[]>([])
     const [conceptos, setConceptos] = useState<Concepto[]>([])
 
     // Form state
     const [patron, setPatron] = useState('')
     const [selectedTerceroId, setSelectedTerceroId] = useState<number | null>(null)
-    const [selectedGrupoId, setSelectedGrupoId] = useState<number | null>(null)
+    const [selectedCentroCostoId, setSelectedCentroCostoId] = useState<number | null>(null)
     const [selectedConceptoId, setSelectedConceptoId] = useState<number | null>(null)
     const [editingId, setEditingId] = useState<number | null>(null)
 
@@ -34,7 +34,7 @@ export const ReglasPage: React.FC = () => {
             ])
             setReglas(reglasData)
             setTerceros(catalogos.terceros)
-            setGrupos(catalogos.grupos)
+            setCentrosCostos(catalogos.centros_costos)
             setConceptos(catalogos.conceptos)
         } catch (error) {
             console.error(error)
@@ -45,7 +45,7 @@ export const ReglasPage: React.FC = () => {
 
     const handleGuardar = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!patron.trim() || !selectedGrupoId || !selectedConceptoId) {
+        if (!patron.trim() || !selectedCentroCostoId || !selectedConceptoId) {
             alert('Complete al menos Patrón, Grupo y Concepto')
             return
         }
@@ -54,7 +54,7 @@ export const ReglasPage: React.FC = () => {
             const reglaData: ReglaClasificacion = {
                 patron: patron.trim(),
                 tercero_id: selectedTerceroId ?? undefined,
-                grupo_id: selectedGrupoId ?? undefined,
+                centro_costo_id: selectedCentroCostoId ?? undefined,
                 concepto_id: selectedConceptoId ?? undefined,
                 tipo_match: 'contiene'
             }
@@ -75,7 +75,7 @@ export const ReglasPage: React.FC = () => {
     const limpiarForm = () => {
         setPatron('')
         setSelectedTerceroId(null)
-        setSelectedGrupoId(null)
+        setSelectedCentroCostoId(null)
         setSelectedConceptoId(null)
         setEditingId(null)
     }
@@ -83,7 +83,7 @@ export const ReglasPage: React.FC = () => {
     const handleEditar = (regla: ReglaClasificacion) => {
         setPatron(regla.patron || '')
         setSelectedTerceroId(regla.tercero_id || null)
-        setSelectedGrupoId(regla.grupo_id || null)
+        setSelectedCentroCostoId(regla.centro_costo_id || null)
         setSelectedConceptoId(regla.concepto_id || null)
         setEditingId(regla.id!)
     }
@@ -110,9 +110,9 @@ export const ReglasPage: React.FC = () => {
         return c ? `${c.id} - ${c.nombre}` : id
     }
 
-    // Filtrar conceptos por grupo seleccionado en el formulario
-    const conceptosFiltrados = selectedGrupoId
-        ? conceptos.filter(c => c.grupo_id === selectedGrupoId)
+    // Filtrar conceptos por centro de costo seleccionado en el formulario
+    const conceptosFiltrados = selectedCentroCostoId
+        ? conceptos.filter(c => c.centro_costo_id === selectedCentroCostoId)
         : conceptos
 
     // Helper to get only the name (without ID prefix)
@@ -132,8 +132,8 @@ export const ReglasPage: React.FC = () => {
         { key: 'patron' as const, label: 'Patrón' },
         { key: 'tercero_id', label: 'Tercero ID', accessor: (r: ReglaClasificacion) => r.tercero_id || '' },
         { key: 'tercero_nombre', label: 'Tercero', accessor: (r: ReglaClasificacion) => getSoloNombre(terceros, r.tercero_id) },
-        { key: 'grupo_id', label: 'Grupo ID', accessor: (r: ReglaClasificacion) => r.grupo_id || '' },
-        { key: 'grupo_nombre', label: 'Grupo', accessor: (r: ReglaClasificacion) => getSoloNombre(grupos, r.grupo_id) },
+        { key: 'centro_costo_id', label: 'Centro Costo ID', accessor: (r: ReglaClasificacion) => r.centro_costo_id || '' },
+        { key: 'centro_costo_nombre', label: 'Centro Costo', accessor: (r: ReglaClasificacion) => getSoloNombre(centrosCostos, r.centro_costo_id) },
         { key: 'concepto_id', label: 'Concepto ID', accessor: (r: ReglaClasificacion) => r.concepto_id || '' },
         { key: 'concepto_nombre', label: 'Concepto', accessor: (r: ReglaClasificacion) => getConceptoSoloNombre(r.concepto_id) },
     ]
@@ -186,16 +186,16 @@ export const ReglasPage: React.FC = () => {
                     </div>
 
                     <div className="md:col-span-3">
-                        <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Grupo</label>
+                        <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Centro de Costo</label>
                         <ComboBox
-                            options={grupos}
-                            value={selectedGrupoId ? selectedGrupoId.toString() : ""}
+                            options={centrosCostos}
+                            value={selectedCentroCostoId ? selectedCentroCostoId.toString() : ""}
                             onChange={(val) => {
                                 const id = val ? parseInt(val) : null
-                                setSelectedGrupoId(id)
-                                setSelectedConceptoId(null) // Reset concepto al cambiar grupo
+                                setSelectedCentroCostoId(id)
+                                setSelectedConceptoId(null) // Reset concepto al cambiar centro de costo
                             }}
-                            placeholder="Seleccionar Grupo"
+                            placeholder="Seleccionar Centro Costo"
                         />
                     </div>
 
@@ -229,7 +229,7 @@ export const ReglasPage: React.FC = () => {
                         <tr>
                             <th className="px-6 py-4">Patrón</th>
                             <th className="px-6 py-4">Tercero Asignado</th>
-                            <th className="px-6 py-4">Grupo</th>
+                            <th className="px-6 py-4">Centro Costo</th>
                             <th className="px-6 py-4">Concepto</th>
                             <th className="px-6 py-4 text-right">Acciones</th>
                         </tr>
@@ -244,7 +244,7 @@ export const ReglasPage: React.FC = () => {
                                 <tr key={regla.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-3 font-medium text-slate-800">"{regla.patron}"</td>
                                     <td className="px-6 py-3">{getNombre(terceros, regla.tercero_id)}</td>
-                                    <td className="px-6 py-3">{getNombre(grupos, regla.grupo_id)}</td>
+                                    <td className="px-6 py-3">{getNombre(centrosCostos, regla.centro_costo_id)}</td>
                                     <td className="px-6 py-3">{getConceptoNombre(regla.concepto_id)}</td>
                                     <td className="px-6 py-3 text-right">
                                         <div className="flex justify-end gap-2">

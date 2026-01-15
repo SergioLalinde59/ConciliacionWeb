@@ -1,24 +1,24 @@
 import { Edit2, Trash2 } from 'lucide-react'
 
-interface ConfigFiltroGrupo {
+interface ConfigFiltroCentroCosto {
     id: number
-    grupo_id: number
+    centro_costo_id: number
     etiqueta: string
     activo_por_defecto: boolean
 }
 
-interface ConfigFiltrosGruposTableProps {
-    configs: ConfigFiltroGrupo[]
-    grupos: { id: number, nombre: string }[]
+interface ConfigFiltrosCentrosCostosTableProps {
+    configs: ConfigFiltroCentroCosto[]
+    centrosCostos: { id: number, nombre: string }[]
     loading: boolean
-    onEdit: (config: ConfigFiltroGrupo) => void
+    onEdit: (config: ConfigFiltroCentroCosto) => void
     onDelete: (id: number) => void
 }
 
-export const ConfigFiltrosGruposTable = ({ configs, grupos, loading, onEdit, onDelete }: ConfigFiltrosGruposTableProps) => {
-    const getGrupoNombre = (grupoId: number) => {
-        const grupo = grupos.find(g => g.id === grupoId)
-        return grupo ? grupo.nombre : `ID ${grupoId}`
+export const ConfigFiltrosCentrosCostosTable = ({ configs, centrosCostos, loading, onEdit, onDelete }: ConfigFiltrosCentrosCostosTableProps) => {
+    const getCentroCostoNombre = (id: number) => {
+        const centro = centrosCostos.find(c => c.id === id)
+        return centro ? centro.nombre : `ID ${id}`
     }
 
     if (loading) {
@@ -45,7 +45,7 @@ export const ConfigFiltrosGruposTable = ({ configs, grupos, loading, onEdit, onD
                 <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Grupo</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Centro de Costo</th>
                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Etiqueta</th>
                         <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Activo por Defecto</th>
                         <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
@@ -58,7 +58,7 @@ export const ConfigFiltrosGruposTable = ({ configs, grupos, loading, onEdit, onD
                                 {config.id}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                {getGrupoNombre(config.grupo_id)}
+                                {getCentroCostoNombre(config.centro_costo_id)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
                                 {config.etiqueta}

@@ -21,7 +21,7 @@ class Movimiento:
     usd: Optional[Decimal] = None
     trm: Optional[Decimal] = None
     tercero_id: Optional[int] = None
-    grupo_id: Optional[int] = None
+    centro_costo_id: Optional[int] = None
     concepto_id: Optional[int] = None
     created_at: Optional[datetime] = None
     detalle: Optional[str] = None
@@ -30,7 +30,7 @@ class Movimiento:
     cuenta_nombre: Optional[str] = None
     moneda_nombre: Optional[str] = None
     tercero_nombre: Optional[str] = None
-    grupo_nombre: Optional[str] = None
+    centro_costo_nombre: Optional[str] = None
     concepto_nombre: Optional[str] = None
 
     def __post_init__(self):
@@ -62,5 +62,5 @@ class Movimiento:
 
     @property
     def necesita_clasificacion(self) -> bool:
-        """Regla de negocio: está pendiente si no tiene grupo o concepto"""
-        return self.grupo_id is None or self.concepto_id is None
+        """Regla de negocio: está pendiente si no tiene centro_costo o concepto"""
+        return self.centro_costo_id is None or self.concepto_id is None

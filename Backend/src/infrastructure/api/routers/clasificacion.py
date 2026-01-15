@@ -7,14 +7,14 @@ from src.infrastructure.api.dependencies import (
     get_reglas_repository, 
     get_tercero_repository, 
     get_tercero_descripcion_repository,
-    get_grupo_repository,
+    get_centro_costo_repository,
     get_concepto_repository
 )
 from src.domain.ports.movimiento_repository import MovimientoRepository
 from src.domain.ports.reglas_repository import ReglasRepository
 from src.domain.ports.tercero_repository import TerceroRepository
 from src.domain.ports.tercero_descripcion_repository import TerceroDescripcionRepository
-from src.domain.ports.grupo_repository import GrupoRepository
+from src.domain.ports.centro_costo_repository import CentroCostoRepository
 from src.domain.ports.concepto_repository import ConceptoRepository
 from src.application.services.clasificacion_service import ClasificacionService
 from src.infrastructure.api.routers.movimientos import MovimientoResponse, _to_response # Reuse existing DTOs
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/api/clasificacion", tags=["clasificacion"])
 
 class SugerenciaSchema(BaseModel):
     tercero_id: Optional[int]
-    grupo_id: Optional[int]
+    centro_costo_id: Optional[int]
     concepto_id: Optional[int]
     razon: Optional[str]
     tipo_match: Optional[str]
@@ -38,7 +38,7 @@ class ContextoClasificacionResponse(BaseModel):
 class ClasificacionLoteDTO(BaseModel):
     patron: str
     tercero_id: int
-    grupo_id: int
+    centro_costo_id: int
     concepto_id: int
 
 def get_clasificacion_service(
@@ -46,7 +46,7 @@ def get_clasificacion_service(
     reglas_repo: ReglasRepository = Depends(get_reglas_repository),
     tercero_repo: TerceroRepository = Depends(get_tercero_repository),
     tercero_desc_repo: TerceroDescripcionRepository = Depends(get_tercero_descripcion_repository),
-    grupo_repo: GrupoRepository = Depends(get_grupo_repository),
+    grupo_repo: CentroCostoRepository = Depends(get_centro_costo_repository),
     concepto_repo: ConceptoRepository = Depends(get_concepto_repository)
 ) -> ClasificacionService:
     return ClasificacionService(
@@ -106,7 +106,7 @@ def clasificar_lote(
     """
     try:
         afectados = service.aplicar_regla_lote(
-            dto.patron, dto.tercero_id, dto.grupo_id, dto.concepto_id
+            dto.patron, dto.tercero_id, dto.centro_costo_id, dto.concepto_id
         )
         return {"filas_afectadas": afectados, "mensaje": f"{afectados} movimientos actualizados correctamente"}
     except Exception as e:
@@ -132,20 +132,20 @@ def preview_clasificacion_lote(
             cursor = mov_repo.conn.cursor()
             query = """
                 SELECT m.Id, m.Fecha, m.Descripcion, m.Referencia, m.Valor, m.USD, m.TRM, 
-                       m.MonedaID, m.CuentaID, m.TerceroID, m.GrupoID, m.ConceptoID, m.created_at, m.Detalle,
+                       m.MonedaID, m.CuentaID, m.TerceroID, m.centro_costo_id, m.ConceptoID, m.created_at, m.Detalle,
                        c.cuenta AS cuenta_nombre,
                        mon.moneda AS moneda_nombre,
                        t.tercero AS tercero_nombre,
-                       g.grupo AS grupo_nombre,
+                       cc.centro_costo AS centro_costo_nombre,
                        con.concepto AS concepto_nombre
                 FROM movimientos m
                 LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
                 LEFT JOIN monedas mon ON m.MonedaID = mon.monedaid
                 LEFT JOIN terceros t ON m.TerceroID = t.terceroid
-                LEFT JOIN grupos g ON m.GrupoID = g.grupoid
+                LEFT JOIN centro_costos cc ON m.centro_costo_id = cc.centro_costo_id
                 LEFT JOIN conceptos con ON m.ConceptoID = con.conceptoid
                 WHERE UPPER(m.Descripcion) LIKE UPPER(%s)
-                  AND (m.TerceroID IS NULL OR m.GrupoID IS NULL OR m.ConceptoID IS NULL)
+                  AND (m.TerceroID IS NULL OR m.centro_costo_id IS NULL OR m.ConceptoID IS NULL)
                 ORDER BY m.Fecha DESC
                 LIMIT 50
             """

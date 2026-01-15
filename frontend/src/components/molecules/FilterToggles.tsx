@@ -13,9 +13,9 @@ interface FilterTogglesProps {
     showIngresosEgresos?: boolean
 
     // Dynamic Exclusion Filters - ALL exclusion filters come from here
-    configuracionExclusion?: Array<{ grupo_id: number; etiqueta: string }>;
-    gruposExcluidos?: number[];
-    onGruposExcluidosChange?: (ids: number[]) => void;
+    configuracionExclusion?: Array<{ centro_costo_id: number; etiqueta: string }>;
+    centrosCostosExcluidos?: number[];
+    onCentrosCostosExcluidosChange?: (ids: number[]) => void;
 }
 
 export const FilterToggles = ({
@@ -31,8 +31,8 @@ export const FilterToggles = ({
     showIngresosEgresos = false,
 
     configuracionExclusion = [],
-    gruposExcluidos = [],
-    onGruposExcluidosChange
+    centrosCostosExcluidos = [],
+    onCentrosCostosExcluidosChange
 }: FilterTogglesProps) => {
     return (
         <div className="flex flex-wrap items-center gap-6">
@@ -51,16 +51,16 @@ export const FilterToggles = ({
                 .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta))
                 .map(config => (
                     <Checkbox
-                        key={config.grupo_id}
+                        key={config.centro_costo_id}
                         label={config.etiqueta}
-                        checked={gruposExcluidos.includes(config.grupo_id)}
+                        checked={centrosCostosExcluidos.includes(config.centro_costo_id)}
                         onChange={(e) => {
                             const isChecked = e.target.checked
-                            const current = gruposExcluidos || []
+                            const current = centrosCostosExcluidos || []
                             if (isChecked) {
-                                onGruposExcluidosChange?.([...current, config.grupo_id])
+                                onCentrosCostosExcluidosChange?.([...current, config.centro_costo_id])
                             } else {
-                                onGruposExcluidosChange?.(current.filter(id => id !== config.grupo_id))
+                                onCentrosCostosExcluidosChange?.(current.filter(id => id !== config.centro_costo_id))
                             }
                         }}
                     />

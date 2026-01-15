@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
+import psycopg2
 
 from src.domain.models.concepto import Concepto
 from src.domain.ports.concepto_repository import ConceptoRepository
@@ -10,20 +11,26 @@ router = APIRouter(prefix="/api/conceptos", tags=["conceptos"])
 
 class ConceptoDTO(BaseModel):
     concepto: str
-    grupoid_fk: Optional[int] = None
+    centro_costo_id: Optional[int] = None
 
 class ConceptoResponse(BaseModel):
     id: int
     nombre: str
-    grupo_id: Optional[int]
+    centro_costo_id: Optional[int]
 
 @router.get("", response_model=List[ConceptoResponse])
-def listar_conceptos(repo: ConceptoRepository = Depends(get_concepto_repository)):
-    conceptos = repo.obtener_todos()
+def listar_conceptos(
+    centro_costo_id: Optional[int] = None, 
+    repo: ConceptoRepository = Depends(get_concepto_repository)
+):
+    if centro_costo_id:
+        conceptos = repo.buscar_por_centro_costo_id(centro_costo_id)
+    else:
+        conceptos = repo.obtener_todos()
     return [{
         "id": c.conceptoid, 
         "nombre": c.concepto,
-        "grupo_id": c.grupoid_fk
+        "centro_costo_id": c.centro_costo_id
     } for c in conceptos]
 
 @router.post("", response_model=ConceptoResponse)
@@ -31,15 +38,17 @@ def crear_concepto(dto: ConceptoDTO, repo: ConceptoRepository = Depends(get_conc
     nuevo = Concepto(
         conceptoid=None, 
         concepto=dto.concepto,
-        grupoid_fk=dto.grupoid_fk
+        centro_costo_id=dto.centro_costo_id
     )
     try:
         guardado = repo.guardar(nuevo)
         return {
             "id": guardado.conceptoid, 
             "nombre": guardado.concepto,
-            "grupo_id": guardado.grupoid_fk
+            "centro_costo_id": guardado.centro_costo_id
         }
+    except psycopg2.errors.ForeignKeyViolation as e:
+        raise HTTPException(status_code=400, detail="El Centro de Costo especificado no es válido.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -52,15 +61,17 @@ def actualizar_concepto(id: int, dto: ConceptoDTO, repo: ConceptoRepository = De
     actualizado = Concepto(
         conceptoid=id,
         concepto=dto.concepto,
-        grupoid_fk=dto.grupoid_fk
+        centro_costo_id=dto.centro_costo_id
     )
     try:
         guardado = repo.guardar(actualizado)
         return {
             "id": guardado.conceptoid, 
             "nombre": guardado.concepto,
-            "grupo_id": guardado.grupoid_fk
+            "centro_costo_id": guardado.centro_costo_id
         }
+    except psycopg2.errors.ForeignKeyViolation as e:
+        raise HTTPException(status_code=400, detail="El Centro de Costo especificado no es válido.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -74,4 +85,3 @@ def eliminar_concepto(id: int, repo: ConceptoRepository = Depends(get_concepto_r
         return {"mensaje": "Eliminado correctamente"}
     except Exception as e:
          raise HTTPException(status_code=400, detail=str(e))
-

@@ -22,18 +22,18 @@ export const MovimientoFormPage = () => {
         moneda_id: '',
         cuenta_id: '',
         tercero_id: '',
-        grupo_id: '',
+        centro_costo_id: '',
         concepto_id: '',
         detalle: ''
     })
 
     // Datos Maestros desde Hook centralizado
-    const { cuentas, monedas, terceros, grupos, conceptos, loading: catalogsLoading } = useCatalogo()
+    const { cuentas, monedas, terceros, centrosCostos, conceptos, loading: catalogsLoading } = useCatalogo()
     const [loading, setLoading] = useState(false)
 
-    // Filtrar conceptos por grupo seleccionado
-    const conceptosFiltrados = formData.grupo_id
-        ? conceptos.filter(c => c.grupo_id === parseInt(formData.grupo_id))
+    // Filtrar conceptos por centro de costo seleccionado
+    const conceptosFiltrados = formData.centro_costo_id
+        ? conceptos.filter(c => c.centro_costo_id === parseInt(formData.centro_costo_id))
         : conceptos
 
     useEffect(() => {
@@ -74,7 +74,7 @@ export const MovimientoFormPage = () => {
                 moneda_id: mov.moneda_id.toString(),
                 cuenta_id: mov.cuenta_id.toString(),
                 tercero_id: mov.tercero_id?.toString() || '',
-                grupo_id: mov.grupo_id?.toString() || '',
+                centro_costo_id: mov.centro_costo_id?.toString() || '',
                 concepto_id: mov.concepto_id?.toString() || '',
                 detalle: mov.detalle || ''
             })
@@ -150,7 +150,7 @@ export const MovimientoFormPage = () => {
             moneda_id: parseInt(formData.moneda_id),
             cuenta_id: parseInt(formData.cuenta_id),
             tercero_id: formData.tercero_id ? parseInt(formData.tercero_id) : null,
-            grupo_id: formData.grupo_id ? parseInt(formData.grupo_id) : null,
+            centro_costo_id: formData.centro_costo_id ? parseInt(formData.centro_costo_id) : null,
             concepto_id: formData.concepto_id ? parseInt(formData.concepto_id) : null,
             detalle: formData.detalle || undefined
         }
@@ -324,25 +324,25 @@ export const MovimientoFormPage = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                     <ComboBox
-                        label="Grupo"
-                        value={formData.grupo_id}
+                        label="Centro de Costo"
+                        value={formData.centro_costo_id}
                         onChange={value => {
-                            // Al cambiar grupo, limpiar concepto si ya no es válido
-                            const nuevoGrupoId = value ? parseInt(value) : null
+                            // Al cambiar centro de costo, limpiar concepto si ya no es válido
+                            const nuevoCentroCostoId = value ? parseInt(value) : null
                             const conceptoActual = formData.concepto_id ? parseInt(formData.concepto_id) : null
 
-                            // Verificar si el concepto actual pertenece al nuevo grupo
-                            const conceptoValido = conceptoActual && nuevoGrupoId
-                                ? conceptos.some(c => c.id === conceptoActual && c.grupo_id === nuevoGrupoId)
+                            // Verificar si el concepto actual pertenece al nuevo centro de costo
+                            const conceptoValido = conceptoActual && nuevoCentroCostoId
+                                ? conceptos.some(c => c.id === conceptoActual && c.centro_costo_id === nuevoCentroCostoId)
                                 : false
 
                             setFormData({
                                 ...formData,
-                                grupo_id: value,
+                                centro_costo_id: value,
                                 concepto_id: conceptoValido ? formData.concepto_id : '' // Limpiar si no es válido
                             })
                         }}
-                        options={grupos}
+                        options={centrosCostos}
                         placeholder="Seleccione o busque..."
                         required
                     />
@@ -352,7 +352,7 @@ export const MovimientoFormPage = () => {
                         value={formData.concepto_id}
                         onChange={value => setFormData({ ...formData, concepto_id: value })}
                         options={conceptosFiltrados}
-                        placeholder={formData.grupo_id ? "Seleccione o busque..." : "Primero seleccione un grupo"}
+                        placeholder={formData.centro_costo_id ? "Seleccione o busque..." : "Primero seleccione un centro de costo"}
                         required
                     />
                 </div>

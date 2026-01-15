@@ -43,7 +43,7 @@ export const Sidebar = () => {
         { name: 'Tipo de Movimientos', path: '/maestros/tipos-movimiento', icon: ArrowRightLeft },
         { name: 'Terceros', path: '/maestros/terceros', icon: Users },
         { name: 'Alias Terceros', path: '/maestros/terceros-descripciones', icon: ListTodo },
-        { name: 'Grupos', path: '/maestros/grupos', icon: Layers },
+        { name: 'Centros de Costos', path: '/maestros/centros-costos', icon: Layers },
         { name: 'Conceptos', path: '/maestros/conceptos', icon: Tags },
         { name: 'Config. Filtros', path: '/maestros/config-filtros', icon: Filter },
         { name: 'Reglas Auto', path: '/maestros/reglas', icon: Zap },
@@ -59,7 +59,7 @@ export const Sidebar = () => {
     const menuReportes = [
         { name: 'Reporte Clasificación', path: '/movimientos/reporte', icon: BarChart3 },
         { name: 'Egresos por Tercero', path: '/reportes/egresos-tercero', icon: PieChart },
-        { name: 'Egresos por Grupo', path: '/reportes/egresos-grupo', icon: Layers },
+        { name: 'Egresos por Centro Costo', path: '/reportes/egresos-centro-costo', icon: Layers },
         { name: 'Ingresos y Gastos', path: '/reportes/ingresos-gastos', icon: TrendingUp },
         { name: 'Descargar Movimientos', path: '/reportes/descargar', icon: Download },
     ];

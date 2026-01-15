@@ -4,11 +4,11 @@ import { toast } from 'react-hot-toast'
 import { ArrowRight, Check, TrendingDown, TrendingUp, Search, Calendar, X, ArrowUp, ArrowDown } from 'lucide-react'
 import type { Movimiento } from '../types'
 
-interface SugerenciaGrupo {
+interface SugerenciaCentroCosto {
     tercero_id: number
     tercero_nombre: string
-    grupo_id: number
-    grupo_nombre: string
+    centro_costo_id: number
+    centro_costo_nombre: string
     concepto_id: number
     concepto_nombre: string
     cantidad: number
@@ -18,7 +18,7 @@ interface SugerenciaGrupo {
 }
 
 export const SugerenciasReclasificacionPage = () => {
-    const [sugerencias, setSugerencias] = useState<SugerenciaGrupo[]>([])
+    const [sugerencias, setSugerencias] = useState<SugerenciaCentroCosto[]>([])
     const [loading, setLoading] = useState(true)
     const [procesando, setProcesando] = useState(false)
 
@@ -27,7 +27,7 @@ export const SugerenciasReclasificacionPage = () => {
     const [filtro, setFiltro] = useState('')
 
     // Modal state
-    const [selectedItem, setSelectedItem] = useState<SugerenciaGrupo | null>(null)
+    const [selectedItem, setSelectedItem] = useState<SugerenciaCentroCosto | null>(null)
     const [detallesMovimientos, setDetallesMovimientos] = useState<Movimiento[]>([])
     const [selectedMovimientos, setSelectedMovimientos] = useState<number[]>([])
     const [loadingDetalles, setLoadingDetalles] = useState(false)
@@ -65,8 +65,8 @@ export const SugerenciasReclasificacionPage = () => {
 
         // Custom sort for Clasificación which is a composite in display but we can sort by tercero_display as proxy
         if (sortConfig.key === 'clasificacion') {
-            valA = (a.tercero_display || '') + (a.grupo_display || '')
-            valB = (b.tercero_display || '') + (b.grupo_display || '')
+            valA = (a.tercero_display || '') + (a.centro_costo_display || '')
+            valB = (b.tercero_display || '') + (b.centro_costo_display || '')
         }
 
         if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1
@@ -85,7 +85,7 @@ export const SugerenciasReclasificacionPage = () => {
             setLoading(true)
             const fechaInicio = `${year}-01-01`
             const fechaFin = `${year}-12-31`
-            const data = await apiService.movimientos.obtenerSugerenciasReclasificacion(fechaInicio, fechaFin) as SugerenciaGrupo[]
+            const data = await apiService.movimientos.obtenerSugerenciasReclasificacion(fechaInicio, fechaFin) as SugerenciaCentroCosto[]
             setSugerencias(data)
         } catch (error) {
             console.error(error)
@@ -95,7 +95,7 @@ export const SugerenciasReclasificacionPage = () => {
         }
     }
 
-    const abrirPrevisualizacion = async (item: SugerenciaGrupo) => {
+    const abrirPrevisualizacion = async (item: SugerenciaCentroCosto) => {
         setSelectedItem(item)
         setLoadingDetalles(true)
         try {
@@ -103,7 +103,7 @@ export const SugerenciasReclasificacionPage = () => {
             const fechaFin = `${year}-12-31`
             const data = await apiService.movimientos.obtenerDetallesSugerencia(
                 item.tercero_id,
-                undefined, // grupo_id deprecated
+                undefined, // centro_costo_id deprecated
                 undefined, // concepto_id deprecated
                 fechaInicio,
                 fechaFin
@@ -133,7 +133,7 @@ export const SugerenciasReclasificacionPage = () => {
 
             await apiService.movimientos.reclasificarLote({
                 tercero_id: selectedItem.tercero_id,
-                // grupo_id y concepto_id ya no son requeridos
+                // centro_costo_id y concepto_id ya no son requeridos
                 fecha_inicio: fechaInicio,
                 fecha_fin: fechaFin,
                 movimiento_ids: selectedMovimientos
@@ -426,7 +426,7 @@ export const SugerenciasReclasificacionPage = () => {
                                                         <div className="flex flex-col">
                                                             <span className="font-medium text-gray-700">{mov.tercero_display || '-'}</span>
                                                             <span className="text-xs text-gray-400">
-                                                                {mov.grupo_display || '-'} / {mov.concepto_display || '-'}
+                                                                {mov.centro_costo_display || '-'} / {mov.concepto_display || '-'}
                                                             </span>
                                                         </div>
                                                     </td>

@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
-from src.domain.models.config_filtro_grupo import ConfigFiltroGrupo
+from src.domain.models.config_filtro_centro_costo import ConfigFiltroCentroCosto
 
-class ConfigFiltroGrupoRepository(ABC):
+class ConfigFiltroCentroCostoRepository(ABC):
     """Repository interface for managing filter exclusion configurations."""
     
     @abstractmethod
-    def guardar(self, config: ConfigFiltroGrupo) -> ConfigFiltroGrupo:
+    def guardar(self, config: ConfigFiltroCentroCosto) -> ConfigFiltroCentroCosto:
         """
         Guarda (crea o actualiza) una configuración de filtro.
         
@@ -14,12 +14,12 @@ class ConfigFiltroGrupoRepository(ABC):
             config: Configuración a guardar
             
         Returns:
-            ConfigFiltroGrupo con el ID asignado
+            ConfigFiltroCentroCosto con el ID asignado
         """
         pass
 
     @abstractmethod
-    def obtener_por_id(self, id: int) -> Optional[ConfigFiltroGrupo]:
+    def obtener_por_id(self, id: int) -> Optional[ConfigFiltroCentroCosto]:
         """
         Obtiene una configuración por su ID.
         
@@ -27,12 +27,12 @@ class ConfigFiltroGrupoRepository(ABC):
             id: ID de la configuración
             
         Returns:
-            ConfigFiltroGrupo si existe, None en caso contrario
+            ConfigFiltroCentroCosto si existe, None en caso contrario
         """
         pass
 
     @abstractmethod
-    def obtener_todos(self) -> List[ConfigFiltroGrupo]:
+    def obtener_todos(self) -> List[ConfigFiltroCentroCosto]:
         """
         Obtiene todas las configuraciones de filtros.
         

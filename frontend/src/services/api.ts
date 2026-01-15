@@ -16,9 +16,9 @@ export type { PaginatedResponse } from './httpClient'
 
 // Importar servicios individuales
 import { movimientosService, clasificacionService } from './movements.service'
-import { catalogosService, gruposService, cuentasService, tercerosService, conceptosService } from './catalogs.service'
+import { catalogosService, centrosCostosService, cuentasService, tercerosService, conceptosService } from './catalogs.service'
 import { archivosService } from './files.service'
-import { reglasService, configFiltrosGruposService } from './config.service'
+import { reglasService, configFiltrosCentrosCostosService } from './config.service'
 
 /**
  * Objeto apiService unificado para compatibilidad con código existente
@@ -32,7 +32,9 @@ export const apiService = {
 
     // Catálogos
     catalogos: catalogosService,
-    grupos: gruposService,
+    centrosCostos: centrosCostosService,
+    // Alias opcional para compatibilidad si se desea, o eliminar
+    // grupos: centrosCostosService, 
     cuentas: cuentasService,
     terceros: tercerosService,
     conceptos: conceptosService,
@@ -42,7 +44,7 @@ export const apiService = {
 
     // Configuración
     reglas: reglasService,
-    configFiltrosGrupos: configFiltrosGruposService,
+    configFiltrosCentrosCostos: configFiltrosCentrosCostosService,
 
     // New Terceros methods
     getTerceros: tercerosService.listar,
@@ -57,11 +59,11 @@ export {
     movimientosService,
     clasificacionService,
     catalogosService,
-    gruposService,
+    centrosCostosService,
     cuentasService,
     tercerosService,
     conceptosService,
     archivosService,
     reglasService,
-    configFiltrosGruposService
+    configFiltrosCentrosCostosService
 }

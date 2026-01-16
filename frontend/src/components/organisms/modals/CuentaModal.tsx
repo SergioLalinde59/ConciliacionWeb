@@ -10,7 +10,7 @@ interface Props {
     isOpen: boolean
     cuenta: Cuenta | null
     onClose: () => void
-    onSave: (data: { nombre: string; permite_carga: boolean }) => void
+    onSave: (data: { nombre: string; permite_carga: boolean; permite_conciliar: boolean }) => void
 }
 
 /**
@@ -19,18 +19,20 @@ interface Props {
 export const CuentaModal = ({ isOpen, cuenta, onClose, onSave }: Props) => {
     const [nombre, setNombre] = useState('')
     const [permiteCarga, setPermiteCarga] = useState(false)
+    const [permiteConciliar, setPermiteConciliar] = useState(false)
 
     useEffect(() => {
         if (isOpen) {
             setNombre(cuenta ? cuenta.nombre : '')
             setPermiteCarga(cuenta ? cuenta.permite_carga : false)
+            setPermiteConciliar(cuenta ? cuenta.permite_conciliar : false)
         }
     }, [isOpen, cuenta])
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         if (!nombre.trim()) return
-        onSave({ nombre, permite_carga: permiteCarga })
+        onSave({ nombre, permite_carga: permiteCarga, permite_conciliar: permiteConciliar })
     }
 
     return (
@@ -44,7 +46,7 @@ export const CuentaModal = ({ isOpen, cuenta, onClose, onSave }: Props) => {
                         Cancelar
                     </Button>
                     <Button
-                        onClick={() => nombre.trim() && onSave({ nombre, permite_carga: permiteCarga })}
+                        onClick={() => nombre.trim() && onSave({ nombre, permite_carga: permiteCarga, permite_conciliar: permiteConciliar })}
                         icon={Save}
                         disabled={!nombre.trim()}
                     >
@@ -66,6 +68,12 @@ export const CuentaModal = ({ isOpen, cuenta, onClose, onSave }: Props) => {
                     label="Permitir carga de archivos (Movimientos)"
                     checked={permiteCarga}
                     onChange={(e) => setPermiteCarga(e.target.checked)}
+                />
+
+                <Checkbox
+                    label="Permite Conciliar (Conciliación Bancaria)"
+                    checked={permiteConciliar}
+                    onChange={(e) => setPermiteConciliar(e.target.checked)}
                 />
             </form>
         </Modal>

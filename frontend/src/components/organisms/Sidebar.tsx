@@ -19,7 +19,9 @@ import {
     TrendingUp,
     Sparkles,
     PieChart,
-    Filter
+    Filter,
+    ClipboardCheck,
+    FileText
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -51,9 +53,11 @@ export const Sidebar = () => {
 
     const menuMovimientos = [
         { name: 'Cargar Movimiento', path: '/movimientos/cargar', icon: UploadCloud },
+        { name: 'Cargar Extractos', path: '/conciliacion/cargar-extracto', icon: FileText },
         { name: 'Por Clasificar', path: '/movimientos/clasificar', icon: ListTodo },
         { name: 'Sugerencias Reclasif.', path: '/movimientos/sugerencias', icon: Sparkles },
         { name: 'Movimientos', path: '/movimientos', icon: Receipt },
+        { name: 'Conciliación', path: '/conciliacion', icon: ClipboardCheck },
     ];
 
     const menuReportes = [

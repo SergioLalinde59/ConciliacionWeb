@@ -67,3 +67,9 @@ def get_config_filtro_centro_costo_repository(conn=Depends(get_db_connection)) -
 def get_config_valor_pendiente_repository(conn=Depends(get_db_connection)) -> ConfigValorPendienteRepository:
     return PostgresConfigValorPendienteRepository(conn)
 
+
+from src.infrastructure.database.postgres_conciliacion_repository import PostgresConciliacionRepository
+from src.domain.ports.conciliacion_repository import ConciliacionRepository
+
+def get_conciliacion_repository(conn=Depends(get_db_connection)) -> ConciliacionRepository:
+    return PostgresConciliacionRepository(conn)

@@ -10,18 +10,23 @@ from src.domain.ports.moneda_repository import MonedaRepository
 # Por simplicidad, importamos directamente aquí.
 from src.infrastructure.extractors.bancolombia import extraer_movimientos_bancolombia
 from src.infrastructure.extractors.creditcard import extraer_movimientos_credito
-from src.infrastructure.extractors.fondorenta import extraer_movimientos_fondorenta
+from src.infrastructure.extractors.fondorenta import extraer_movimientos_fondorenta, extraer_resumen_fondorenta
 
 from src.domain.ports.tercero_repository import TerceroRepository
+from src.domain.ports.conciliacion_repository import ConciliacionRepository
+from src.domain.models.conciliacion import Conciliacion
+from src.infrastructure.extractors.bancolombia import extraer_resumen_bancolombia
 
 class ProcesadorArchivosService:
     def __init__(self, 
                  movimiento_repo: MovimientoRepository, 
                  moneda_repo: MonedaRepository,
-                 tercero_repo: TerceroRepository):
+                 tercero_repo: TerceroRepository,
+                 conciliacion_repo: Optional[ConciliacionRepository] = None):
         self.movimiento_repo = movimiento_repo
         self.moneda_repo = moneda_repo
         self.tercero_repo = tercero_repo
+        self.conciliacion_repo = conciliacion_repo
         
         # Cache de monedas para evitar consultas repetitivas
         self._monedas_cache = {}
@@ -251,7 +256,7 @@ class ProcesadorArchivosService:
                     cuenta_id=cuenta_id,
                     usd=usd_val,  # Valor USD o None
                     trm=None,
-                    tercero_id=None, grupo_id=None, concepto_id=None,
+                    tercero_id=None, centro_costo_id=None, concepto_id=None,
                     id=None  # Se genera al guardar
                 )
                 
@@ -268,4 +273,117 @@ class ProcesadorArchivosService:
             "nuevos_insertados": insertados,
             "duplicados": duplicados,
             "errores": errores
+        }
+
+    def analizar_extracto(self, file_obj: Any, filename: str, tipo_cuenta: str) -> Dict[str, Any]:
+        """
+        Analiza un PDF y extrae el resumen (Saldos) sin guardar.
+        """
+        datos = {}
+        if tipo_cuenta == 'bancolombia_ahorro':
+            datos = extraer_resumen_bancolombia(file_obj)
+        elif tipo_cuenta == 'FondoRenta':  # Value from frontend
+            import logging
+            logger = logging.getLogger("app_logger")
+            logger.error(f"DEBUG: SERVICE Calling extraer_resumen_fondorenta for {filename} - vReloadCheck")
+            
+            # FORCE RELOAD to ensure we get the debug prints
+            try:
+                import importlib
+                from src.infrastructure.extractors import fondorenta
+                importlib.reload(fondorenta)
+                logger.error("DEBUG: Force reloaded fondorenta module")
+                datos = fondorenta.extraer_resumen_fondorenta(file_obj)
+                logger.error(f"DEBUG: SERVICE Returned from extractor. Data keys: {list(datos.keys()) if datos else 'None'}")
+            except Exception as e:
+                logger.error(f"DEBUG: Error reloading/calling fondorenta: {e}")
+                # Log traceback
+                import traceback
+                logger.error(traceback.format_exc())
+                raise e
+        else:
+            raise ValueError(f"Extracción de resumen no soportada para: {tipo_cuenta}")
+            
+        if not datos:
+            raise ValueError("No se pudo extraer el resumen del archivo. Verifique el formato.")
+            
+        return datos
+
+    def procesar_extracto(self, file_obj: Any, filename: str, tipo_cuenta: str, cuenta_id: int, year: Optional[int] = None, month: Optional[int] = None) -> Dict[str, Any]:
+        """
+        Procesa un extracto y actualiza la conciliación.
+        """
+        # 1. Extraer
+        datos = self.analizar_extracto(file_obj, filename, tipo_cuenta)
+        
+        # 2. Validar o ajustar datos si es necesario
+        # Por seguridad, si el usuario envió year/month, usamos esos, pero podríamos validar contra el PDF si extrajimos fechas
+        
+        if not year or not month:
+            # Intentar usar los del extracto
+            year_extracto = datos.get('year')
+            month_extracto = datos.get('month')
+            
+            if year_extracto and month_extracto:
+                year = year_extracto
+                month = month_extracto
+            else:
+                raise ValueError("No se pudo determinar el periodo (Año/Mes) del extracto. Por favor verifique el PDF o ingréselo manualmente si la opción existe.")
+        
+        # 3. Crear objeto Conciliacion
+        # Nota: sistema_entradas/salidas se calculan o se dejan como estaban.
+        # Al usar 'guardar', el repositorio hace upsert.
+        
+        # Buscamos si existe para preservar datos del sistema?
+        # El repo maneja upsert, pero necesitamos saber si ya existe para no borrar lo del sistema
+        # De hecho, el upsert SQL que tenemos solo actualiza los campos del extracto si hay conflicto
+        # PERO, necesitamos pasarle valores completos o el repo debe manejar actualizaciones parciales.
+        # Nuestro repo.guardar actualiza TODO.
+        # Mejor estrategia: Obtener existente -> Actualizar campos extracto -> Guardar
+        
+        if not self.conciliacion_repo:
+            raise Exception("ConciliacionRepository no inyectado")
+
+        conciliacion_actual = self.conciliacion_repo.obtener_por_periodo(cuenta_id, year, month)
+        
+        # fecha_corte = date(year, month, 1) # Default si no viene
+        # Intenta usar fin de mes si se puede calcular, pero por ahora dia 1 es seguro para identificar el mes
+        import calendar
+        last_day = calendar.monthrange(year, month)[1]
+        fecha_corte = date(year, month, last_day)
+
+        if conciliacion_actual:
+            conciliacion_actual.extracto_saldo_anterior = datos.get('saldo_anterior', Decimal(0))
+            conciliacion_actual.extracto_entradas = datos.get('entradas', Decimal(0))
+            conciliacion_actual.extracto_salidas = datos.get('salidas', Decimal(0))
+            conciliacion_actual.extracto_saldo_final = datos.get('saldo_final', Decimal(0))
+            conciliacion_actual.fecha_corte = fecha_corte
+            conciliacion_to_save = conciliacion_actual
+        else:
+            conciliacion_to_save = Conciliacion(
+                id=None,
+                cuenta_id=cuenta_id,
+                year=year,
+                month=month,
+                fecha_corte=fecha_corte,
+                extracto_saldo_anterior=datos.get('saldo_anterior', Decimal(0)),
+                extracto_entradas=datos.get('entradas', Decimal(0)),
+                extracto_salidas=datos.get('salidas', Decimal(0)),
+                extracto_saldo_final=datos.get('saldo_final', Decimal(0)),
+                sistema_entradas=Decimal(0),
+                sistema_salidas=Decimal(0),
+                sistema_saldo_final=Decimal(0),
+                diferencia_saldo=None,
+                datos_extra={"archivo_extracto": filename},
+                estado='PENDIENTE'
+            )
+            
+        guardado = self.conciliacion_repo.guardar(conciliacion_to_save)
+        
+        # Opcional: Recalcular sistema para tener la foto completa
+        final = self.conciliacion_repo.recalcular_sistema(cuenta_id, year, month)
+        
+        return {
+            "mensaje": "Extracto cargado correctamente",
+            "conciliacion": final
         }

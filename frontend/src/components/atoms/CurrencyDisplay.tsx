@@ -52,12 +52,13 @@ export const formatCurrency = (
     showSymbol: boolean = true
 ): string => {
     const config = CURRENCY_CONFIG[currency]
+    const numValue = Number(value)
 
     if (showSymbol) {
-        return new Intl.NumberFormat(config.locale, config.options).format(value)
+        return new Intl.NumberFormat(config.locale, config.options).format(numValue)
     }
 
-    return value.toLocaleString(config.locale, {
+    return numValue.toLocaleString(config.locale, {
         maximumFractionDigits: currency === 'USD' ? 2 : 0,
         minimumFractionDigits: currency === 'USD' ? 2 : 0
     })
@@ -67,10 +68,19 @@ export const formatCurrency = (
  * Función para obtener solo el número formateado sin símbolo
  */
 export const formatNumber = (value: number, decimals: number = 0): string => {
-    return value.toLocaleString('es-CO', {
+    return Number(value).toLocaleString('es-CO', {
         maximumFractionDigits: decimals,
         minimumFractionDigits: decimals
     })
+}
+
+/**
+ * Obtiene la clase de color basada en el valor
+ */
+export const getNumberColorClass = (value: number): string => {
+    if (value > 0) return 'text-emerald-600'
+    if (value < 0) return 'text-rose-600'
+    return 'text-blue-600'
 }
 
 /**
@@ -101,12 +111,7 @@ export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
     const shouldShowSymbol = showSymbol ?? showCurrency ?? true
 
     // Determinar el color basado en el valor
-    const getColorClass = (): string => {
-        if (!colorize) return ''
-        if (value > 0) return 'text-emerald-600'
-        if (value < 0) return 'text-rose-600'
-        return 'text-blue-600'
-    }
+    const colorClass = colorize ? getNumberColorClass(value) : ''
 
     // Formatear el valor
     const formattedValue = formatCurrency(value, currency, shouldShowSymbol)
@@ -117,8 +122,9 @@ export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
         : formattedValue
 
     return (
-        <span className={`${getColorClass()} ${className}`}>
+        <span className={`${colorClass} ${className}`}>
             {displayValue}
         </span>
     )
 }
+

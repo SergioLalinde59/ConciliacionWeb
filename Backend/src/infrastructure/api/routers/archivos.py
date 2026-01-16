@@ -2,19 +2,21 @@ from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
 from typing import Dict, Any
 
 from src.application.services.procesador_archivos_service import ProcesadorArchivosService
-from src.infrastructure.api.dependencies import get_movimiento_repository, get_moneda_repository, get_tercero_repository
+from src.infrastructure.api.dependencies import get_movimiento_repository, get_moneda_repository, get_tercero_repository, get_conciliacion_repository
 from src.domain.ports.movimiento_repository import MovimientoRepository
 from src.domain.ports.moneda_repository import MonedaRepository
 from src.domain.ports.tercero_repository import TerceroRepository
+from src.domain.ports.conciliacion_repository import ConciliacionRepository
 
 router = APIRouter(prefix="/api/archivos", tags=["archivos"])
 
 def get_procesador_service(
     mov_repo: MovimientoRepository = Depends(get_movimiento_repository),
     moneda_repo: MonedaRepository = Depends(get_moneda_repository),
-    tercero_repo: TerceroRepository = Depends(get_tercero_repository)
+    tercero_repo: TerceroRepository = Depends(get_tercero_repository),
+    conciliacion_repo: ConciliacionRepository = Depends(get_conciliacion_repository)
 ) -> ProcesadorArchivosService:
-    return ProcesadorArchivosService(mov_repo, moneda_repo, tercero_repo)
+    return ProcesadorArchivosService(mov_repo, moneda_repo, tercero_repo, conciliacion_repo)
 
 @router.post("/cargar")
 async def cargar_archivo(

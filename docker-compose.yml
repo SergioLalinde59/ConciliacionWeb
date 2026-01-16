@@ -1,10 +1,9 @@
-
-
 services:
   db:
     image: postgres:18-alpine
     container_name: mvtos_db
     environment:
+      TZ: "America/Bogota"
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_NAME:-Mvtos}
@@ -23,6 +22,7 @@ services:
       context: ./Backend
     container_name: mvtos_backend
     environment:
+      - TZ=America/Bogota
       - DB_HOST=host.docker.internal
       - DB_PORT=5433
       - DB_NAME=${DB_NAME:-Mvtos}

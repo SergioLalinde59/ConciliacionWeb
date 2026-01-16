@@ -22,7 +22,8 @@ from src.infrastructure.api.routers import (
     archivos,
     reglas,
     config_filtros_centros_costos,
-    tercero_descripciones
+    tercero_descripciones,
+    conciliaciones
 )
 
 
@@ -98,6 +99,7 @@ app.include_router(archivos.router)
 app.include_router(reglas.router)
 app.include_router(config_filtros_centros_costos.router)
 app.include_router(tercero_descripciones.router)
+app.include_router(conciliaciones.router)
 
 logger.info("Todos los routers registrados")
 

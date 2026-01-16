@@ -14,6 +14,7 @@ export interface Cuenta {
     id: number
     nombre: string
     permite_carga: boolean
+    permite_conciliar: boolean
 }
 
 export interface Moneda {

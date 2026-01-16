@@ -58,13 +58,17 @@ export const CuentasPage = () => {
             })
     }
 
-    const handleSave = (data: { nombre: string, permite_carga: boolean }) => {
+    const handleSave = (data: { nombre: string, permite_carga: boolean, permite_conciliar: boolean }) => {
         if (itemEditando) {
             // Actualizar
             fetch(`${API_BASE_URL}/api/cuentas/${itemEditando.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cuenta: data.nombre, permite_carga: data.permite_carga })
+                body: JSON.stringify({
+                    cuenta: data.nombre,
+                    permite_carga: data.permite_carga,
+                    permite_conciliar: data.permite_conciliar
+                })
             }).then(res => {
                 if (res.ok) {
                     toast.success('Cuenta actualizada')
@@ -79,7 +83,11 @@ export const CuentasPage = () => {
             fetch(`${API_BASE_URL}/api/cuentas`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cuenta: data.nombre, permite_carga: data.permite_carga })
+                body: JSON.stringify({
+                    cuenta: data.nombre,
+                    permite_carga: data.permite_carga,
+                    permite_conciliar: data.permite_conciliar
+                })
             }).then(res => {
                 if (res.ok) {
                     toast.success('Cuenta creada')

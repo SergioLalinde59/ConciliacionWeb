@@ -14,12 +14,14 @@ import { ReporteClasificacionesPage } from './pages/ReporteClasificacionesPage'
 import { ClasificarMovimientosPage } from './pages/ClasificarMovimientosPage'
 import { ReporteIngresosGastosMesPage } from './pages/ReporteIngresosGastosMesPage'
 import { UploadMovimientosPage } from './pages/UploadMovimientosPage'
+import { UploadExtractoPage } from './pages/UploadExtractoPage'
 import { ReglasPage } from './pages/ReglasPage'
 import { DescargarMovimientosPage } from './pages/DescargarMovimientosPage'
 import { SugerenciasReclasificacionPage } from './pages/SugerenciasReclasificacionPage'
 import { ReporteEgresosTerceroPage } from './pages/ReporteEgresosTerceroPage'
 import { ReporteEgresosCentroCostoPage } from './pages/ReporteEgresosCentroCostoPage'
 import { ConfigFiltrosCentrosCostosPage } from './pages/ConfigFiltrosCentrosCostosPage'
+import { ConciliacionPage } from './pages/ConciliacionPage'
 
 
 function App() {
@@ -39,6 +41,7 @@ function App() {
                     <Route path="/maestros/reglas" element={<ReglasPage />} />
                     <Route path="/movimientos" element={<MovimientosPage />} />
                     <Route path="/movimientos/cargar" element={<UploadMovimientosPage />} />
+                    <Route path="/conciliacion/cargar-extracto" element={<UploadExtractoPage />} />
                     <Route path="/movimientos/nuevo" element={<MovimientoFormPage />} />
                     <Route path="/movimientos/reporte" element={<ReporteClasificacionesPage />} />
                     <Route path="/movimientos/sugerencias" element={<SugerenciasReclasificacionPage />} />
@@ -48,6 +51,7 @@ function App() {
                     <Route path="/reportes/descargar" element={<DescargarMovimientosPage />} />
                     <Route path="/movimientos/clasificar" element={<ClasificarMovimientosPage />} />
                     <Route path="/movimientos/editar/:id" element={<MovimientoFormPage />} />
+                    <Route path="/conciliacion" element={<ConciliacionPage />} />
                     <Route path="/mvtos/*" element={
                         <div className="p-8">
                             <h1 className="text-2xl font-bold text-gray-400">Próximamente</h1>

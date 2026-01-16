@@ -12,13 +12,13 @@ class PostgresCuentaRepository(CuentaRepository):
         try:
             if cuenta.cuentaid:
                 cursor.execute(
-                    "UPDATE cuentas SET cuenta = %s, activa = %s, permite_carga = %s WHERE cuentaid = %s",
-                    (cuenta.cuenta, cuenta.activa, cuenta.permite_carga, cuenta.cuentaid)
+                    "UPDATE cuentas SET cuenta = %s, activa = %s, permite_carga = %s, permite_conciliar = %s WHERE cuentaid = %s",
+                    (cuenta.cuenta, cuenta.activa, cuenta.permite_carga, cuenta.permite_conciliar, cuenta.cuentaid)
                 )
             else:
                 cursor.execute(
-                    "INSERT INTO cuentas (cuenta, activa, permite_carga) VALUES (%s, %s, %s) RETURNING cuentaid",
-                    (cuenta.cuenta, cuenta.activa, cuenta.permite_carga)
+                    "INSERT INTO cuentas (cuenta, activa, permite_carga, permite_conciliar) VALUES (%s, %s, %s, %s) RETURNING cuentaid",
+                    (cuenta.cuenta, cuenta.activa, cuenta.permite_carga, cuenta.permite_conciliar)
                 )
                 cuenta.cuentaid = cursor.fetchone()[0]
             self.conn.commit()
@@ -31,24 +31,24 @@ class PostgresCuentaRepository(CuentaRepository):
 
     def obtener_por_id(self, cuentaid: int) -> Optional[Cuenta]:
         cursor = self.conn.cursor()
-        cursor.execute("SELECT cuentaid, cuenta, activa, permite_carga FROM cuentas WHERE cuentaid = %s AND activa = TRUE", (cuentaid,))
+        cursor.execute("SELECT cuentaid, cuenta, activa, permite_carga, permite_conciliar FROM cuentas WHERE cuentaid = %s AND activa = TRUE", (cuentaid,))
         row = cursor.fetchone()
         cursor.close()
-        return Cuenta(cuentaid=row[0], cuenta=row[1], activa=row[2], permite_carga=row[3]) if row else None
+        return Cuenta(cuentaid=row[0], cuenta=row[1], activa=row[2], permite_carga=row[3], permite_conciliar=row[4]) if row else None
 
     def obtener_todos(self) -> List[Cuenta]:
         cursor = self.conn.cursor()
-        cursor.execute("SELECT cuentaid, cuenta, activa, permite_carga FROM cuentas WHERE activa = TRUE ORDER BY cuenta")
+        cursor.execute("SELECT cuentaid, cuenta, activa, permite_carga, permite_conciliar FROM cuentas WHERE activa = TRUE ORDER BY cuenta")
         rows = cursor.fetchall()
         cursor.close()
-        return [Cuenta(cuentaid=r[0], cuenta=r[1], activa=r[2], permite_carga=r[3]) for r in rows]
+        return [Cuenta(cuentaid=r[0], cuenta=r[1], activa=r[2], permite_carga=r[3], permite_conciliar=r[4]) for r in rows]
 
     def buscar_por_nombre(self, nombre: str) -> Optional[Cuenta]:
         cursor = self.conn.cursor()
-        cursor.execute("SELECT cuentaid, cuenta, activa, permite_carga FROM cuentas WHERE LOWER(cuenta) = LOWER(%s) AND activa = TRUE", (nombre,))
+        cursor.execute("SELECT cuentaid, cuenta, activa, permite_carga, permite_conciliar FROM cuentas WHERE LOWER(cuenta) = LOWER(%s) AND activa = TRUE", (nombre,))
         row = cursor.fetchone()
         cursor.close()
-        return Cuenta(cuentaid=row[0], cuenta=row[1], activa=row[2], permite_carga=row[3]) if row else None
+        return Cuenta(cuentaid=row[0], cuenta=row[1], activa=row[2], permite_carga=row[3], permite_conciliar=row[4]) if row else None
 
     def eliminar(self, cuentaid: int):
         cursor = self.conn.cursor()

@@ -90,3 +90,24 @@ export const getUltimos12Meses = () => {
     const fin = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0)
     return { inicio: formatDateISO(inicio), fin: formatDateISO(fin) }
 }
+
+export const getMonthsBetween = (startDateStr: string, endDateStr: string): { year: number, month: number }[] => {
+    const start = parseDateISO(startDateStr)
+    const end = parseDateISO(endDateStr)
+    const result: { year: number, month: number }[] = []
+
+    // Start with the first day of the start month
+    let current = new Date(start.getFullYear(), start.getMonth(), 1)
+    // End with the first day of the end month to ensure comparison works
+    const target = new Date(end.getFullYear(), end.getMonth(), 1)
+
+    while (current <= target) {
+        result.push({
+            year: current.getFullYear(),
+            month: current.getMonth() + 1
+        })
+        current.setMonth(current.getMonth() + 1)
+    }
+
+    return result
+}

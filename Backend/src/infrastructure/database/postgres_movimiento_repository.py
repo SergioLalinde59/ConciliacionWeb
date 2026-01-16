@@ -4,14 +4,20 @@ from decimal import Decimal
 import psycopg2
 from src.domain.models.movimiento import Movimiento
 from src.domain.ports.movimiento_repository import MovimientoRepository
+from src.infrastructure.database.postgres_conciliacion_repository import PostgresConciliacionRepository
 
 class PostgresMovimientoRepository(MovimientoRepository):
     """
     Adaptador de Base de Datos para Movimientos en PostgreSQL.
     """
     
+    
+
     def __init__(self, connection):
         self.conn = connection
+        # Instanciar repositorio de conciliacion "on-the-fly" usando la misma conexión
+        # Esto evita inyeccion compleja en este punto, manteniendo el coupling aceptable para un hook
+        self.conciliacion_repo = PostgresConciliacionRepository(connection)
 
     def _get_ids_traslados(self) -> tuple[Optional[int], Optional[int]]:
         """Busca dinámicamente el ID de centro_costo y concepto para 'Traslados'"""
@@ -43,7 +49,8 @@ class PostgresMovimientoRepository(MovimientoRepository):
                            concepto_id: Optional[int] = None,
                            centros_costos_excluidos: Optional[List[int]] = None,
                            solo_pendientes: bool = False,
-                           tipo_movimiento: Optional[str] = None
+                           tipo_movimiento: Optional[str] = None,
+                           descripcion_contiene: Optional[str] = None
     ) -> tuple[str, list]:
         """
         Construye la cláusula WHERE y los parámetros para los filtros comunes.
@@ -84,6 +91,10 @@ class PostgresMovimientoRepository(MovimientoRepository):
                 conditions.append("m.Valor > 0")
             elif tipo_movimiento == 'egresos':
                 conditions.append("m.Valor < 0")
+        
+        if descripcion_contiene:
+            conditions.append("m.Descripcion ILIKE %s")
+            params.append(f"%{descripcion_contiene}%")
         
         if not conditions:
             return "", []
@@ -155,6 +166,20 @@ class PostgresMovimientoRepository(MovimientoRepository):
                 mov.created_at = result[1]
             
             self.conn.commit()
+            
+            # --- AUTO-RECONCILIATION HOOK ---
+            try:
+                # Solo recalculamos si hay cuenta asociada y fecha
+                if mov.cuenta_id and mov.fecha:
+                    year = mov.fecha.year
+                    month = mov.fecha.month
+                    # Recalcular sin bloquear el retorno (si falla, logueamos pero no fallamos el request principal?)
+                    # Por ahora dejamos que falle si la BD está mal, para integridad.
+                    self.conciliacion_repo.recalcular_sistema(mov.cuenta_id, year, month)
+            except Exception as e:
+                # Opcional: Loguear warning pero no detener el flujo principal
+                print(f"WARNING: Error al recalcular conciliacion: {e}")
+                
             return mov
         except Exception as e:
             self.conn.rollback()
@@ -368,6 +393,7 @@ class PostgresMovimientoRepository(MovimientoRepository):
                        centros_costos_excluidos: Optional[List[int]] = None,
                        solo_pendientes: bool = False,
                        tipo_movimiento: Optional[str] = None,
+                       descripcion_contiene: Optional[str] = None,
                        skip: int = 0,
                        limit: Optional[int] = None
     ) -> tuple[List[Movimiento], int]:
@@ -406,7 +432,8 @@ class PostgresMovimientoRepository(MovimientoRepository):
             concepto_id=concepto_id,
             centros_costos_excluidos=centros_costos_excluidos,
             solo_pendientes=solo_pendientes,
-            tipo_movimiento=tipo_movimiento
+            tipo_movimiento=tipo_movimiento,
+            descripcion_contiene=descripcion_contiene
         )
         
         query += where_clause

@@ -19,6 +19,7 @@ import { movimientosService, clasificacionService } from './movements.service'
 import { catalogosService, centrosCostosService, cuentasService, tercerosService, conceptosService } from './catalogs.service'
 import { archivosService } from './files.service'
 import { reglasService, configFiltrosCentrosCostosService } from './config.service'
+import { conciliacionService } from './conciliacionService'
 
 /**
  * Objeto apiService unificado para compatibilidad con código existente
@@ -51,7 +52,10 @@ export const apiService = {
     getTerceroDescripciones: tercerosService.listarDescripciones,
     createTerceroDescripcion: tercerosService.crearDescripcion,
     updateTerceroDescripcion: tercerosService.actualizarDescripcion,
-    deleteTerceroDescripcion: tercerosService.eliminarDescripcion
+    deleteTerceroDescripcion: tercerosService.eliminarDescripcion,
+
+    // Conciliacion
+    conciliacion: conciliacionService
 }
 
 // Exportar servicios individuales para uso directo
@@ -65,5 +69,6 @@ export {
     conceptosService,
     archivosService,
     reglasService,
-    configFiltrosCentrosCostosService
+    configFiltrosCentrosCostosService,
+    conciliacionService
 }

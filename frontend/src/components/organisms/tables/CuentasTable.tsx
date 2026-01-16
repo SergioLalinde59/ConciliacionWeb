@@ -26,6 +26,17 @@ export const CuentasTable = ({ cuentas, loading, onEdit, onDelete }: Props) => {
                     ? <CheckCircle size={18} className="text-green-500 mx-auto" />
                     : <XCircle size={18} className="text-gray-300 mx-auto" />
             )
+        },
+        {
+            key: 'permite_conciliar',
+            header: 'Permite Conciliar',
+            align: 'center',
+            width: 'w-32',
+            accessor: (row) => (
+                row.permite_conciliar
+                    ? <CheckCircle size={18} className="text-green-500 mx-auto" />
+                    : <XCircle size={18} className="text-gray-300 mx-auto" />
+            )
         }
     ]
 

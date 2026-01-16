@@ -188,7 +188,11 @@ class ClasificacionService:
         # ============================================
         # 2. BUSCAR POR DESCRIPCIÓN en tercero_descripciones
         # ============================================
-        if not sugerencia['tercero_id'] and self.tercero_descripcion_repo:
+        # IMPORTANTE: Solo buscar por descripción si el movimiento TIENE referencia
+        # Si no tiene referencia, no sugerir tercero basándose solo en descripción
+        tiene_referencia = bool(movimiento.referencia and len(movimiento.referencia.strip()) > 0)
+        
+        if not sugerencia['tercero_id'] and tiene_referencia and self.tercero_descripcion_repo:
             descripcion = movimiento.descripcion or ""
             
             # Extraer las primeras palabras significativas para buscar
@@ -226,22 +230,80 @@ class ClasificacionService:
         # ============================================
         # 3. CONTEXTO HISTÓRICO
         # ============================================
-        # Caso especial: Fondo Renta (cuenta_id=3) - siempre mostrar últimos 5 movimientos clasificados
+        # Caso especial: "Traslado de Fondo" sin referencia para cuentas Ahorros (1) o Fondo Renta (3)
+        es_ahorros = movimiento.cuenta_id == 1
         es_fondo_renta = movimiento.cuenta_id == 3
         
-        if es_fondo_renta:
+        # Verificar si la descripción contiene "Traslado De Fondo" o "Traslado a Fondo"
+        descripcion_upper = (movimiento.descripcion or "").upper()
+        es_traslado_fondo = ("TRASLADO DE FONDO" in descripcion_upper or 
+                            "TRASLADO A FONDO" in descripcion_upper)
+        
+        # Si es traslado de fondo sin referencia en cuentas Ahorros o Fondo Renta
+        if (es_ahorros or es_fondo_renta) and not tiene_referencia and es_traslado_fondo:
+            # Buscar directamente en la base de datos movimientos que contengan "Traslado" + "Fondo"
+            # Esto es más eficiente que traer todos y filtrar en memoria
+            movs_todas, _ = self.movimiento_repo.buscar_avanzado(
+                descripcion_contiene="Traslado Fondo",  # Busca palabras en la descripción
+                limit=100  # Limitar a los últimos 100 que cumplan
+            )
+            
+            # Filtrar adicionales que cumplan:
+            # 1. Cuenta es Ahorros (1) o Fondo Renta (3)
+            # 2. Ya clasificados (con tercero, centro de costo y concepto)
+            contexto_movimientos = [
+                m for m in movs_todas 
+                if m.id != movimiento.id 
+                and m.cuenta_id in (1, 3)  # Ahorros o Fondo Renta
+                and m.tercero_id is not None
+                and m.centro_costo_id is not None
+                and m.concepto_id is not None
+            ]
+        
+        # Caso especial: Fondo Renta (cuenta_id=3) - siempre mostrar últimos 5 movimientos clasificados
+        elif es_fondo_renta:
             # Para Fondo Renta: obtener últimos movimientos de esta cuenta que ya estén clasificados
             movs_cuenta, _ = self.movimiento_repo.buscar_avanzado(
                 cuenta_id=3,
                 limit=50
             )
-            contexto_movimientos = [
-                m for m in movs_cuenta 
-                if m.id != movimiento.id 
-                and m.tercero_id is not None
-                and m.centro_costo_id is not None
-                and m.concepto_id is not None
-            ]
+            
+            # IMPORTANTE: Si el movimiento actual NO tiene referencia, solo mostrar historial SIN referencia
+            if not tiene_referencia:
+                contexto_movimientos = [
+                    m for m in movs_cuenta 
+                    if m.id != movimiento.id 
+                    and m.tercero_id is not None
+                    and m.centro_costo_id is not None
+                    and m.concepto_id is not None
+                    and not m.referencia  # Solo sin referencia
+                ]
+                
+                # Adicionalmente filtrar por descripción similar
+                if contexto_movimientos:
+                    desc_actual = movimiento.descripcion or ""
+                    palabras_ignorar = {'y', 'de', 'la', 'el', 'en', 'a', 'por', 'para', 'con', 'cop', 'usd', 'traslado', 'fondo', 'renta'}
+                    palabras = desc_actual.split()
+                    palabras_significativas = [p for p in palabras if p.lower() not in palabras_ignorar and len(p) > 2]
+                    
+                    # Si hay palabras significativas, filtrar por similitud
+                    if palabras_significativas and len(palabras_significativas) >= 2:
+                        patron_busqueda = " ".join(palabras_significativas[:3]).lower()
+                        contexto_filtrado = [
+                            m for m in contexto_movimientos
+                            if patron_busqueda in (m.descripcion or "").lower()
+                        ]
+                        if contexto_filtrado:
+                            contexto_movimientos = contexto_filtrado
+            else:
+                # Si tiene referencia, mostrar todos los movimientos clasificados
+                contexto_movimientos = [
+                    m for m in movs_cuenta 
+                    if m.id != movimiento.id 
+                    and m.tercero_id is not None
+                    and m.centro_costo_id is not None
+                    and m.concepto_id is not None
+                ]
         elif sugerencia['tercero_id'] and not referencia_no_existe:
             # Caso normal: mostrar historial del tercero sugerido
             movs_tercero, _ = self.movimiento_repo.buscar_avanzado(
@@ -298,9 +360,26 @@ class ClasificacionService:
                     if contexto_filtrado:
                         contexto_movimientos = contexto_filtrado
         
-        # Ordenar por fecha descendente
+        # Ordenar por fecha descendente y limitar a 5
         contexto_movimientos.sort(key=lambda x: x.fecha, reverse=True)
         contexto_movimientos = contexto_movimientos[:5]
+        
+        # ============================================
+        # 6. SUGERIR TERCERO SI TODOS SON IGUALES EN EL HISTORIAL
+        # ============================================
+        # Si no hay sugerencia de tercero aún, y hay contexto histórico,
+        # verificar si todos los movimientos tienen el mismo tercero
+        if not sugerencia['tercero_id'] and contexto_movimientos:
+            terceros_unicos = set(m.tercero_id for m in contexto_movimientos if m.tercero_id)
+            
+            # Si hay exactamente un tercero único en todos los movimientos históricos
+            if len(terceros_unicos) == 1:
+                tercero_comun_id = terceros_unicos.pop()
+                tercero_comun = self.tercero_repo.obtener_por_id(tercero_comun_id)
+                if tercero_comun:
+                    sugerencia['tercero_id'] = tercero_comun_id
+                    sugerencia['razon'] = f"Todos los movimientos históricos similares son de: {tercero_comun.tercero}"
+                    sugerencia['tipo_match'] = 'tercero_comun_historico'
 
         return {
             'movimiento_id': movimiento.id,

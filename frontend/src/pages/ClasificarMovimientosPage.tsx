@@ -406,6 +406,7 @@ export const ClasificarMovimientosPage: React.FC = () => {
                                         <thead>
                                             <tr className="bg-gray-50 text-left text-gray-500">
                                                 <th className="px-4 py-2">Fecha</th>
+                                                <th className="px-4 py-2">Cuenta</th>
                                                 <th className="px-4 py-2">Referencia</th>
                                                 <th className="px-4 py-2">Descripción</th>
                                                 <th className="px-4 py-2">Valor</th>
@@ -418,6 +419,9 @@ export const ClasificarMovimientosPage: React.FC = () => {
                                             {sugerenciaData.contexto.map((ctx) => (
                                                 <tr key={ctx.id} className="border-b hover:bg-gray-50">
                                                     <td className="px-4 py-2 whitespace-nowrap">{ctx.fecha}</td>
+                                                    <td className="px-4 py-2 text-sm text-blue-600 font-medium whitespace-nowrap">
+                                                        {ctx.cuenta_display || '-'}
+                                                    </td>
                                                     <td className="px-4 py-2 text-sm font-medium text-gray-900 whitespace-nowrap">{ctx.referencia || '-'}</td>
                                                     <td className="px-4 py-2 text-xs text-gray-500 max-w-xs line-clamp-3" title={ctx.descripcion}>{ctx.descripcion}</td>
                                                     <td className="px-4 py-2"><CurrencyDisplay value={ctx.valor} /></td>

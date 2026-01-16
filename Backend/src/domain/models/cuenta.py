@@ -8,6 +8,7 @@ class Cuenta:
     cuenta: str
     activa: bool = True
     permite_carga: bool = False
+    permite_conciliar: bool = False
 
     def __post_init__(self):
         if not self.cuenta:

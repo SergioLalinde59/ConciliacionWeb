@@ -118,5 +118,17 @@ export interface ConfigFiltroCentroCosto {
 }
 
 
+
+export interface CuentaExtractor {
+    id?: number
+    cuenta_id: number
+    tipo: string
+    modulo: string
+    orden: number
+    activo: boolean
+    created_at?: string
+}
+
 // Force module compilation
 export const _types_module = true
+

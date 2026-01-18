@@ -27,6 +27,18 @@ export interface Column<T> {
 }
 
 /**
+ * Definición de un grupo de encabezados
+ */
+export interface HeaderGroup {
+    /** Título del grupo */
+    title: React.ReactNode
+    /** Cuantas columnas abarca */
+    colSpan: number
+    /** Clases CSS adicionales */
+    className?: string
+}
+
+/**
  * Props para DataTable
  */
 export interface DataTableProps<T> {
@@ -34,6 +46,8 @@ export interface DataTableProps<T> {
     data: T[]
     /** Definición de columnas */
     columns: Column<T>[]
+    /** Grupos de encabezados (opcional) */
+    headerGroups?: HeaderGroup[]
     /** Si está cargando los datos */
     loading?: boolean
     /** Mensaje cuando está cargando */
@@ -81,6 +95,7 @@ type SortDirection = 'asc' | 'desc' | null
 export function DataTable<T extends Record<string, any>>({
     data,
     columns,
+    headerGroups,
     loading = false,
     loadingMessage = 'Cargando...',
     emptyMessage = 'No hay datos para mostrar.',
@@ -193,6 +208,19 @@ export function DataTable<T extends Record<string, any>>({
         <div className={`overflow-x-auto ${rounded ? 'rounded-lg' : ''} ${className}`}>
             <table className="w-full text-left border-collapse">
                 <thead>
+                    {headerGroups && (
+                        <tr className="bg-gray-50 border-b border-gray-200">
+                            {headerGroups.map((group, index) => (
+                                <th
+                                    key={index}
+                                    colSpan={group.colSpan}
+                                    className={`py-2 px-4 text-xs font-bold uppercase tracking-wider ${group.className ?? ''}`}
+                                >
+                                    {group.title}
+                                </th>
+                            ))}
+                        </tr>
+                    )}
                     <tr className="border-b border-gray-200 bg-gray-50">
                         {columns.map((column) => (
                             <th

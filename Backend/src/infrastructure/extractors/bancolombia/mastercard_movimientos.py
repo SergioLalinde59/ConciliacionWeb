@@ -1,11 +1,18 @@
+"""
+Extractor de movimientos para Tarjeta de Crédito MasterCard Bancolombia.
+Maneja tanto COP (pesos) como USD (dólares).
+"""
+
 import pdfplumber
 import re
 from typing import List, Dict, Any
-from .utils import parsear_fecha, parsear_valor
+from ..utils import parsear_fecha, parsear_valor
 
-def extraer_movimientos_credito(file_obj: Any) -> List[Dict]:
+
+def extraer_movimientos(file_obj: Any) -> List[Dict]:
     """
     Extrae movimientos de tarjeta de crédito Bancolombia desde Stream.
+    Maneja tanto COP como USD - la moneda se identifica en cada movimiento.
     """
     movimientos = []
     

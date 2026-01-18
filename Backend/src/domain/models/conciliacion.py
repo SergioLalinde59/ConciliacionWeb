@@ -42,6 +42,16 @@ class Conciliacion:
         return abs(calculado - self.extracto_saldo_final) < Decimal('0.01')
 
     @property
+    def periodo_texto(self) -> str:
+        """Retorna el periodo en formato legible: 'YYYY - Mes'"""
+        meses = [
+            "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        ]
+        mes_nombre = meses[self.month] if 1 <= self.month <= 12 else "Desconocido"
+        return f"{self.year} - {mes_nombre}"
+    
+    @property
     def conciliacion_ok(self) -> bool:
         """Valida si el sistema coincide con el extracto"""
         if self.diferencia_saldo is None:

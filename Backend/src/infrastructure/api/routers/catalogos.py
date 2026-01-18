@@ -58,7 +58,7 @@ def obtener_todos_catalogos(conn = Depends(get_db_connection)):
         terceros.append({"id": t.terceroid, "nombre": t.tercero})
 
     return {
-        "cuentas": [{"id": c.cuentaid, "nombre": c.cuenta} for c in repo_cue.obtener_todos()],
+        "cuentas": [{"id": c.cuentaid, "nombre": c.cuenta, "permite_carga": c.permite_carga, "permite_conciliar": c.permite_conciliar} for c in repo_cue.obtener_todos()],
         "monedas": [{"id": m.monedaid, "nombre": m.moneda, "isocode": m.isocode} for m in repo_mon.obtener_todos()],
         "terceros": terceros,
         "centros_costos": [{"id": g.centro_costo_id, "nombre": g.centro_costo} for g in repo_cc.obtener_todos()],

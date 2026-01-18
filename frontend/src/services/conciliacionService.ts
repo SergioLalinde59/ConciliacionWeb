@@ -25,10 +25,11 @@ export const conciliacionService = {
         return handleResponse(response);
     },
 
-    async analizarExtracto(file: File, tipoCuenta: string) {
+    async analizarExtracto(file: File, tipoCuenta: string, cuentaId?: number | null) {
         const formData = new FormData()
         formData.append('file', file)
         formData.append('tipo_cuenta', tipoCuenta)
+        if (cuentaId) formData.append('cuenta_id', cuentaId.toString())
 
         // Assuming httpClient is imported or defined elsewhere, and handleResponse is used for fetch.
         // If httpClient is a different client (e.g., axios), the import and usage would need adjustment.
@@ -53,11 +54,18 @@ export const conciliacionService = {
 
         const response = await fetch(`${API_BASE_URL}/api/conciliaciones/cargar-extracto`, {
             method: 'POST',
-            headers: {
-                // 'Content-Type': 'multipart/form-data' is automatically set by fetch when using FormData
-            },
             body: formData
         })
         return handleResponse(response)
+    },
+
+    async obtenerMovimientosExtracto(cuentaId: number, year: number, month: number) {
+        const response = await fetch(`${API_BASE_URL}/api/conciliaciones/${cuentaId}/${year}/${month}/movimientos-extracto`);
+        return handleResponse(response);
+    },
+
+    async compararMovimientos(cuentaId: number, year: number, month: number) {
+        const response = await fetch(`${API_BASE_URL}/api/conciliaciones/${cuentaId}/${year}/${month}/comparacion`);
+        return handleResponse(response);
     }
 };

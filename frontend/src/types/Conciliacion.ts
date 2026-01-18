@@ -28,3 +28,18 @@ export interface ConciliacionUpdate {
     extracto_saldo_final: number;
     datos_extra?: Record<string, any>;
 }
+
+export interface MovimientoExtracto {
+    id: number;
+    cuenta_id: number;
+    year: number;
+    month: number;
+    fecha: string;
+    descripcion: string;
+    referencia: string | null;
+    valor: number;
+    usd?: number;
+    trm?: number;
+    numero_linea: number | null;
+    cuenta: string;
+}

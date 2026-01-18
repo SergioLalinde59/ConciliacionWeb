@@ -21,7 +21,8 @@ import {
     PieChart,
     Filter,
     ClipboardCheck,
-    FileText
+    FileText,
+    FileCog
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -49,6 +50,7 @@ export const Sidebar = () => {
         { name: 'Conceptos', path: '/maestros/conceptos', icon: Tags },
         { name: 'Config. Filtros', path: '/maestros/config-filtros', icon: Filter },
         { name: 'Reglas Auto', path: '/maestros/reglas', icon: Zap },
+        { name: 'Extractores', path: '/maestros/extractores', icon: FileCog },
     ];
 
     const menuMovimientos = [

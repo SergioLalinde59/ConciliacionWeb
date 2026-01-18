@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { apiService } from '../services/api'
 import type { Cuenta } from '../types'
 import { UploadCloud, FileText, CheckCircle, AlertCircle, BarChart3 } from 'lucide-react'
+import { Modal } from '../components/molecules/Modal'
+import { Button } from '../components/atoms/Button'
+import { ExtractoResumenCinta } from '../components/molecules/ExtractoResumenCinta'
 
 // TODO: Importar tipo Conciliacion si es necesario o usar `any` para el resumen por ahora
 interface ResumenExtracto {
@@ -14,11 +17,15 @@ interface ResumenExtracto {
     year?: number
     month?: number
     periodo_texto?: string
+    movimientos_count?: number
+    total_leidos?: number
+    total_duplicados?: number
+    total_nuevos?: number
 }
 
 export const UploadExtractoPage: React.FC = () => {
     const [file, setFile] = useState<File | null>(null)
-    const [tipoCuenta, setTipoCuenta] = useState('bancolombia_ahorro')
+    const [tipoCuenta, setTipoCuenta] = useState('')
     const [cuentaId, setCuentaId] = useState<number | null>(null)
     const [cuentas, setCuentas] = useState<Cuenta[]>([])
 
@@ -28,6 +35,9 @@ export const UploadExtractoPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null)
     const [analyzed, setAnalyzed] = useState(false)
     const [resumen, setResumen] = useState<ResumenExtracto | null>(null)
+
+    // Modal Success State
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
 
     useEffect(() => {
         // Load accounts
@@ -43,6 +53,7 @@ export const UploadExtractoPage: React.FC = () => {
             setError(null)
             setAnalyzed(false)
             setResumen(null)
+            setShowSuccessModal(false)
         }
     }
 
@@ -56,7 +67,8 @@ export const UploadExtractoPage: React.FC = () => {
         setResumen(null)
 
         try {
-            const data = await apiService.conciliacion.analizarExtracto(file, tipoCuenta)
+            const data = await apiService.conciliacion.analizarExtracto(file, tipoCuenta, cuentaId)
+            console.log("DEBUG: Datos recibidos de analizarExtracto (resumen):", data)
             setResumen(data)
             setAnalyzed(true)
         } catch (err: any) {
@@ -87,8 +99,7 @@ export const UploadExtractoPage: React.FC = () => {
                 resumen.month
             )
             setResult(data)
-            setAnalyzed(false)
-            setFile(null) // Reset on complete success
+            setShowSuccessModal(true) // Show modal on success
         } catch (err: any) {
             setError(err.message || "Error al cargar extracto")
         } finally {
@@ -105,6 +116,14 @@ export const UploadExtractoPage: React.FC = () => {
 
     const formatCurrency = (val: number) => {
         return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(val)
+    }
+
+    const handleCloseSuccessModal = () => {
+        setShowSuccessModal(false)
+        setResult(null)
+        setAnalyzed(false)
+        setFile(null)
+        setResumen(null)
     }
 
     return (
@@ -134,13 +153,8 @@ export const UploadExtractoPage: React.FC = () => {
                                     setError(null)
                                     const cuenta = cuentas.find(c => c.id === id)
                                     if (cuenta) {
-                                        // Default inference
-                                        const nombreLower = cuenta.nombre.toLowerCase()
-                                        if (nombreLower.includes('ahorro') || nombreLower.includes('bancolombia')) {
-                                            setTipoCuenta('bancolombia_ahorro')
-                                        } else if (nombreLower.includes('renta') || nombreLower.includes('fondo')) {
-                                            setTipoCuenta('FondoRenta')
-                                        }
+                                        // Usar el nombre de cuenta directamente como tipo_cuenta
+                                        setTipoCuenta(cuenta.nombre)
                                     }
                                 }}
                                 className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2.5"
@@ -191,6 +205,14 @@ export const UploadExtractoPage: React.FC = () => {
                 {resumen && analyzed && (
                     <div className="animate-fade-in space-y-6">
                         <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                            {resumen.total_leidos !== undefined && (
+                                <ExtractoResumenCinta
+                                    totalLeidos={resumen.total_leidos}
+                                    totalDuplicados={resumen.total_duplicados || 0}
+                                    totalNuevos={resumen.total_nuevos || 0}
+                                />
+                            )}
+
                             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <BarChart3 className="text-blue-600" />
@@ -222,13 +244,7 @@ export const UploadExtractoPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Validación básica matematica */}
-                            {Math.abs((resumen.saldo_anterior + resumen.entradas - resumen.salidas) - resumen.saldo_final) > 0.01 && (
-                                <div className="mt-4 p-3 bg-orange-50 text-orange-800 text-sm rounded-lg flex items-center gap-2">
-                                    <AlertCircle size={16} />
-                                    <span>Advertencia: Los valores leídos no cuadran matemáticamente. Verifique el PDF.</span>
-                                </div>
-                            )}
+                            {/* Validación eliminada - el usuario revisa visualmente los valores */}
 
                             {(!resumen.year || !resumen.month) && (
                                 <div className="mt-4 p-3 bg-red-50 text-red-800 text-sm rounded-lg flex items-center gap-2">
@@ -252,9 +268,9 @@ export const UploadExtractoPage: React.FC = () => {
                             </button>
                             <button
                                 onClick={handleCargarDefinitivo}
-                                disabled={!cuentaId || !resumen.year}
+                                disabled={!cuentaId || !resumen.year || resumen.total_nuevos === 0}
                                 className={`px-6 py-2 rounded-lg font-bold text-white shadow-sm transition flex items-center gap-2
-                                    ${!cuentaId || !resumen.year
+                                    ${!cuentaId || !resumen.year || resumen.total_nuevos === 0
                                         ? 'bg-gray-400 cursor-not-allowed'
                                         : 'bg-green-600 hover:bg-green-700'
                                     }`}
@@ -266,23 +282,80 @@ export const UploadExtractoPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* 3. Resultado Final */}
-                {result && (
-                    <div className="p-4 bg-green-50 rounded-lg border border-green-200 animate-fade-in">
-                        <h3 className="text-lg font-semibold text-green-900 mb-3 flex items-center gap-2">
-                            <CheckCircle className="h-5 w-5" />
-                            Carga Exitosa
-                        </h3>
-                        <p className="text-green-800">
-                            {result.conciliacion?.year && result.conciliacion?.month
-                                ? `Se ha actualizado la conciliación del periodo ${result.conciliacion.year}-${result.conciliacion.month} correctamente.`
-                                : 'Se ha actualizado la conciliación correctamente.'}
-                        </p>
-                        <div className="mt-4">
-                            <p className="text-sm">Sistema actualizado: <strong>{formatCurrency(result.conciliacion.sistema_saldo_final)}</strong></p>
+                {/* Modal de Resultados Finales */}
+                <Modal
+                    isOpen={showSuccessModal}
+                    onClose={handleCloseSuccessModal}
+                    title={
+                        result?.conciliacion
+                            ? `Extracto Cargado: ${tipoCuenta} - ${result.conciliacion.year} - ${["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"][result.conciliacion.month] || result.conciliacion.month}`
+                            : "Resumen de Carga"
+                    }
+                    size="xl"
+                    footer={
+                        <Button onClick={handleCloseSuccessModal} className="w-full">
+                            Entendido
+                        </Button>
+                    }
+                >
+                    {result && result.conciliacion && (
+                        <div className="space-y-6 text-center py-4">
+                            <div className="flex justify-center">
+                                <div className="bg-green-100 p-4 rounded-full">
+                                    <CheckCircle className="h-12 w-12 text-green-600" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 className="text-xl font-bold text-gray-900 mb-2">¡Carga Completada!</h4>
+                                <p className="text-gray-500 mb-2">El extracto se ha procesado exitosamente.</p>
+
+                                <p className="text-lg font-medium text-blue-900 mb-4">{cuentaId} - {tipoCuenta}</p>
+
+                                {/* Mostrar Periodo Explícitamente */}
+                                <div className="inline-block bg-blue-50 px-4 py-2 rounded-lg border border-blue-100">
+                                    <span className="text-blue-800 font-medium">
+                                        Periodo: <strong>{result.conciliacion.periodo_texto || `${["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"][result.conciliacion.month] || result.conciliacion.month} ${result.conciliacion.year}`}</strong>
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Mostrar estadísticas en el modal de éxito usando el mismo componente (Atomic Design) */}
+                            {resumen && result.movimientos_count !== undefined && (
+                                <ExtractoResumenCinta
+                                    totalLeidos={resumen.total_leidos || 0}
+                                    totalDuplicados={resumen.total_duplicados || 0}
+                                    totalNuevos={result.movimientos_count}
+                                    labelNuevos="CARGADOS"
+                                />
+                            )}
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left bg-gray-50 p-6 rounded-xl">
+                                <div className="space-y-1">
+                                    <p className="text-xs text-gray-500 uppercase font-semibold">Saldo Anterior</p>
+                                    <p className="text-lg font-bold text-gray-900">{formatCurrency(result.conciliacion.extracto_saldo_anterior)}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs text-green-600 uppercase font-semibold">Entradas</p>
+                                    <p className="text-lg font-bold text-green-600">{formatCurrency(result.conciliacion.extracto_entradas)}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs text-red-600 uppercase font-semibold">Salidas</p>
+                                    <p className="text-lg font-bold text-red-600">{formatCurrency(result.conciliacion.extracto_salidas)}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs text-blue-600 uppercase font-semibold">Saldo Final</p>
+                                    <p className="text-lg font-bold text-blue-600">{formatCurrency(result.conciliacion.extracto_saldo_final)}</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-blue-50 p-3 rounded-lg text-left">
+                                <p className="text-sm text-gray-600">Sistema actualizado</p>
+                                <p className="text-xl font-bold text-blue-700">{formatCurrency(result.conciliacion.sistema_saldo_final)}</p>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </Modal>
 
                 {error && (
                     <div className="mt-8 p-4 bg-red-50 rounded-lg border border-red-200">

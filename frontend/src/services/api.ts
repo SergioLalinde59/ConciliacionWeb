@@ -20,6 +20,7 @@ import { catalogosService, centrosCostosService, cuentasService, tercerosService
 import { archivosService } from './files.service'
 import { reglasService, configFiltrosCentrosCostosService } from './config.service'
 import { conciliacionService } from './conciliacionService'
+import { extractoresService } from './extractores.service'
 
 /**
  * Objeto apiService unificado para compatibilidad con código existente
@@ -55,7 +56,8 @@ export const apiService = {
     deleteTerceroDescripcion: tercerosService.eliminarDescripcion,
 
     // Conciliacion
-    conciliacion: conciliacionService
+    conciliacion: conciliacionService,
+    extractores: extractoresService
 }
 
 // Exportar servicios individuales para uso directo
@@ -70,5 +72,6 @@ export {
     archivosService,
     reglasService,
     configFiltrosCentrosCostosService,
-    conciliacionService
+    conciliacionService,
+    extractoresService
 }

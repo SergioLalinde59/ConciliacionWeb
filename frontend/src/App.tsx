@@ -16,6 +16,7 @@ import { ReporteIngresosGastosMesPage } from './pages/ReporteIngresosGastosMesPa
 import { UploadMovimientosPage } from './pages/UploadMovimientosPage'
 import { UploadExtractoPage } from './pages/UploadExtractoPage'
 import { ReglasPage } from './pages/ReglasPage'
+import { CuentaExtractoresPage } from './pages/CuentaExtractoresPage'
 import { DescargarMovimientosPage } from './pages/DescargarMovimientosPage'
 import { SugerenciasReclasificacionPage } from './pages/SugerenciasReclasificacionPage'
 import { ReporteEgresosTerceroPage } from './pages/ReporteEgresosTerceroPage'
@@ -39,6 +40,7 @@ function App() {
                     <Route path="/maestros/conceptos" element={<ConceptosPage />} />
                     <Route path="/maestros/config-filtros" element={<ConfigFiltrosCentrosCostosPage />} />
                     <Route path="/maestros/reglas" element={<ReglasPage />} />
+                    <Route path="/maestros/extractores" element={<CuentaExtractoresPage />} />
                     <Route path="/movimientos" element={<MovimientosPage />} />
                     <Route path="/movimientos/cargar" element={<UploadMovimientosPage />} />
                     <Route path="/conciliacion/cargar-extracto" element={<UploadExtractoPage />} />

@@ -7,7 +7,7 @@ import { Button } from '../components/atoms/Button'
 
 export const UploadMovimientosPage: React.FC = () => {
     const [file, setFile] = useState<File | null>(null)
-    const [tipoCuenta, setTipoCuenta] = useState('bancolombia_ahorro')
+    const [tipoCuenta, setTipoCuenta] = useState('')
     const [cuentaId, setCuentaId] = useState<number | null>(null)
     const [cuentas, setCuentas] = useState<Cuenta[]>([])
 
@@ -120,14 +120,8 @@ export const UploadMovimientosPage: React.FC = () => {
                                     // Inferir tipo de cuenta
                                     const cuenta = cuentas.find(c => c.id === id)
                                     if (cuenta) {
-                                        const nombreLower = cuenta.nombre.toLowerCase()
-                                        if (nombreLower.includes('tarjeta') || nombreLower.includes('credit') || nombreLower.includes('tc') || nombreLower.includes('mc') || nombreLower.includes('mastercard')) {
-                                            setTipoCuenta('credit_card')
-                                        } else if (nombreLower.includes('fondo') || nombreLower.includes('renta')) {
-                                            setTipoCuenta('fondo_renta')
-                                        } else {
-                                            setTipoCuenta('bancolombia_ahorro')
-                                        }
+                                        // Usar el nombre de cuenta directamente como tipo_cuenta
+                                        setTipoCuenta(cuenta.nombre)
                                     }
                                 }}
                                 className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2.5"

@@ -49,7 +49,92 @@ class PostgresConciliacionRepository(ConciliacionRepository):
         cursor.execute(query, (cuenta_id, year, month))
         row = cursor.fetchone()
         cursor.close()
-        return self._row_to_conciliacion(row)
+        # Auto-sincronización: Verificar si el resumen coincide con los movimientos reales
+        conciliacion = self._row_to_conciliacion(row)
+        if conciliacion:
+            return self._verificar_y_sincronizar_extracto(conciliacion)
+        return conciliacion
+
+    def _verificar_y_sincronizar_extracto(self, conciliacion: Conciliacion) -> Conciliacion:
+        """
+        Verifica si los totales del extracto en la conciliación coinciden con la suma real
+        de los movimientos en movimientos_extracto. Si no, actualiza la conciliación.
+        """
+        try:
+            cursor = self.conn.cursor()
+            
+            # Calcular sumas reales desde movimientos_extracto
+            # Nota: Usamos ABS para sumarizar valores absolutos en los totales.
+            # Fix: Sumar (valor + COALESCE(usd, 0)) para cubrir cuentas COP y USD.
+            # En COP, usd es NULL/0. En USD, valor es 0.
+            query_check = """
+                SELECT 
+                    COALESCE(SUM(CASE WHEN (valor + COALESCE(usd, 0)) > 0 THEN (valor + COALESCE(usd, 0)) ELSE 0 END), 0) as entradas,
+                    COALESCE(SUM(CASE WHEN (valor + COALESCE(usd, 0)) < 0 THEN ABS(valor + COALESCE(usd, 0)) ELSE 0 END), 0) as salidas
+                FROM movimientos_extracto
+                WHERE cuenta_id = %s AND year = %s AND month = %s
+            """
+            cursor.execute(query_check, (conciliacion.cuenta_id, conciliacion.year, conciliacion.month))
+            real_entradas, real_salidas = cursor.fetchone()
+            
+            # Convertir a float para comparación (decimales de BD vs float de objeto)
+            current_entradas = float(conciliacion.extracto_entradas)
+            current_salidas = float(conciliacion.extracto_salidas)
+            real_entradas = float(real_entradas)
+            real_salidas = float(real_salidas)
+            
+            # Tolerancia para diferencias de punto flotante
+            diff_entradas = abs(current_entradas - real_entradas)
+            diff_salidas = abs(current_salidas - real_salidas)
+            
+            # Condición de actualización:
+            # 1. Si hay diferencias en Entradas o Salidas
+            # 2. O si NO hay movimientos (Entradas=0 y Salidas=0) pero SI hay Saldo Anterior (lo cual el PO pide borrar)
+            
+            force_zero_balance = (real_entradas == 0 and real_salidas == 0 and float(conciliacion.extracto_saldo_anterior) != 0)
+            
+            if diff_entradas > 0.01 or diff_salidas > 0.01 or force_zero_balance:
+                print(f"DEBUG: Inconsistencia detectada en Conciliacion {conciliacion.cuenta_id}-{conciliacion.year}-{conciliacion.month}. "
+                      f"Stored: +{current_entradas}/-{current_salidas}. Real: +{real_entradas}/-{real_salidas}. Fixing...")
+                
+                nuevo_saldo_anterior = float(conciliacion.extracto_saldo_anterior)
+                
+                # REGLA DE NEGOCIO (User Request): 
+                # Si no hay movimientos de extracto (carga vacía), el saldo anterior también debe ser 0.
+                if real_entradas == 0 and real_salidas == 0:
+                    nuevo_saldo_anterior = 0.0
+
+                # Recalcular saldo final
+                # Saldo Final = Saldo Anterior + Entradas - Salidas
+                nuevo_saldo_final = nuevo_saldo_anterior + real_entradas - real_salidas
+                
+                # Actualizar DB
+                update_query = """
+                    UPDATE conciliaciones
+                    SET 
+                        extracto_saldo_anterior = %s,
+                        extracto_entradas = %s,
+                        extracto_salidas = %s,
+                        extracto_saldo_final = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s
+                """
+                cursor.execute(update_query, (nuevo_saldo_anterior, real_entradas, real_salidas, nuevo_saldo_final, conciliacion.id))
+                self.conn.commit()
+                
+                # Actualizar objeto en memoria
+                conciliacion.extracto_saldo_anterior = nuevo_saldo_anterior
+                conciliacion.extracto_entradas = real_entradas
+                conciliacion.extracto_salidas = real_salidas
+                conciliacion.extracto_saldo_final = nuevo_saldo_final
+                
+        except Exception as e:
+            print(f"ERROR: Falló la sincronización de extracto: {e}")
+            self.conn.rollback()
+        finally:
+            cursor.close()
+            
+        return conciliacion
 
     def guardar(self, conciliacion: Conciliacion) -> Conciliacion:
         cursor = self.conn.cursor()

@@ -13,7 +13,7 @@ conn = psycopg2.connect(
 )
 cur = conn.cursor()
 
-# Delete duplicate Mc Pesos records from December 2025 that are:
+# Delete duplicate MasterCardPesos records from December 2025 that are:
 # - Positive value (duplicates)
 # - Unclassified (tercero_id IS NULL)
 cur.execute("""

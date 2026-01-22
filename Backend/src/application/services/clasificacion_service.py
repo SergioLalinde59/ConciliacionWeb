@@ -103,8 +103,20 @@ class ClasificacionService:
 
         # 1. Estrategia: Reglas Estáticas (Alta prioridad)
         # ------------------------------------------------
+        
+        # Obtener y ordenar reglas: 
+        # Las reglas con cuenta_id específica deben evaluarse PRIMERO que las globales (None)
         reglas = self.reglas_repo.obtener_todos()
+        # Ordenar: x.cuenta_id is not None (True=1, False=0) descendente -> Primero las que tienen cuenta
+        reglas.sort(key=lambda x: x.cuenta_id is not None, reverse=True)
+        
         for regla in reglas:
+            # 1.1 Filtro por Cuenta (Si la regla especifica cuenta, debe coincidir)
+            if regla.cuenta_id is not None:
+                if movimiento.cuenta_id != regla.cuenta_id:
+                    continue # No aplica esta regla para esta cuenta
+            
+            # 1.2 Coincidencia de Patrón
             coincide = False
             texto_upper = (movimiento.descripcion or "").upper()
             patron_upper = regla.patron.upper()
@@ -129,7 +141,8 @@ class ClasificacionService:
                     modificado = True
                 
                 if modificado:
-                    return True, f"Regla estática: '{regla.patron}'"
+                    tipo_regla = "Cuenta Específica" if regla.cuenta_id else "Global"
+                    return True, f"Regla estática [{tipo_regla}]: '{regla.patron}'"
 
         # 2. Estrategia: Histórico por Referencia
         # ---------------------------------------
@@ -217,6 +230,41 @@ class ClasificacionService:
         referencia_no_existe = False
 
         # ============================================
+        # 0. ESTRATEGIA: REFERENCIA EXACTA (>8 DÍGITOS) - PRIORIDAD MÁXIMA
+        # ============================================
+        # Según reglas de negocio: Si la referencia tiene más de 8 dígitos, buscar en catálogo específico.
+        # Si existe, ese ES el tercero y el historial debe ser de ese tercero.
+        # Si no existe, marcar flag para sugerir creación.
+        
+        tiene_referencia_larga = bool(movimiento.referencia and len(movimiento.referencia.strip()) > 8 and movimiento.referencia.isdigit())
+        match_referencia_encontrado = False
+        
+        if tiene_referencia_larga and self.tercero_descripcion_repo:
+            td = self.tercero_descripcion_repo.buscar_por_referencia(movimiento.referencia)
+            if td:
+                print(f"   ✅ MATCH REFERENCIA EXACTA (>8): {movimiento.referencia} -> TerceroID {td.terceroid}")
+                # 1. Fijar el tercero inmediatamente
+                sugerencia['tercero_id'] = td.terceroid
+                sugerencia['razon'] = f"Referencia Exacta (>8 dígitos): {movimiento.referencia}"
+                sugerencia['tipo_match'] = 'referencia_exacta'
+                match_referencia_encontrado = True
+                
+                # 2. Forzar el contexto a ser SOLO de este tercero
+                # Buscamos historial de este tercero para intentar deducir CC/Concepto por similitud de valor/texto
+                cands_tercero, _ = self.movimiento_repo.buscar_avanzado(tercero_id=td.terceroid, limit=20)
+                
+                for m in cands_tercero:
+                    if m.id != movimiento.id:
+                        if m.id not in candidatos_map:
+                            candidatos_map[m.id] = {'mov': m, 'origen': {'referencia_tercero'}, 'score_cobertura': 10}
+                        else:
+                             candidatos_map[m.id]['origen'].add('referencia_tercero')
+                             candidatos_map[m.id]['score_cobertura'] += 10
+            else:
+                print(f"   ⚠️ Referencia larga {movimiento.referencia} NO encontrada en catálogo.")
+                referencia_no_existe = True
+
+        # ============================================
         # 1. ESTRATEGIA: PATRONES DE DESCRIPCIÓN (Catálogo Terceros)
         # ============================================
         # Nota: La Estrategia 1 original (Ref Exacta) ya se ejecutó en auto_clasificar (paso 1.2 y 1.3)
@@ -224,7 +272,7 @@ class ClasificacionService:
         
         tiene_referencia = bool(movimiento.referencia and len(movimiento.referencia.strip()) > 0)
         
-        if not sugerencia['tercero_id'] and tiene_referencia and self.tercero_descripcion_repo:
+        if not match_referencia_encontrado and not sugerencia['tercero_id'] and tiene_referencia and self.tercero_descripcion_repo:
             descripcion = movimiento.descripcion or ""
             palabras_ignorar = {'y', 'de', 'la', 'el', 'en', 'a', 'por', 'para', 'con', 'cop', 'usd'}
             palabras = descripcion.split()
@@ -255,31 +303,33 @@ class ClasificacionService:
         # Esta estrategia SIEMPRE corre para llenar el contexto
         
         descripcion = movimiento.descripcion or ""
-        palabras_ignorar = {'y', 'de', 'la', 'el', 'en', 'a', 'por', 'para', 'con', 'cop', 'usd', 'pago', 'transferencia'}
-        palabras = descripcion.split()
         
-        # FIX: Permitir palabras de 2 caracteres en búsqueda (e.g. 'TC')
-        # Antes era len(p) > 2, ahora len(p) >= 2
-        palabras_clave = sorted(list(set([p for p in palabras if p.lower() not in palabras_ignorar and len(p) >= 2])))
-        
-        print(f"   🔎 Buscando candidatos con palabras: {palabras_clave}")
-        
-        for palabra in palabras_clave:
-            # Buscar en repo (Aumentado límite para evitar perder matches por palabras comunes como MASTER)
-            # FIX: Limit aumentado de 30 a 100
-            cands, _ = self.movimiento_repo.buscar_avanzado(descripcion_contiene=palabra, limit=100)
+        if not match_referencia_encontrado:
+            palabras_ignorar = {'y', 'de', 'la', 'el', 'en', 'a', 'por', 'para', 'con', 'cop', 'usd', 'pago', 'transferencia'}
+            palabras = descripcion.split()
             
-            for m in cands:
-                if m.id == movimiento.id or not m.tercero_id:
-                    continue
+            # FIX: Permitir palabras de 2 caracteres en búsqueda (e.g. 'TC')
+            # Antes era len(p) > 2, ahora len(p) >= 2
+            palabras_clave = sorted(list(set([p for p in palabras if p.lower() not in palabras_ignorar and len(p) >= 2])))
+            
+            print(f"   🔎 Buscando candidatos con palabras: {palabras_clave}")
+            
+            for palabra in palabras_clave:
+                # Buscar en repo (Aumentado límite para evitar perder matches por palabras comunes como MASTER)
+                # FIX: Limit aumentado de 30 a 100
+                cands, _ = self.movimiento_repo.buscar_avanzado(descripcion_contiene=palabra, limit=100)
+                
+                for m in cands:
+                    if m.id == movimiento.id or not m.tercero_id:
+                        continue
+                        
+                    if m.id not in candidatos_map:
+                        candidatos_map[m.id] = {'mov': m, 'origen': {'texto'}, 'score_cobertura': 0}
                     
-                if m.id not in candidatos_map:
-                    candidatos_map[m.id] = {'mov': m, 'origen': {'texto'}, 'score_cobertura': 0}
-                
-                if 'texto' not in candidatos_map[m.id]['origen']:
-                    candidatos_map[m.id]['origen'].add('texto')
-                
-                candidatos_map[m.id]['score_cobertura'] += 1
+                    if 'texto' not in candidatos_map[m.id]['origen']:
+                        candidatos_map[m.id]['origen'].add('texto')
+                    
+                    candidatos_map[m.id]['score_cobertura'] += 1
 
         # ============================================
         # 3. CASOS ESPECIALES (FONDO RENTA / TRASLADO)

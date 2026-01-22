@@ -108,6 +108,7 @@ export interface ReglaClasificacion {
     activa?: boolean
     prioridad?: number
     tipo_match?: string
+    cuenta_id?: number
 }
 
 export interface ConfigFiltroCentroCosto {

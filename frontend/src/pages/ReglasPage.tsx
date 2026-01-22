@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { apiService } from '../services/api'
-import type { ReglaClasificacion, Tercero, CentroCosto, Concepto } from '../types'
+import type { ReglaClasificacion, Tercero, CentroCosto, Concepto, Cuenta } from '../types'
 import { Plus, Zap, Edit, X } from 'lucide-react'
 import { ComboBox } from '../components/molecules/ComboBox'
 import { CsvExportButton } from '../components/molecules/CsvExportButton'
@@ -15,9 +15,11 @@ export const ReglasPage: React.FC = () => {
     const [terceros, setTerceros] = useState<Tercero[]>([])
     const [centrosCostos, setCentrosCostos] = useState<CentroCosto[]>([])
     const [conceptos, setConceptos] = useState<Concepto[]>([])
+    const [cuentas, setCuentas] = useState<Cuenta[]>([])
 
     // Form state
     const [patron, setPatron] = useState('')
+    const [selectedCuentaId, setSelectedCuentaId] = useState<number | null>(null)
     const [selectedTerceroId, setSelectedTerceroId] = useState<number | null>(null)
     const [selectedCentroCostoId, setSelectedCentroCostoId] = useState<number | null>(null)
     const [selectedConceptoId, setSelectedConceptoId] = useState<number | null>(null)
@@ -39,6 +41,7 @@ export const ReglasPage: React.FC = () => {
             setTerceros(catalogos.terceros)
             setCentrosCostos(catalogos.centros_costos)
             setConceptos(catalogos.conceptos)
+            setCuentas(catalogos.cuentas)
         } catch (error) {
             console.error(error)
         } finally {
@@ -80,6 +83,7 @@ export const ReglasPage: React.FC = () => {
                 tercero_id: selectedTerceroId ?? undefined,
                 centro_costo_id: selectedCentroCostoId ?? undefined,
                 concepto_id: selectedConceptoId ?? undefined,
+                cuenta_id: selectedCuentaId ?? undefined,
                 tipo_match: 'contiene'
             }
 
@@ -98,6 +102,7 @@ export const ReglasPage: React.FC = () => {
 
     const limpiarForm = () => {
         setPatron('')
+        setSelectedCuentaId(null)
         setSelectedTerceroId(null)
         setSelectedCentroCostoId(null)
         setSelectedConceptoId(null)
@@ -107,6 +112,7 @@ export const ReglasPage: React.FC = () => {
 
     const handleEditar = (regla: ReglaClasificacion) => {
         setPatron(regla.patron || '')
+        setSelectedCuentaId(regla.cuenta_id || null)
         setSelectedTerceroId(regla.tercero_id || null)
         setSelectedCentroCostoId(regla.centro_costo_id || null)
         setSelectedConceptoId(regla.concepto_id || null)
@@ -154,9 +160,15 @@ export const ReglasPage: React.FC = () => {
         return c ? c.nombre : ''
     }
 
+    // Opciones para ComboBox de Cuentas (convertir a formato label/value o usar directamente si ComboBox lo soporta)
+    // El ComboBox actual parece requerir options con {id, nombre} estándar.
+    const cuentasOptions = cuentas.map(c => ({ id: c.id, nombre: c.nombre }))
+
     const csvColumns = [
         { key: 'id' as const, label: 'ID' },
         { key: 'patron' as const, label: 'Patrón' },
+        { key: 'cuenta_id', label: 'Cuenta ID', accessor: (r: ReglaClasificacion) => r.cuenta_id || '' },
+        { key: 'cuenta_nombre', label: 'Cuenta', accessor: (r: ReglaClasificacion) => getSoloNombre(cuentas, r.cuenta_id) },
         { key: 'tercero_id', label: 'Tercero ID', accessor: (r: ReglaClasificacion) => r.tercero_id || '' },
         { key: 'tercero_nombre', label: 'Tercero', accessor: (r: ReglaClasificacion) => getSoloNombre(terceros, r.tercero_id) },
         { key: 'centro_costo_id', label: 'Centro Costo ID', accessor: (r: ReglaClasificacion) => r.centro_costo_id || '' },
@@ -166,6 +178,12 @@ export const ReglasPage: React.FC = () => {
     ]
 
     const columns: Column<ReglaClasificacion>[] = [
+        {
+            key: 'cuenta_id',
+            header: 'Cuenta (Opcional)',
+            sortable: true,
+            accessor: (r) => r.cuenta_id ? <span className="font-medium text-blue-600">{getNombre(cuentas, r.cuenta_id)}</span> : <span className="text-slate-400 italic text-xs">Global</span>
+        },
         {
             key: 'patron',
             header: 'Patrón',
@@ -229,6 +247,18 @@ export const ReglasPage: React.FC = () => {
                     )}
                 </div>
                 <form onSubmit={handleGuardar} className="space-y-4">
+                    {/* Fila 1: Cuenta (Opcional) */}
+                    <div>
+                        <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Cuenta (Opcional - Prioridad Alta)</label>
+                        <ComboBox
+                            options={cuentasOptions}
+                            value={selectedCuentaId ? selectedCuentaId.toString() : ""}
+                            onChange={(val) => setSelectedCuentaId(val ? parseInt(val) : null)}
+                            placeholder="Todas las Cuentas (Global)"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1">Si selecciona una cuenta, esta regla tendrá prioridad sobre las reglas globales.</p>
+                    </div>
+
                     {/* Fila 2: Tercero, Centro Costo, Concepto */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="">

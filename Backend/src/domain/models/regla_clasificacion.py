@@ -9,6 +9,7 @@ class ReglaClasificacion:
     tercero_id: Optional[int] = None
     centro_costo_id: Optional[int] = None
     concepto_id: Optional[int] = None
+    cuenta_id: Optional[int] = None  # Nueva columna para filtro por cuenta
     id: Optional[int] = None
     
     # Tipo de match: 'exacto', 'contiene', 'inicio'

@@ -3,7 +3,7 @@ import type { Movimiento, SugerenciaClasificacion, ContextoClasificacionResponse
 import { apiService } from '../services/api'
 import { ComboBox } from '../components/molecules/ComboBox'
 import { TerceroModal } from '../components/organisms/modals/TerceroModal'
-import { ModalClasificarSimilares } from '../components/ModalClasificarSimilares'
+
 import { CurrencyDisplay } from '../components/atoms/CurrencyDisplay'
 import { Save, Layers, Clock, CheckCircle, ArrowRight, Search, Copy, RefreshCw } from 'lucide-react'
 import { DataTable } from '../components/molecules/DataTable'
@@ -38,7 +38,7 @@ export const ClasificarMovimientosPage: React.FC = () => {
     const [batchSelectedIds, setBatchSelectedIds] = useState<Set<number>>(new Set())
 
     // Modal Clasificar Similares
-    const [showSimilaresModal, setShowSimilaresModal] = useState(false)
+
 
     // Catalogos
     const [centrosCostos, setCentrosCostos] = useState<{ id: number, nombre: string }[]>([])
@@ -579,18 +579,7 @@ export const ClasificarMovimientosPage: React.FC = () => {
                                             </tbody>
                                         </table>
 
-                                        {/* Botón para clasificar similares */}
-                                        {movimientoActual && terceroId && centroCostoId && conceptoId && (
-                                            <div className="mt-4 flex justify-end">
-                                                <button
-                                                    onClick={() => setShowSimilaresModal(true)}
-                                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                                                >
-                                                    <Layers className="h-4 w-4" />
-                                                    Clasificar Todos los Similares
-                                                </button>
-                                            </div>
-                                        )}
+
                                     </div>
                                 )}
                             </div>
@@ -604,26 +593,7 @@ export const ClasificarMovimientosPage: React.FC = () => {
                 )}
             </div>
 
-            {/* Modal Clasificar Similares */}
-            {movimientoActual && terceroId && centroCostoId && conceptoId && (
-                <ModalClasificarSimilares
-                    isOpen={showSimilaresModal}
-                    onClose={() => setShowSimilaresModal(false)}
-                    movimientoReferencia={movimientoActual}
-                    clasificacion={{
-                        tercero_id: terceroId,
-                        centro_costo_id: centroCostoId,
-                        concepto_id: conceptoId,
-                        tercero_display: terceros.find(t => t.id === terceroId)?.nombre || '',
-                        centro_costo_display: centrosCostos.find(c => c.id === centroCostoId)?.nombre || '',
-                        concepto_display: conceptos.find(c => c.id === conceptoId)?.nombre || ''
-                    }}
-                    onConfirm={() => {
-                        // Recargar pendientes después de clasificar
-                        cargarDatosIniciales()
-                    }}
-                />
-            )}
+
 
             <TerceroModal
                 isOpen={showTerceroModal}

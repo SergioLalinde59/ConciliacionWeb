@@ -1,0 +1,47 @@
+# Filter Reconcilable Accounts
+
+The goal is to update the "Conciliación Mensual" page to only display accounts that are marked as reconcilable (`permite_conciliar = true`).
+
+## User Review Required
+
+> [!NOTE]
+> This change will hide any accounts where `permite_conciliar` is false from the reconciliation view. If you need to reconcile an account that is currently hidden, you will need to update its settings in the Account Management section (if available) or database.
+
+## Proposed Changes
+
+### Frontend
+
+#### [MODIFY] [ConciliacionPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx)
+
+- Update the `visibleCuentas` unique memo to filter out accounts where `permite_conciliar` is false.
+- Ensure the filter applies even when "Todas" is selected.
+
+```typescript
+    // Filter accounts to display
+    const visibleCuentas = useMemo(() => {
+        if (!cuentas) return [];
+        
+        // Filter by reconcile permission first
+        let filtered = cuentas.filter((c: Cuenta) => c.permite_conciliar);
+
+        if (cuentaId) {
+            filtered = filtered.filter((c: Cuenta) => c.id === Number(cuentaId));
+        }
+        return filtered;
+    }, [cuentas, cuentaId]);
+```
+
+## Verification Plan
+
+### Manual Verification
+1.  Open the "Conciliación Mensual" page.
+2.  Verify that only accounts like "Ahorros", "Efectivo", "FondoRenta" (assuming they have `permite_conciliar=true`) are visible.
+3.  Verify that accounts like "Aportes" or "Otros" (values that might be `false`) are hidden if they are not supposed to be reconciled.
+4.  Check the filter dropdown (if it lists accounts, it currently uses [cuentas](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/cuentas.py#22-31) directly).
+    - *Self-correction*: The dropdown should probably ALSO only list reconcilable accounts to avoid confusion.
+    - I will check `FiltrosReporte.tsx` to see if I need to pass the filtered list to it.
+    - [ConciliacionPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx) line 152: `cuentas={cuentas}`. This passes *all* accounts to the filter. It might be better to pass the filtered list of reconcilable accounts to the filter as well, so the user can't select a non-reconcilable account.
+    - I will add this to the plan.
+
+### Automated Tests
+- No automated tests for this UI behavior currently exist. Verification will be visual via browser.

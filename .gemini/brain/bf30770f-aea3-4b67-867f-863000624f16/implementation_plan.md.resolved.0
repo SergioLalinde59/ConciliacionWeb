@@ -1,0 +1,25 @@
+# Add Year and Month to Upload Success Modal
+
+The goal is to display the year and month of the uploaded extract in the success modal, as requested by the user. Currently, the modal title attempts to show a [periodo_texto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/domain/models/conciliacion.py#44-53) which appears to be missing from the backend response, resulting in an incomplete title.
+
+## User Review Required
+> [!NOTE]
+> I will calculate the period text (e.g., "2024 - Enero") directly in the frontend using the `year` and `month` fields which are reliably returned by the backend, ensuring it always displays correctly even if the backend property is not serialized.
+
+## Proposed Changes
+
+### Frontend
+
+#### [MODIFY] [UploadExtractoPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/UploadExtractoPage.tsx)
+-   Refactor the [Modal](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/UploadExtractoPage.tsx#121-128) title to construct the period text using `result.conciliacion.year` and `result.conciliacion.month` if [periodo_texto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/domain/models/conciliacion.py#44-53) is unavailable.
+-   Add a helper function or map for month names (1 -> Enero, etc.).
+-   Insert a new element in the modal body (below "¡Carga Completada!" and above the stats) to prominently display the period.
+
+## Verification Plan
+
+### Manual Verification
+-   **Analyze Extract**: Upload a valid PDF extract.
+-   **Confirm Load**: Click "Confirmar y Cargar".
+-   **Verify Modal**: Check that the success modal appears.
+    -   Verify the title says "Extracto Cargado - [Year] - [Month]".
+    -   Verify the body explicitly shows the period, e.g., "Periodo: [Month] [Year]".

@@ -96,7 +96,10 @@ class ProcesadorArchivosService:
 
         # 3. Fallback legacy si no hay modulos definidos o fallaron todos
         # (Esto solo deberia pasar si cuenta_id es None o no está en la config)
-        if not cuenta_id:
+        if True:
+             if hasattr(file_obj, 'seek'):
+                 file_obj.seek(0)
+             
              raw_movs = []
              if tipo_cuenta == 'Ahorros':
                  from src.infrastructure.extractors.bancolombia import ahorros_movimientos
@@ -304,12 +307,32 @@ class ProcesadorArchivosService:
                 print(f"Error procesando movimiento: {raw} - {e}")
                 errores += 1
                 
+        # Calcular periodo dominante (YYYY-MMM)
+        periodo_str = "N/A"
+        if raw_movs:
+            try:
+                # Extraer (año, mes) de cada movimiento
+                fechas = [m['fecha'][:7] for m in raw_movs if m.get('fecha')] # YYYY-MM
+                if fechas:
+                    from collections import Counter
+                    most_common = Counter(fechas).most_common(1)[0][0]
+                    year, month = most_common.split('-')
+                    
+                    meses_abr = {
+                        '01': 'ENE', '02': 'FEB', '03': 'MAR', '04': 'ABR', '05': 'MAY', '06': 'JUN',
+                        '07': 'JUL', '08': 'AGO', '09': 'SEP', '10': 'OCT', '11': 'NOV', '12': 'DIC'
+                    }
+                    periodo_str = f"{year}-{meses_abr.get(month, month)}"
+            except Exception as e:
+                print(f"Error calculando periodo: {e}")
+
         return {
             "archivo": filename,
             "total_extraidos": total,
             "nuevos_insertados": insertados,
             "duplicados": duplicados,
-            "errores": errores
+            "errores": errores,
+            "periodo": periodo_str
         }
 
     def analizar_extracto(self, file_obj: Any, filename: str, tipo_cuenta: str, cuenta_id: Optional[int] = None) -> Dict[str, Any]:

@@ -35,8 +35,8 @@ def main():
         movimientos, total = repo.buscar_avanzado(
             fecha_inicio=start_date,
             fecha_fin=end_date,
-            grupo_id=47,
-            grupos_excluidos=[47] # Should exclude EVERYTHING from group 47
+            centro_costo_id=47,
+            centros_costos_excluidos=[47] # Should exclude EVERYTHING from group 47
         )
         
         print(f"RESULT: Total records found: {total}")
@@ -46,7 +46,7 @@ def main():
         else:
             print(f"FAILURE: Logic is BROKEN ({total} records found). Backend filtering failed.")
             for m in movimientos[:3]:
-                print(f"  - Found ID: {m.id}, Group: {m.grupo_id}, Desc: {m.descripcion}")
+                print(f"  - Found ID: {m.id}, Group: {m.centro_costo_id}, Desc: {m.descripcion}")
 
     except Exception as e:
         print(f"ERROR: {e}")

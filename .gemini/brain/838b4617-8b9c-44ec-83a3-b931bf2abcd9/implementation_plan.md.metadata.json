@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Implementation plan detailing the error analysis, root cause, and proposed solution for fixing MasterCard extract processing. Includes adding debug logging and adjusting regex patterns based on actual PDF format.",
+  "updatedAt": "2026-01-16T19:34:22.134493300Z"
+}

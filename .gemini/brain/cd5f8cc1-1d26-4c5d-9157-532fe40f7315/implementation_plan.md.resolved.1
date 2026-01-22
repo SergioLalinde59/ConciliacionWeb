@@ -1,0 +1,33 @@
+# Implementation Plan - Fix MasterCard USD Extractor
+
+The MasterCard USD extractor is correctly extracting movement lines but fails to distinguish between USD transactions (international) and COP transactions (domestic) which appear in the same 'Valor Movimiento' column (or are read as such) but with Peso values. This results in massive Peso amounts being stored as USD.
+
+## Proposed Changes
+
+### Backend
+
+#### [MODIFY] [mastercard_usd_extracto_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto_movimientos.py)
+
+-   Modify [_extraer_movimientos_desde_texto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto_movimientos.py#44-100) to implement currency discrimination:
+    -   **Logic**:
+        -   **USD Transaction**: Small magnitude (e.g., < 1,000) OR specific formatting clues.
+            -   Action: Store in `usd` column. Set [valor](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto_movimientos.py#101-118) = 0, `trm` = 0.
+        -   **COP Transaction**: Large magnitude (e.g., > 50,000) OR large magnitude with 0% interest rate text.
+            -   Action: Store in [valor](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto_movimientos.py#101-118) column. Set `usd` = 0, `trm` = 0.
+    -   **Heuristics Details**:
+        -   Start by sanitizing the value string.
+        -   If `abs(value) > 2,000` (threshold adjustment based on typical USD purchases vs COP):
+            -   Check for "0,0000 %" interest rate string in the raw line (common for domestic COP purchases).
+            -   If magnitude is huge (e.g. > 50,000), assume COP.
+        -   Else assume USD.
+-   Update the dictionary construction to reflect this split.
+
+## Verification Plan
+
+### Manual Verification
+1.  **Analyze Logs**: Since I cannot upload the PDF to test, I will verify the logic against the provided log lines in the user request.
+    -   *Test Case 1*: `APPLE.COM/BILL $ 3,43`. `3.43 < 1000`. -> **USD**. Correct.
+    -   *Test Case 2*: `DROGUERIA PASTEUR` `61.856,00`. `> 50,000`. -> **COP**. Correct.
+    -   *Test Case 3*: `SMART FIT` `19.900,00`. `< 50,000` but `> 1,000`. Check interest. If `0,0000%` present -> **COP**. Correct.
+    -   *Test Case 4*: `TIENDA D1` `1.700,00`. `> 1,000`. Interest check. -> **COP**. Correct.
+2.  **User Review**: Ask the user to re-run the extraction and confirm the values are now correctly categorized (no more "Error al decir que son movimientos de MasterCard USD").

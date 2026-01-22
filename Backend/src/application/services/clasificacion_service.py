@@ -1,5 +1,7 @@
 from typing import List, Optional, Tuple
 from decimal import Decimal
+import os
+from difflib import SequenceMatcher
 from src.domain.models.movimiento import Movimiento
 from src.domain.ports.movimiento_repository import MovimientoRepository
 from src.domain.ports.reglas_repository import ReglasRepository
@@ -7,6 +9,67 @@ from src.domain.ports.tercero_repository import TerceroRepository
 from src.domain.ports.tercero_descripcion_repository import TerceroDescripcionRepository
 from src.domain.ports.centro_costo_repository import CentroCostoRepository
 from src.domain.ports.concepto_repository import ConceptoRepository
+
+def calcular_similitud_texto(texto1: str, texto2: str) -> float:
+    """
+    Calcula la similitud entre dos textos usando SequenceMatcher.
+    Retorna un valor entre 0 y 100 (porcentaje de similitud).
+    """
+    if not texto1 or not texto2:
+        return 0.0
+    
+    # Normalizar textos: minúsculas y sin espacios extras
+    t1 = " ".join(texto1.lower().split())
+    t2 = " ".join(texto2.lower().split())
+    
+    # Calcular similitud
+    ratio = SequenceMatcher(None, t1, t2).ratio()
+    return ratio * 100
+
+def calcular_similitud_palabras(texto1: str, texto2: str) -> float:
+    """
+    Calcula similitud basada en palabras compartidas usando el coeficiente de Jaccard.
+    Retorna un valor entre 0 y 100 (porcentaje de similitud).
+    
+    Esta métrica es más robusta para textos con palabras en diferente orden.
+    Ejemplo: "PAGO TC MASTER" vs "MASTER TC PAGO" → alta similitud
+    """
+    if not texto1 or not texto2:
+        return 0.0
+    
+    # Normalizar y extraer palabras
+    palabras1 = set(texto1.lower().split())
+    palabras2 = set(texto2.lower().split())
+    
+    # Eliminar palabras muy cortas (1-2 caracteres) que no aportan significado
+    palabras1 = {p for p in palabras1 if len(p) > 2}
+    palabras2 = {p for p in palabras2 if len(p) > 2}
+    
+    if not palabras1 or not palabras2:
+        return 0.0
+    
+    # Coeficiente de Jaccard: |intersección| / |unión|
+    comunes = palabras1.intersection(palabras2)
+    union = palabras1.union(palabras2)
+    
+    return (len(comunes) / len(union)) * 100
+
+def calcular_similitud_hibrida(texto1: str, texto2: str) -> float:
+    """
+    Combina similitud de palabras (Jaccard) y similitud de secuencia (SequenceMatcher).
+    
+    Pesos:
+    - 60% similitud de palabras (más importante para coincidencias conceptuales)
+    - 40% similitud de secuencia (importante para orden y estructura)
+    
+    Retorna un valor entre 0 y 100 (porcentaje de similitud).
+    """
+    sim_palabras = calcular_similitud_palabras(texto1, texto2)
+    sim_secuencia = calcular_similitud_texto(texto1, texto2)
+    
+    # Peso: 60% palabras, 40% secuencia
+    return (sim_palabras * 0.6) + (sim_secuencia * 0.4)
+
 
 class ClasificacionService:
     """
@@ -91,6 +154,19 @@ class ClasificacionService:
                 movimiento.concepto_id = mejor_candidato.concepto_id
                 movimiento.concepto_id = mejor_candidato.concepto_id
                 return True, f"Histórico por Referencia ({movimiento.referencia})"
+        
+        # 3. Estrategia: Catálogo Externo por Referencia (>8 dígitos)
+        # -------------------------------------------------------
+        # Nueva ubicación (antes en Pipeline): Si está en catálogo oficial, es match seguro.
+        if (movimiento.referencia and len(movimiento.referencia) > 8 
+            and movimiento.referencia.isdigit() and self.tercero_descripcion_repo):
+            
+            td = self.tercero_descripcion_repo.buscar_por_referencia(movimiento.referencia)
+            if td:
+                movimiento.tercero_id = td.terceroid
+                # Nota: Catálogo externo solo da Tercero, no CC/Concepto, por lo que podría quedar parcialmente clasificado
+                # Pero en este caso lo consideramos éxito para asignar el Tercero.
+                return True, f"Referencia Catálogo Exacta: {movimiento.referencia}"
 
         return False, "Sin coincidencias"
 
@@ -113,13 +189,11 @@ class ClasificacionService:
 
     def obtener_sugerencia_clasificacion(self, movimiento_id: int) -> dict:
         """
-        Calcula una sugerencia de clasificación para un movimiento,
-        sin guardarla. Retorna también el contexto histórico relevante.
+        [PIPELINE UNIFICADO]
+        Calcula una sugerencia de clasificación usando múltiples estrategias simultáneas
+        y un sistema de ranking/scoring unificado.
         
-        Algoritmo de búsqueda:
-        1. Si referencia tiene >8 dígitos numéricos, buscar en tercero_descripciones.referencia
-        2. Buscar descripción en tercero_descripciones.descripcion
-        3. Mostrar historial de movimientos con misma referencia o descripción similar
+        Score Final = (SimilitudTexto * 0.7) + (SimilitudValor * 0.3)
         """
         movimiento = self.movimiento_repo.obtener_por_id(movimiento_id)
         if not movimiento:
@@ -133,254 +207,192 @@ class ClasificacionService:
             'tipo_match': None
         }
         
-        # Contexto de movimientos históricos
-        contexto_movimientos = []
+        # Mapa de candidatos unificado: {id: {'mov': obj, 'origen': set(), 'score_cobertura': 0}}
+        candidatos_map = {}
         
-        # Flag para indicar que tiene referencia larga pero no existe en alias
+        print(f"\n🚀 INICIANDO PIPELINE DE CLASIFICACIÓN para ID {movimiento_id}")
+        print(f"   Descripción: '{movimiento.descripcion}'")
+        print(f"   Valor: {movimiento.valor}")
+        
         referencia_no_existe = False
+
+        # ============================================
+        # 1. ESTRATEGIA: PATRONES DE DESCRIPCIÓN (Catálogo Terceros)
+        # ============================================
+        # Nota: La Estrategia 1 original (Ref Exacta) ya se ejecutó en auto_clasificar (paso 1.2 y 1.3)
+        # Aquí solo queda buscar patrones parciales si hay referencia.
         
-        # ============================================
-        # CASO ESPECIAL: FONDO RENTA (cuenta_id=3)
-        # ============================================
-        if movimiento.cuenta_id == 3:
-            tercero_fr = self.tercero_repo.buscar_exacto("Fondo Renta")
-            if tercero_fr:
-                sugerencia['tercero_id'] = tercero_fr.terceroid
-                sugerencia['razon'] = "Cuenta Fondo Renta → Tercero Fondo Renta"
-                sugerencia['tipo_match'] = 'cuenta_fondo_renta'
-                
-                # Para valores pequeños, auto-asignar Impuestos/Rte Fuente
-                if (movimiento.valor is not None and abs(movimiento.valor) < 100000 
-                    and self.centro_costo_repo and self.concepto_repo):
-                    
-                    # Buscar grupo Impuestos
-                    centro_costo_imp = self.centro_costo_repo.buscar_por_nombre("Impuestos")
-                    if centro_costo_imp:
-                        # Buscar concepto Rte Fuente dentro de ese grupo
-                        concepto_rf = self.concepto_repo.buscar_por_nombre("Rte Fuente", centro_costo_id=centro_costo_imp.centro_costo_id)
-                        if concepto_rf:
-                            sugerencia['centro_costo_id'] = centro_costo_imp.centro_costo_id
-                            sugerencia['concepto_id'] = concepto_rf.conceptoid
-                            sugerencia['razon'] = "Fondo Renta (valor < $100.000) → Impuestos / Rte Fuente"
-        
-        # ============================================
-        # 1. BUSCAR POR REFERENCIA (>8 dígitos) en tercero_descripciones
-        # ============================================
-        has_long_ref = (movimiento.referencia 
-                        and len(movimiento.referencia) > 8 
-                        and movimiento.referencia.isdigit())
-        
-        if has_long_ref and self.tercero_descripcion_repo:
-            td = self.tercero_descripcion_repo.buscar_por_referencia(movimiento.referencia)
-            if td:
-                # Obtener el nombre del tercero
-                tercero = self.tercero_repo.obtener_por_id(td.terceroid)
-                tercero_nombre = tercero.tercero if tercero else "Desconocido"
-                sugerencia.update({
-                    'tercero_id': td.terceroid,
-                    'razon': f"Referencia: {movimiento.referencia} → {tercero_nombre}",
-                    'tipo_match': 'referencia_tercero'
-                })
-            else:
-                # La referencia tiene >8 dígitos pero NO existe en tercero_descripciones
-                referencia_no_existe = True
-        
-        # ============================================
-        # 2. BUSCAR POR DESCRIPCIÓN en tercero_descripciones
-        # ============================================
-        # IMPORTANTE: Solo buscar por descripción si el movimiento TIENE referencia
-        # Si no tiene referencia, no sugerir tercero basándose solo en descripción
         tiene_referencia = bool(movimiento.referencia and len(movimiento.referencia.strip()) > 0)
         
         if not sugerencia['tercero_id'] and tiene_referencia and self.tercero_descripcion_repo:
             descripcion = movimiento.descripcion or ""
-            
-            # Extraer las primeras palabras significativas para buscar
-            # Ignorar palabras cortas como "Y", "De", "La", etc.
             palabras_ignorar = {'y', 'de', 'la', 'el', 'en', 'a', 'por', 'para', 'con', 'cop', 'usd'}
             palabras = descripcion.split()
-            palabras_significativas = [p for p in palabras if p.lower() not in palabras_ignorar and len(p) > 1]
+            # FIX: Permitimos palabras de 2 letras (ej: TC)
+            significativas = [p for p in palabras if p.lower() not in palabras_ignorar and len(p) >= 2]
             
-            patrones_a_probar = []
+            patrones = []
+            if len(significativas) >= 3: patrones.append(" ".join(significativas[:3]))
+            if len(significativas) >= 2: patrones.append(" ".join(significativas[:2]))
+            if significativas: patrones.append(significativas[0])
             
-            # Probar con las primeras 2-3 palabras significativas
-            if len(palabras_significativas) >= 3:
-                patrones_a_probar.append(" ".join(palabras_significativas[:3]))
-            if len(palabras_significativas) >= 2:
-                patrones_a_probar.append(" ".join(palabras_significativas[:2]))
-            if palabras_significativas:
-                patrones_a_probar.append(palabras_significativas[0])
-            
-            # Try each pattern until we find a match
-            for patron in patrones_a_probar:
-                if len(patron) < 3:  # Skip very short patterns
-                    continue
+            for patron in patrones:
+                if len(patron) < 3: continue
                 matches = self.tercero_descripcion_repo.buscar_por_descripcion(patron)
                 if matches:
                     mejor = matches[0]
-                    tercero = self.tercero_repo.obtener_por_id(mejor.terceroid)
-                    tercero_nombre = tercero.tercero if tercero else "Desconocido"
-                    sugerencia.update({
-                        'tercero_id': mejor.terceroid,
-                        'razon': f"Descripción: {mejor.descripcion} → {tercero_nombre}",
-                        'tipo_match': 'descripcion_tercero'
-                    })
-                    break  # Found a match, stop trying
+                    # Si encontramos, lo usamos para sugerencia directa
+                    if not sugerencia['tercero_id']:
+                        sugerencia['tercero_id'] = mejor.terceroid
+                        sugerencia['razon'] = f"Patrón Descripción: {mejor.descripcion}"
+                        sugerencia['tipo_match'] = 'descripcion_tercero'
+                        print(f"   ✅ Match directo por patrón: {mejor.descripcion}")
+                    break
+
+        # ============================================
+        # 2. ESTRATEGIA: BÚSQUEDA EXHAUSTIVA (MULTI-WORD)
+        # ============================================
+        # Esta estrategia SIEMPRE corre para llenar el contexto
         
+        descripcion = movimiento.descripcion or ""
+        palabras_ignorar = {'y', 'de', 'la', 'el', 'en', 'a', 'por', 'para', 'con', 'cop', 'usd', 'pago', 'transferencia'}
+        palabras = descripcion.split()
+        
+        # FIX: Permitir palabras de 2 caracteres en búsqueda (e.g. 'TC')
+        # Antes era len(p) > 2, ahora len(p) >= 2
+        palabras_clave = sorted(list(set([p for p in palabras if p.lower() not in palabras_ignorar and len(p) >= 2])))
+        
+        print(f"   🔎 Buscando candidatos con palabras: {palabras_clave}")
+        
+        for palabra in palabras_clave:
+            # Buscar en repo (Aumentado límite para evitar perder matches por palabras comunes como MASTER)
+            # FIX: Limit aumentado de 30 a 100
+            cands, _ = self.movimiento_repo.buscar_avanzado(descripcion_contiene=palabra, limit=100)
+            
+            for m in cands:
+                if m.id == movimiento.id or not m.tercero_id:
+                    continue
+                    
+                if m.id not in candidatos_map:
+                    candidatos_map[m.id] = {'mov': m, 'origen': {'texto'}, 'score_cobertura': 0}
+                
+                if 'texto' not in candidatos_map[m.id]['origen']:
+                    candidatos_map[m.id]['origen'].add('texto')
+                
+                candidatos_map[m.id]['score_cobertura'] += 1
+
         # ============================================
-        # 3. CONTEXTO HISTÓRICO
+        # 3. CASOS ESPECIALES (FONDO RENTA / TRASLADO)
         # ============================================
-        # Caso especial: "Traslado de Fondo" sin referencia para cuentas Ahorros (1) o Fondo Renta (3)
         es_ahorros = movimiento.cuenta_id == 1
         es_fondo_renta = movimiento.cuenta_id == 3
         
-        # Verificar si la descripción contiene "Traslado De Fondo" o "Traslado a Fondo"
-        descripcion_upper = (movimiento.descripcion or "").upper()
-        es_traslado_fondo = ("TRASLADO DE FONDO" in descripcion_upper or 
-                            "TRASLADO A FONDO" in descripcion_upper)
+        if es_fondo_renta:
+             # Traer historial de la cuenta 3 (los ultimos 20)
+             cands, _ = self.movimiento_repo.buscar_avanzado(cuenta_id=3, limit=20)
+             for m in cands:
+                if m.id != movimiento.id and m.tercero_id:
+                    if m.id not in candidatos_map:
+                        candidatos_map[m.id] = {'mov': m, 'origen': {'cuenta'}, 'score_cobertura': 0}
+                    candidatos_map[m.id]['origen'].add('cuenta')
         
-        # Si es traslado de fondo sin referencia en cuentas Ahorros o Fondo Renta
-        if (es_ahorros or es_fondo_renta) and not tiene_referencia and es_traslado_fondo:
-            # Buscar directamente en la base de datos movimientos que contengan "Traslado" + "Fondo"
-            # Esto es más eficiente que traer todos y filtrar en memoria
-            movs_todas, _ = self.movimiento_repo.buscar_avanzado(
-                descripcion_contiene="Traslado Fondo",  # Busca palabras en la descripción
-                limit=100  # Limitar a los últimos 100 que cumplan
-            )
-            
-            # Filtrar adicionales que cumplan:
-            # 1. Cuenta es Ahorros (1) o Fondo Renta (3)
-            # 2. Ya clasificados (con tercero, centro de costo y concepto)
-            contexto_movimientos = [
-                m for m in movs_todas 
-                if m.id != movimiento.id 
-                and m.cuenta_id in (1, 3)  # Ahorros o Fondo Renta
-                and m.tercero_id is not None
-                and m.centro_costo_id is not None
-                and m.concepto_id is not None
-            ]
+        # ============================================
+        # 4. EVALUACIÓN Y RANKING UNIFICADO
+        # ============================================
+        resultados_scoring = []
         
-        # Caso especial: Fondo Renta (cuenta_id=3) - siempre mostrar últimos 5 movimientos clasificados
-        elif es_fondo_renta:
-            # Para Fondo Renta: obtener últimos movimientos de esta cuenta que ya estén clasificados
-            movs_cuenta, _ = self.movimiento_repo.buscar_avanzado(
-                cuenta_id=3,
-                limit=50
-            )
+        # Parámetros Scoring
+        PESO_TEXTO = 0.7
+        PESO_VALOR = 0.3
+        
+        # Margen valor
+        margen_pct = Decimal(os.getenv('SIMILAR_RECORDS_VALUE_MARGIN_PERCENT', '20')) / Decimal('100')
+        valor_abs = abs(movimiento.valor) if movimiento.valor else Decimal(0)
+        valor_min = valor_abs * (1 - margen_pct)
+        valor_max = valor_abs * (1 + margen_pct)
+        
+        for mid, data in candidatos_map.items():
+            cand = data['mov']
             
-            # IMPORTANTE: Si el movimiento actual NO tiene referencia, solo mostrar historial SIN referencia
-            if not tiene_referencia:
-                contexto_movimientos = [
-                    m for m in movs_cuenta 
-                    if m.id != movimiento.id 
-                    and m.tercero_id is not None
-                    and m.centro_costo_id is not None
-                    and m.concepto_id is not None
-                    and not m.referencia  # Solo sin referencia
-                ]
+            # 1. Similitud Texto (Híbrida)
+            sim_texto = calcular_similitud_hibrida(descripcion, cand.descripcion or "")
+            
+            # 2. Similitud Valor
+            score_valor = 0
+            cand_valor_abs = abs(cand.valor) if cand.valor else Decimal(0)
+            
+            if cand.valor == movimiento.valor:
+                score_valor = 100 # Match exacto
+            elif (cand.valor is not None and movimiento.valor is not None 
+                  and (cand.valor < 0) == (movimiento.valor < 0) # Mismo signo
+                  and valor_min <= cand_valor_abs <= valor_max):
+                score_valor = 50 # Rango aceptable
+            
+            # Bonus por cobertura de palabras (Search Density)
+            # Si buscamos 5 palabras y el candidato tiene 4, es muy relevante
+            bonus_cobertura = min(data['score_cobertura'] * 2, 10) # Max 10 pts extra
+            
+            # SCORE FINAL
+            score_final = (sim_texto * PESO_TEXTO) + (score_valor * PESO_VALOR) + bonus_cobertura
+            
+            resultados_scoring.append({
+                'movimiento': cand,
+                'score_final': score_final,
+                'sim_texto': sim_texto,
+                'score_valor': score_valor,
+                'origen': list(data['origen'])
+            })
+            
+        # Ordenar por Score Final Descendente (Ranking Competitivo)
+        resultados_scoring.sort(key=lambda x: x['score_final'], reverse=True)
+        
+        # Logging Top 5
+        print(f"\n   🏆 TOP 5 CANDIDATOS (Ranking Unificado):")
+        for i, res in enumerate(resultados_scoring[:5]):
+            m = res['movimiento']
+            print(f"      {i+1}. [{res['score_final']:.1f} pts] ID {m.id} - '{m.descripcion}'")
+            print(f"         Txt: {res['sim_texto']:.1f}% | Val: {res['score_valor']} | Origen: {res['origen']}")
+            
+        # Seleccionar contexto top 5
+        contexto_movimientos = [r['movimiento'] for r in resultados_scoring[:5]]
+        
+        # ============================================
+        # 5. INFERIR SUGERENCIAS DESDE EL GANADOR
+        # ============================================
+        if not sugerencia['tercero_id'] and contexto_movimientos:
+            ganador = resultados_scoring[0]
+            
+            # Umbral de confianza
+            if ganador['score_final'] >= 50:
+                mejor_match = ganador['movimiento']
+                sugerencia['tercero_id'] = mejor_match.tercero_id
                 
-                # Adicionalmente filtrar por descripción similar
-                if contexto_movimientos:
-                    desc_actual = movimiento.descripcion or ""
-                    palabras_ignorar = {'y', 'de', 'la', 'el', 'en', 'a', 'por', 'para', 'con', 'cop', 'usd', 'traslado', 'fondo', 'renta'}
-                    palabras = desc_actual.split()
-                    palabras_significativas = [p for p in palabras if p.lower() not in palabras_ignorar and len(p) > 2]
-                    
-                    # Si hay palabras significativas, filtrar por similitud
-                    if palabras_significativas and len(palabras_significativas) >= 2:
-                        patron_busqueda = " ".join(palabras_significativas[:3]).lower()
-                        contexto_filtrado = [
-                            m for m in contexto_movimientos
-                            if patron_busqueda in (m.descripcion or "").lower()
-                        ]
-                        if contexto_filtrado:
-                            contexto_movimientos = contexto_filtrado
-            else:
-                # Si tiene referencia, mostrar todos los movimientos clasificados
-                contexto_movimientos = [
-                    m for m in movs_cuenta 
-                    if m.id != movimiento.id 
-                    and m.tercero_id is not None
-                    and m.centro_costo_id is not None
-                    and m.concepto_id is not None
-                ]
-        elif sugerencia['tercero_id'] and not referencia_no_existe:
-            # Caso normal: mostrar historial del tercero sugerido
-            movs_tercero, _ = self.movimiento_repo.buscar_avanzado(
-                tercero_id=sugerencia['tercero_id'],
-                limit=50  # Increased to have more candidates for value matching
-            )
-            # Filter: exclude current movement, require at least tercero_id set
-            # (grupo_id and concepto_id can be used as copy source by user)
-            contexto_movimientos = [
-                m for m in movs_tercero 
-                if m.id != movimiento.id 
-                and m.tercero_id is not None
-            ]
-            
-            # ============================================
-            # 4. SUGERIR GRUPO Y CONCEPTO POR COINCIDENCIA DE VALOR
-            # ============================================
-            # Si encontramos un movimiento histórico con el mismo valor exacto,
-            # usar su grupo_id y concepto_id como sugerencia
-            if movimiento.valor is not None:
-                for m in contexto_movimientos:
-                    if (m.valor == movimiento.valor 
-                        and m.centro_costo_id is not None 
-                        and m.concepto_id is not None):
-                        sugerencia['centro_costo_id'] = m.centro_costo_id
-                        sugerencia['concepto_id'] = m.concepto_id
-                        # Actualizar la razón para indicar que también coincidió por valor
-                        razon_actual = sugerencia.get('razon') or ''
-                        sugerencia['razon'] = f"{razon_actual} (Valor coincidente: {m.valor})"
-                        break  # Usar el primero que coincida (más reciente)
-            
-            # ============================================
-            # 5. FILTRAR HISTORIAL POR VALORES CERCANOS
-            # ============================================
-            # Para cuenta 3 (Fondo Renta), no aplicar filtro por porcentaje
-            # Solo mostrar los últimos 5 movimientos de la cuenta
-            if not es_fondo_renta:
-                # Solo mostrar movimientos con valores cercanos al actual (±5%)
-                if movimiento.valor is not None and movimiento.valor != 0:
-                    valor_actual = abs(movimiento.valor)
-                    margen = valor_actual * Decimal('0.05')  # 5% de margen
-                    valor_min = valor_actual - margen
-                    valor_max = valor_actual + margen
-                    
-                    # Filtrar por signo igual y valor dentro del rango
-                    contexto_filtrado = [
-                        m for m in contexto_movimientos
-                        if m.valor is not None
-                        and (m.valor < 0) == (movimiento.valor < 0)  # Mismo signo
-                        and valor_min <= abs(m.valor) <= valor_max
-                    ]
-                    
-                    # Si hay resultados filtrados, usarlos; sino mantener los originales
-                    if contexto_filtrado:
-                        contexto_movimientos = contexto_filtrado
-        
-        # Ordenar por fecha descendente y limitar a 5
-        contexto_movimientos.sort(key=lambda x: x.fecha, reverse=True)
-        contexto_movimientos = contexto_movimientos[:5]
+                # Si tambien coincide en valor (o es muy similar), sugerir clasificacion completa
+                if ganador['score_valor'] >= 50:
+                    sugerencia['centro_costo_id'] = mejor_match.centro_costo_id
+                    sugerencia['concepto_id'] = mejor_match.concepto_id
+                    sugerencia['razon'] = f"Similaridad Histórica: {ganador['sim_texto']:.1f}% (Valor coincidente)"
+                    sugerencia['tipo_match'] = 'historico_valor'
+                else:
+                    sugerencia['razon'] = f"Similaridad Texto: {ganador['sim_texto']:.1f}%"
+                    sugerencia['tipo_match'] = 'historico_texto'
         
         # ============================================
-        # 6. SUGERIR TERCERO SI TODOS SON IGUALES EN EL HISTORIAL
+        # 6. SUGERIR TERCERO SI TODOS SON IGUALES (Consistencia)
         # ============================================
-        # Si no hay sugerencia de tercero aún, y hay contexto histórico,
-        # verificar si todos los movimientos tienen el mismo tercero
         if not sugerencia['tercero_id'] and contexto_movimientos:
             terceros_unicos = set(m.tercero_id for m in contexto_movimientos if m.tercero_id)
-            
-            # Si hay exactamente un tercero único en todos los movimientos históricos
             if len(terceros_unicos) == 1:
                 tercero_comun_id = terceros_unicos.pop()
-                tercero_comun = self.tercero_repo.obtener_por_id(tercero_comun_id)
-                if tercero_comun:
-                    sugerencia['tercero_id'] = tercero_comun_id
-                    sugerencia['razon'] = f"Todos los movimientos históricos similares son de: {tercero_comun.tercero}"
-                    sugerencia['tipo_match'] = 'tercero_comun_historico'
-
+                sugerencia['tercero_id'] = tercero_comun_id
+                sugerencia['razon'] = f"Historial consistente ({len(contexto_movimientos)}/{len(contexto_movimientos)})"
+                sugerencia['tipo_match'] = 'frecuencia_tercero'
+                
+        # Completar información de nombres para el frontend
+        if sugerencia['tercero_id']:
+            t = self.tercero_repo.obtener_por_id(sugerencia['tercero_id'])
+            sugerencia['tercero_nombre'] = t.tercero if t else None
+            
         return {
             'movimiento_id': movimiento.id,
             'sugerencia': sugerencia,
@@ -395,3 +407,76 @@ class ClasificacionService:
         """
         # Delegar al repositorio para eficiencia (UPDATE masivo)
         return self.movimiento_repo.actualizar_clasificacion_lote(patron, tercero_id, centro_costo_id, concepto_id)
+
+    def obtener_movimientos_similares_pendientes(self, movimiento_id: int) -> List[dict]:
+        """
+        Encuentra todos los movimientos PENDIENTES similares a un movimiento dado.
+        Usa el mismo algoritmo de similitud de texto del fallback.
+        Retorna lista con movimientos y su porcentaje de similitud.
+        """
+        # Obtener el movimiento de referencia
+        movimiento = self.movimiento_repo.obtener_por_id(movimiento_id)
+        if not movimiento:
+            raise ValueError(f"Movimiento {movimiento_id} no encontrado")
+        
+        # Extraer múltiples palabras significativas (mismo algoritmo mejorado que fallback)
+        descripcion = movimiento.descripcion or ""
+        palabras_ignorar = {'y', 'de', 'la', 'el', 'en', 'a', 'por', 'para', 'con', 'cop', 'usd'}
+        palabras = descripcion.split()
+        
+        # FIX: Permitir palabras de >= 2 letras
+        palabras_significativas = [p for p in palabras if p.lower() not in palabras_ignorar and len(p) >= 2]
+        
+        # Obtener todas las palabras significativas sin límite
+        palabras_busqueda = palabras_significativas
+        
+        if not palabras_busqueda:
+            return []
+        
+        # Buscar movimientos que contengan al menos una de las palabras clave
+        candidatos_map = {}  # {id: {'mov': mov, 'score': int}}
+        
+        for palabra in palabras_busqueda:
+            if len(palabra) >= 2: # FIX: Ajustar validación para permitir 2 letras
+                movs_palabra, _ = self.movimiento_repo.buscar_avanzado(
+                    descripcion_contiene=palabra,
+                    solo_pendientes=True,  # Solo pendientes
+                    limit=50
+                )
+                # Agregar y contar coincidencias (score de cobertura)
+                for m in movs_palabra:
+                    if m.id not in candidatos_map:
+                        candidatos_map[m.id] = {'mov': m, 'score': 0}
+                    candidatos_map[m.id]['score'] += 1
+        
+        # Convertir a lista y ordenar por score de cobertura (ranking)
+        candidates_ranked = sorted(
+            candidatos_map.values(), 
+            key=lambda x: x['score'], 
+            reverse=True
+        )
+        
+        # Quedarnos con los top 100 candidatos por cobertura
+        movs_similares = [c['mov'] for c in candidates_ranked[:100]]
+        
+        # Obtener umbral de similitud desde variable de entorno
+        umbral_similitud = float(os.getenv('SIMILAR_RECORDS_TEXT_SIMILARITY_THRESHOLD', '70'))
+        descripcion_actual = movimiento.descripcion or ""
+
+        
+        # Calcular similitud híbrida para cada candidato
+        candidatos_similitud = []
+        for m in movs_similares:
+            if m.id != movimiento.id:  # Excluir el movimiento de referencia
+                # Usar similitud híbrida (60% palabras + 40% secuencia)
+                similitud = calcular_similitud_hibrida(descripcion_actual, m.descripcion or "")
+                if similitud >= umbral_similitud:
+                    candidatos_similitud.append({
+                        'movimiento': m,
+                        'similitud': round(similitud, 1)
+                    })
+        
+        # Ordenar por similitud descendente
+        candidatos_similitud.sort(key=lambda x: x['similitud'], reverse=True)
+        
+        return candidatos_similitud

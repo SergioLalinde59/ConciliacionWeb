@@ -1,0 +1,35 @@
+# Implementation Plan - Unify Currency Presentation
+
+## Goal Description
+Unify the presentation of monetary values across the application (Dashboard and Report Tables). Positive values should be green, and negative values should be red.
+
+## Proposed Changes
+
+### Frontend
+#### [MODIFY] [App.css](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.css)
+- Add utility classes for currency colors:
+    - `.text-currency-positive` (Green)
+    - `.text-currency-negative` (Red)
+
+#### [MODIFY] [StatCard.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/StatCard/StatCard.tsx)
+- Inspect the `value` prop.
+- If `value` represents a negative number (contains `-`), apply `.text-currency-negative`.
+- If `value` represents a positive number (and is not zero), apply `.text-currency-positive`.
+
+#### [MODIFY] [App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx)
+- In the Report Table rendering logic:
+    - Apply the same logic to the cells modifying `subtotal`, `iva`, `total`, `descuentos`.
+    - Create a small helper function `getCurrencyClass` inside [App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx) or inline logic.
+
+## Verification Plan
+
+### Manual Verification
+1.  **Dashboard**:
+    - Check "Subtotal Acumulado" (should be Green).
+    - Check "Total Descuentos" (should be Red if negative).
+    - Check "Total IVA" (should be Green).
+    - Check "Monto Total" (should be Green).
+2.  **Report Table**:
+    - Go to "Ver Reporte".
+    - Check the columns `Subtotal`, `Descuentos`, `IVA`, `Total`.
+    - Verify correct coloring (Green for +, Red for -).

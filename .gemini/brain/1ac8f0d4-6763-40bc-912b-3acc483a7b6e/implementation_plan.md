@@ -1,0 +1,23 @@
+# Implementation Plan - Fix Vite Startup in `arranque_app.ps1`
+
+The goal is to ensure the Vite development server starts correctly when running `arranque_app.ps1`. Currently, the user reports it is not starting. We will enhance the script to handle dependencies, port conflicts, and ensure visibility.
+
+## User Review Required
+> [!NOTE]
+> The script will attempt to install `node_modules` if they are missing in the `frontend` directory. This requires `npm` to be installed and available in the system PATH.
+
+## Proposed Changes
+
+### Scripts
+#### [MODIFY] [arranque_app.ps1](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/arranque_app.ps1)
+- Remove any existing `frontend` container to free up port 5174.
+- Check if `frontend/node_modules` exists. If not, run `npm install`.
+- Update the `Start-Process` command to use `npm run dev` for consistency with `package.json`.
+- Add more verbose output to the new PowerShell window to help with debugging (using `cmd /k` or `PowerShell -NoExit` with explicit echo commands).
+
+## Verification Plan
+
+### Manual Verification
+- User runs `.\arranque_app.ps1`.
+- User verifies that a new PowerShell window opens for Vite.
+- User verifies that `http://localhost:5174` loads the application.

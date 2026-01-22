@@ -1,0 +1,35 @@
+# Implementación de Carga Perezosa (Lazy Loading) para Extractores
+
+## Objetivo
+Refactorizar el [ProcesadorArchivosService](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#17-509) para que los módulos de extracción específicos (Ahorros, MasterCard, FondoRenta) solo se importen cuando sean realmente necesarios, en lugar de importarlos todos al inicio de la aplicación.
+
+Esto aumenta la robustez del sistema: si falla la carga de un extractor (por ejemplo, por un error de sintaxis o importación en `MasterCard`), las otras funcionalidades (como procesar `Ahorros`) seguirán funcionando correctamente.
+
+## Propuesta de Cambios
+
+### 1. Modificar [ProcesadorArchivosService](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#17-509) (Backend)
+
+#### [MODIFY] [procesador_archivos_service.py](file:///f:/1. Cloud/4. AI/1. Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py)
+
+- **Eliminar** la importación global:
+  ```python
+  from src.infrastructure.extractors import bancolombia
+  ```
+- **Implementar** importaciones locales dentro de los métodos [_extraer_movimientos](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#66-83) y [analizar_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#277-360).
+  - Ejemplo:
+    ```python
+    def _extraer_movimientos(self, ...):
+        if tipo_cuenta == 'Ahorros':
+            from src.infrastructure.extractors.bancolombia import ahorros_extracto
+            raw_movs = ahorros_extracto.extraer_movimientos_ahorros(file_obj)
+        # ... otros casos
+    ```
+
+### 2. Verificar [__init__.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/__init__.py) (Opcional)
+No es estrictamente necesario modificar [src/infrastructure/extractors/bancolombia/__init__.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/__init__.py) si dejamos de importarlo como paquete completo, pero aseguraremos que su uso no sea accidental.
+
+## Plan de Verificación
+
+1. **Prueba de Humo**: Levantar la aplicación con un error intencional en uno de los extractores (opcional) para verificar que no crashea al inicio.
+2. **Prueba Funcional**: Procesar un extracto de "Ahorros" y verificar que funciona.
+3. **Prueba Funcional**: Procesar un extracto de "MasterCard" y verificar que carga su módulo correctamente en ese momento.

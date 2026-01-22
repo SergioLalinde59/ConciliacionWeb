@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Relax header detection in MasterCard USD extractor significantly to handle spacing variations in PDF. Also add debug logging to inspect page content if detection fails.",
+  "updatedAt": "2026-01-17T18:30:47.605041300Z"
+}

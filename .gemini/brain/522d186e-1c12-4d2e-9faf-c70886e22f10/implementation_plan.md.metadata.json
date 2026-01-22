@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Update PostgresConciliacionRepository to properly handle USD values in extract synchronization logic.",
+  "updatedAt": "2026-01-18T02:41:26.823156200Z"
+}

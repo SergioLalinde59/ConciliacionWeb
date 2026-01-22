@@ -1,0 +1,29 @@
+# Walkthrough - Atomic Table Implementation & Enhancements
+
+I have successfully replaced the table in "Conciliación Mensual" with the Atomic Design `DataTable` component and enhanced it with sorting and grouped headers.
+
+## Changes
+
+### 1. Refactored `ConciliacionPage.tsx`
+
+-   **Component Replacement**: Replaced manual `<table>` with `<DataTable />`.
+-   **Structure**: Flattened data structure to enable robust sorting on all columns.
+-   **Reordering**: Swapped the order of columns to show **Extracto (Manual)** before **Sistema (Calculado)** as requested.
+-   **Configuration**:
+    -   Passed `headerGroups` to render the top-level grouping headers.
+    -   Configured green (Extract) and blue (System) styles for headers to maintain visual hierarchy.
+
+### 2. Enhanced `DataTable.tsx`
+
+-   **Grouped Headers**: Added a new optional prop `headerGroups` that renders an additional header row (`<thead><tr>...</tr></thead>`) above the standard column headers. This allows for spanning multiple columns with a shared title and style.
+
+## Verification Results
+
+### Manual Verification
+> [!NOTE]
+> Per the user's request, I have skipped the automated browser verification.
+
+**Things to check:**
+1.  **Column Order**: Verify "Extracto" columns appear to the left of "Sistema" columns.
+2.  **Grouped Headers**: Confirm there is a top header row labeled "Extracto (Manual)" and "Sistema (Calculado)" spanning the correct columns.
+3.  **Sorting**: Click on column headers (e.g., "Entradas", "Saldo Final") to verify sorting works for both accounting groups.

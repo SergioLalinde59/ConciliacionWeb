@@ -1,0 +1,4 @@
+- [x] Locate "CONCEPTO (OPCIONAL)" string in codebase
+- [x] Verify if [ClassificationFilters](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/ClassificationFilters.tsx#16-62) is used in "Gestión de Movimientos"
+- [x] Modify [ClassificationFilters](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/ClassificationFilters.tsx#16-62) to conditionally or permanently remove "(OPCIONAL)" based on context
+- [x] Verify the change

@@ -1,0 +1,21 @@
+# Task: Debug Missing FondoRenta Extract Data
+
+- [x] Investigate data source for "Conciliación Mensual" table <!-- id: 0 -->
+    - [x] Analyze `conciliaciones.py` router to see which table feeds the main view <!-- id: 1 -->
+    - [x] Check if "Extracto (Manual)" columns come from `conciliaciones` summary table or `movimientos_extracto` <!-- id: 2 -->
+- [x] Verify database state <!-- id: 3 -->
+    - [x] Run `debug_fondo_renta.py` to check `movimientos_extracto` and `conciliaciones` <!-- id: 15 -->
+    - [x] Check `cuentas` table to get FondoRenta ID <!-- id: 13 -->
+- [x] Analyze Extraction Process <!-- id: 6 -->
+    - [x] Locate `fondorenta_extracto_movimientos.py` <!-- id: 7 -->
+    - [x] Review `fondorenta_extracto.py` (summary extractor) <!-- id: 11 -->
+    - [x] Review `ProcesadorArchivosService` orchestration <!-- id: 12 -->
+    - [x] Review `fondorenta_movimientos.py` (referenced in service fallback) <!-- id: 14 -->
+- [x] Implement Database Configuration (All Accounts) <!-- id: 16 -->
+    - [x] Create SQL/Python script to insert/update `cuenta_extractores` for: <!-- id: 17 -->
+        - [x] FondoRenta (ID 3) -> `fondorenta_extracto_movimientos` <!-- id: 18 -->
+        - [x] Ahorros (ID 1) -> `ahorros_extracto_movimientos` <!-- id: 19 -->
+        - [x] MasterCard Pesos (ID 6) -> `mastercard_pesos_extracto_movimientos` <!-- id: 20 -->
+        - [x] MasterCard USD (ID 7) -> `mastercard_usd_extracto_movimientos` <!-- id: 21 -->
+- [x] Answer user question regarding cache <!-- id: 9 -->
+- [x] Fix the issue (Run SQL and verify) <!-- id: 10 -->

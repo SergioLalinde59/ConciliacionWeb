@@ -37,7 +37,7 @@ def main():
         response = [{
             "id": c.conceptoid, 
             "nombre": c.concepto,
-            "grupo_id": c.grupoid_fk
+            "centro_costo_id": c.centro_costo_id
         } for c in conceptos]
         print("Response constructed successfully.")
         

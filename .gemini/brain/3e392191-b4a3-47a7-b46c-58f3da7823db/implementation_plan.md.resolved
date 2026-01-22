@@ -1,0 +1,45 @@
+# Implementation Plan - Atomic CurrencyValue Component
+
+The user reports that currency values are still black. To resolve this and follow Atomic Design principles, I will create a dedicated `CurrencyValue` atom.
+
+## Proposed Changes
+
+### 1. New Atom: `CurrencyValue`
+Create `src/components/atoms/CurrencyValue/CurrencyValue.tsx` and `CurrencyValue.css`.
+- **Props**:
+    - `value`: number
+    - `currency`: string (default 'COP')
+    - `decimals`: number (default 0)
+    - `className`: string (optional)
+- **Logic**:
+    - Format using `Intl.NumberFormat`.
+    - Apply `text-currency-positive` (Green) if `>= 0`.
+    - Apply `text-currency-negative` (Red) if `< 0`.
+    - *Correction*: The user wants positive/negative coloring *only* for specific fields (Subtotal, Discounts, IVA, Total). The "Atomic" component should probably default to having color, but [StatCard](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/StatCard/StatCard.tsx#23-65) logic needs to decide *when* to use this component vs a regular span.
+
+### 2. Refactor [StatCard.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/StatCard/StatCard.tsx)
+- Import `CurrencyValue`.
+- Logic:
+    - If `value` comes in as a formatted string (e.g. "$ 1.000"), try to parse it or rely on a new prop `isCurrency`.
+    - *Better approach*: The [StatCard](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/StatCard/StatCard.tsx#23-65) currently takes `value: string | number`.
+    - If `value` is a number, we can blindly use `CurrencyValue`? No, "Total Facturas" is a number (11) but shouldn't be colored.
+    - **Strategy**: Detect if the `value` string contains `$`. If so, strip non-numeric chars, parse to number, and pass to `CurrencyValue`? Or simply keep the current string detection logic but use the *styles* from the new Atom.
+    - **Refined Strategy**: The [StatCard](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/StatCard/StatCard.tsx#23-65) is receiving pre-formatted strings (e.g. from [formatCurrency](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx#505-513) in [App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx)).
+    - I will stick to the logic: "If string contains `$`, use special coloring classes".
+    - I will check [StatCard.css](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/StatCard/StatCard.css) for conflicting styles.
+
+### 3. Refactor [App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx)
+- Replace manual table cell formatting with `<CurrencyValue value={...} />`.
+- This ensures consistency in the Tables.
+
+### 4. CSS Fixes
+- Ensure `text-currency-positive` and `text-currency-negative` have `!important` and are loaded last.
+- Verify [StatCard.css](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/StatCard/StatCard.css) isn't using a high-specificity selector like `.stat-card .stat-card__content .stat-card__value` with a fixed color.
+
+## Execution Steps
+1.  Inspect [StatCard.css](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/StatCard/StatCard.css) (done).
+2.  Create `CurrencyValue` atom.
+3.  Update [App.css](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.css) (clean up).
+4.  Refactor [StatCard.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/StatCard/StatCard.tsx) to use the logic or component.
+5.  Refactor [App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx) to use `CurrencyValue` in tables.
+6.  **Rebuild Frontend**.

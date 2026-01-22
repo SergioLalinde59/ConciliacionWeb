@@ -1,0 +1,34 @@
+# Mejorar Lógica de Sugerencias de Clasificación
+
+## Problema Actual
+
+Movimiento de "Fondo Renta" sin referencia muestra historial de "Protección" que SÍ tiene referencia.
+
+## Tareas
+
+### Backend - Lógica de Sugerencias
+
+- [ ] **Modificar [clasificacion_service.py](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/clasificacion_service.py)**
+  - [ ] Para movimientos SIN referencia, buscar solo movimientos SIN referencia de la misma cuenta
+  - [ ] Buscar por descripción similar en la misma cuenta
+  - [ ] NO sugerir basándose en descripción si es de tercero diferente
+
+### Frontend - Historial Relacionado
+
+- [ ] **Agregar columna Cuenta**
+  - [ ] Modificar tabla de "Historial Relacionado" 
+  - [ ] Agregar columna entre Fecha y Referencia
+  - [ ] Formato: "id - nombre_cuenta"
+
+### Backend - API Response
+
+- [ ] **Incluir datos de cuenta en contexto**
+  - [ ] Modificar `MovimientoResponse` para incluir cuenta_id y cuenta_nombre
+  - [ ] Asegurar que se envían al frontend
+
+### Verificación
+
+- [ ] **Probar con movimiento de Fondo Renta sin referencia**
+  - [ ] Verificar que muestra solo movimientos de Fondo Renta
+  - [ ] Verificar que NO mezcla movimientos con/sin referencia
+  - [ ] Verificar que columna Cuenta aparece correctamente

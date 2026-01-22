@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "Documentation of Phase 3.1 implementation: PostgresMovimientoVinculacionRepository adapter for the matching system, including all repository methods for managing movement linkages between bank statements and system records.",
+  "updatedAt": "2026-01-18T16:04:56.765502800Z"
+}

@@ -1,0 +1,32 @@
+# Walkthrough - Conciliación Mensual Data Consistency Fix
+
+I have implemented a **self-healing data consistency check** for the "conciliaciones" module.
+
+## The Issue
+The "Conciliación Mensual" view was showing non-zero values (Entradas/Salidas) for months where the detailed *extract* data (the [movimientos_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#205-231) table) was actually empty or different. This happened because the summary table (`conciliaciones`) was not being updated when the underlying detailed data changed (e.g., if data was deleted manually or reloaded).
+
+## The Fix
+I modified the [PostgresConciliacionRepository](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_conciliacion_repository.py#7-222) to automatically verify data integrity whenever a reconciliation record is read.
+
+1.  **Auto-Verification**: When you view a monthly reconciliation, the system now queries the *actual* [movimientos_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#205-231) table to calculate the real totals.
+2.  **Auto-Correction**: It compares these real totals with the stored totals. If they differ (by more than 0.01), it:
+    *   Updates the stored totals in the database.
+    *   Recalculates the "Saldo Final" based on the correct totals.
+    *   Returns the corrected data to the frontend.
+
+## Verification
+I ran a verification script ([verify_fix.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/verify_fix.py)) that simulated a corrupted state:
+- **Scenario**: A reconciliation record existed saying "Entradas = 5000", but the movements table was empty.
+- **Result**:
+    - The system detected the inconsistency.
+    - It immediately corrected the database record to "Entradas = 0".
+    - It returned the correct values to the application.
+
+```text
+DEBUG: Inconsistencia detectada en Conciliacion 3-2026-1. Stored: +5000.0/-200.0. Real: +0.0/-0.0. Fixing...
+✅ EXITO: El repositorio corrigió los valores a 0 en memoria.
+✅ EXITO: La DB fue actualizada correctamente.
+```
+
+## How to Test
+Simply refresh the "Conciliación Mensual" page. Any month that previously showed phantom numbers (when it should be zero) will now automatically correct itself to zero upon loading.

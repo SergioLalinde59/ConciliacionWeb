@@ -1,0 +1,18 @@
+# Task: Add USD and TRM Columns to Reconciliation Detail
+
+- [x] Explore codebase
+    - [x] Locate frontend component for reconciliation detail view <!-- id: 0 -->
+    - [x] Locate backend models and API for reconciliation data <!-- id: 1 -->
+    - [x] Verify database schema (via models and repo) <!-- id: 2 -->
+- [ ] Backend Changes
+    - [ ] Update [postgres_movimiento_repository.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_movimiento_repository.py) to select/save `usd`, `trm` <!-- id: 3 -->
+    - [ ] Update [postgres_movimiento_extracto_repository.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_movimiento_extracto_repository.py) to select/save `usd`, `trm` <!-- id: 4 -->
+    - [ ] Update [postgres_conciliacion_repository.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_conciliacion_repository.py) to include USD/TRM stats in comparison <!-- id: 5 -->
+- [ ] Frontend Changes
+    - [ ] Update [Movimiento](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/types.ts#55-77) and [MovimientoExtracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/models/movimiento_extracto.py#5-30) interfaces in [types/index.ts](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/types/index.ts) <!-- id: 6 -->
+    - [ ] Update [ConciliacionMovimientosTab.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/components/organisms/ConciliacionMovimientosTab.tsx) <!-- id: 7 -->
+        - [ ] Add columns to "Movimientos" table
+        - [ ] Add columns to "Movimientos Extracto" table
+        - [ ] Update summary cards to show USD/TRM stats
+- [ ] Verification
+    - [ ] Verify changes with user <!-- id: 8 -->

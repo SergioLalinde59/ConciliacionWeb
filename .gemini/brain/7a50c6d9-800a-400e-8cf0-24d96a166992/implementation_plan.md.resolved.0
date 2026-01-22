@@ -1,0 +1,32 @@
+# Replace Hardcoded Table with Atomic Design DataTable
+
+The goal is to replace the manual `<table>` implementation in [ConciliacionMovimientosTab.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/organisms/ConciliacionMovimientosTab.tsx) with the standardized [DataTable](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/DataTable.tsx#65-276) component from the Atomic Design system.
+
+## User Review Required
+
+> [!NOTE]
+> This change affects the visual presentation of the "Detalle de Movimientos (Extracto)" table. It should maintain the same data but use the standardized component.
+
+## Proposed Changes
+
+### Frontend Component
+
+#### [MODIFY] [ConciliacionMovimientosTab.tsx](file:///f:/1. Cloud/4. AI/1. Antigravity/ConciliacionWeb/frontend/src/components/organisms/ConciliacionMovimientosTab.tsx)
+- Import [DataTable](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/DataTable.tsx#65-276) and [Column](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/DataTable.tsx#8-28) from `../molecules/DataTable`.
+- Define column definitions that match the current table structure:
+  - **Fecha**: Display `fecha` in mono font.
+  - **Descripción**: Display `descripcion`.
+  - **Referencia**: Display `referencia` or '-', right-aligned, mono font.
+  - **Valor**: Display `valor` using `CurrencyDisplay` with conditional green/red coloring.
+  - **USD**: Display `usd` using `CurrencyDisplay` (conditional).
+  - **TRM**: Display `trm` using `CurrencyDisplay` (conditional).
+  - **Estado**: Display a status indicator.
+- Replace the raw `<table>` with `<DataTable data={movimientos} columns={columns} ... />`.
+
+## Verification Plan
+
+### Manual Verification
+- The user will need to navigate to the "Conciliación" page, select an account and period with data.
+- Verify that the "Detalle de Movimientos (Extracto)" table renders correctly using the new style.
+- Check that columns "USD" and "TRM" appear only when relevant (as per logic).
+- Check that "Valor" is colored green for positive and red for negative.

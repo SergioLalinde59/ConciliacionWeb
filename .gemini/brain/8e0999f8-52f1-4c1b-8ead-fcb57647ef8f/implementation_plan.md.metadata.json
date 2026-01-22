@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Plan to add auto-synchronization between `conciliaciones` and `movimientos_extracto` in `PostgresConciliacionRepository` to resolve data consistency issues.",
+  "updatedAt": "2026-01-18T02:15:25.206426100Z"
+}

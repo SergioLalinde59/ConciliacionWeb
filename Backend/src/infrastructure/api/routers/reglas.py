@@ -12,8 +12,9 @@ router = APIRouter(prefix="/api/reglas", tags=["reglas"])
 class ReglaDTO(BaseModel):
     id: Optional[int] = None
     patron: str
+    patron_descripcion: Optional[str] = None
     tercero_id: Optional[int] = None
-    grupo_id: Optional[int] = None
+    centro_costo_id: Optional[int] = None
     concepto_id: Optional[int] = None
     tipo_match: str = 'contiene'
 
@@ -27,8 +28,9 @@ def crear_regla(dto: ReglaDTO, repo: ReglasRepository = Depends(get_reglas_repos
         nueva_regla = ReglaClasificacion(
             id=None,
             patron=dto.patron,
+            patron_descripcion=dto.patron_descripcion,
             tercero_id=dto.tercero_id,
-            grupo_id=dto.grupo_id,
+            centro_costo_id=dto.centro_costo_id,
             concepto_id=dto.concepto_id,
             tipo_match=dto.tipo_match
         )
@@ -48,8 +50,9 @@ def actualizar_regla(
         regla = ReglaClasificacion(
             id=id,
             patron=dto.patron,
+            patron_descripcion=dto.patron_descripcion,
             tercero_id=dto.tercero_id,
-            grupo_id=dto.grupo_id,
+            centro_costo_id=dto.centro_costo_id,
             concepto_id=dto.concepto_id,
             tipo_match=dto.tipo_match
         )

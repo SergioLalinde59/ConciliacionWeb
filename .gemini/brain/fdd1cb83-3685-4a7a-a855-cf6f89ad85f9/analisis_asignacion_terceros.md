@@ -1,0 +1,218 @@
+# Análisis de Lógica de Asignación de Terceros
+
+## Contexto
+
+Basado en las imágenes proporcionadas, se evidencia un problema en la lógica de asignación de terceros para movimientos pendientes de clasificar.
+
+## Situación Observada
+
+### Caso 1: Editar Alias (Imagen 1)
+- **Tercero Maestro**: 195 - PolyMaster Sas
+- **Descripción**: Transferencia Cta Suc Virtual
+- **Referencia**: 2100002768
+
+### Caso 2: Editor de Clasificación (Imagen 2)
+- **Movimiento**: Transferencia Cta Suc
+- **Referencia**: 02100002768
+- **Advertencia**: "Tercero no Existe para la referencia 02100002768"
+- **Sugerencia**: Descripción: Transferencia Cta Suc → Fuente Clara (86 - Fuente Clara)
+
+## Análisis del Código Actual
+
+### Algoritmo de Búsqueda de Tercero (`clasificacion_service.py`)
+
+El servicio `ClasificacionService.obtener_sugerencia_clasificacion()` implementa el siguiente algoritmo:
+
+#### 1. Búsqueda por Referencia (Líneas 167-186)
+
+```python
+# 1. BUSCAR POR REFERENCIA (>8 dígitos) en tercero_descripciones
+has_long_ref = (movimiento.referencia 
+                and len(movimiento.referencia) > 8 
+                and movimiento.referencia.isdigit())
+
+if has_long_ref and self.tercero_descripcion_repo:
+    td = self.tercero_descripcion_repo.buscar_por_referencia(movimiento.referencia)
+    if td:
+        # Obtener el nombre del tercero
+        tercero = self.tercero_repo.obtener_por_id(td.terceroid)
+        tercero_nombre = tercero.tercero if tercero else "Desconocido"
+        sugerencia.update({
+            'tercero_id': td.terceroid,
+            'razon': f"Referencia: {movimiento.referencia} → {tercero_nombre}",
+            'tipo_match': 'referencia_tercero'
+        })
+    else:
+        # La referencia tiene >8 dígitos pero NO existe en tercero_descripciones
+        referencia_no_existe = True
+```
+
+#### 2. Búsqueda por Descripción (Líneas 189-224)
+
+Si no se encontró por referencia, busca por descripción:
+
+```python
+# 2. BUSCAR POR DESCRIPCIÓN en tercero_descripciones
+if not sugerencia['tercero_id'] and self.tercero_descripcion_repo:
+    descripcion = movimiento.descripcion or ""
+    
+    # Extraer las primeras palabras significativas
+    palabras_ignorar = {'y', 'de', 'la', 'el', 'en', 'a', 'por', 'para', 'con', 'cop', 'usd'}
+    palabras = descripcion.split()
+    palabras_significativas = [p for p in palabras if p.lower() not in palabras_ignorar and len(p) > 1]
+    
+    # Probar con las primeras 2-3 palabras significativas
+    patrones_a_probar = []
+    if len(palabras_significativas) >= 3:
+        patrones_a_probar.append(" ".join(palabras_significativas[:3]))
+    if len(palabras_significativas) >= 2:
+        patrones_a_probar.append(" ".join(palabras_significativas[:2]))
+    if palabras_significativas:
+        patrones_a_probar.append(palabras_significativas[0])
+    
+    # Try each pattern until we find a match
+    for patron in patrones_a_probar:
+        if len(patron) < 3:  # Skip very short patterns
+            continue
+        matches = self.tercero_descripcion_repo.buscar_por_descripcion(patron)
+        if matches:
+            mejor = matches[0]
+            tercero = self.tercero_repo.obtener_por_id(mejor.terceroid)
+            tercero_nombre = tercero.tercero if tercero else "Desconocido"
+            sugerencia.update({
+                'tercero_id': mejor.terceroid,
+                'razon': f"Descripción: {mejor.descripcion} → {tercero_nombre}",
+                'tipo_match': 'descripcion_tercero'
+            })
+            break
+```
+
+## Problema Identificado
+
+> [!WARNING]
+> **Referencias con ceros a la izquierda**
+> 
+> La lógica actual tiene un **problema crítico** con referencias que tienen ceros a la izquierda.
+
+### Escenario Problema:
+
+1. **Alias creado**: 
+   - Referencia en alias: `2100002768`
+   - Tercero: PolyMaster Sas (ID: 195)
+
+2. **Movimiento bancario**:
+   - Referencia bancaria: `02100002768` (con cero a la izquierda)
+   - Descripción: "Transferencia Cta Suc"
+
+3. **Resultado**:
+   - ❌ No encuentra el alias por referencia (porque `02100002768` ≠ `2100002768`)
+   - ✅ Encuentra por descripción: "Fuente Clara" (posiblemente porque "Transferencia Cta Suc" coincide con algún alias de Fuente Clara)
+   - **Asigna el tercero incorrecto**
+
+## Causa Raíz
+
+La búsqueda `buscar_por_referencia()` realiza una **comparación exacta** de strings, sin normalizar los ceros a la izquierda:
+
+- Alias guardado: `"2100002768"`
+- Referencia del movimiento: `"02100002768"`
+- Comparación: `"2100002768" ≠ "02100002768"` ❌
+
+## Soluciones Propuestas
+
+### Opción 1: Normalizar Referencias al Guardar (Recomendada) ⭐
+
+Modificar la lógica de guardado de aliases para **eliminar ceros a la izquierda** antes de guardar:
+
+```python
+def normalizar_referencia(referencia: str) -> str:
+    """Elimina ceros a la izquierda de referencias numéricas."""
+    if referencia and referencia.isdigit():
+        return str(int(referencia))  # Convierte a int y vuelve a string
+    return referencia
+```
+
+**Ventajas:**
+- Los aliases ya existentes en la BD se normalizan una sola vez
+- Búsquedas más rápidas (comparación exacta sin procesamiento extra)
+- Consistencia en la base de datos
+
+**Desventajas:**
+- Requiere migración de datos existentes
+
+### Opción 2: Normalizar en la Búsqueda
+
+Modificar `buscar_por_referencia()` para normalizar ambas referencias antes de comparar:
+
+```python
+# En postgres_tercero_descripcion_repository.py
+def buscar_por_referencia(self, referencia: str) -> Optional[TerceroDescripcion]:
+    # Normalizar referencia de búsqueda
+    if referencia and referencia.isdigit():
+        referencia_normalizada = str(int(referencia))
+        
+        # Buscar con normalización
+        query = """
+            SELECT id, terceroid, descripcion, referencia, activa, created_at 
+            FROM tercero_descripciones 
+            WHERE activa = TRUE 
+            AND CASE 
+                WHEN referencia ~ '^[0-9]+$' THEN CAST(referencia AS bigint)::text
+                ELSE referencia
+            END = %s
+            LIMIT 1
+        """
+        cursor.execute(query, (referencia_normalizada,))
+```
+
+**Ventajas:**
+- No requiere migración de datos
+- Cambio localizado en el repositorio
+
+**Desventajas:**
+- Procesamiento extra en cada búsqueda
+- Query más compleja
+
+### Opción 3: Solución Híbrida (Mejor Balance) 🎯
+
+1. **Normalizar al guardar**: Modificar el endpoint de creación/edición de aliases
+2. **Normalizar en búsqueda**: Añadir normalización como respaldo
+3. **Script de migración**: Normalizar referencias existentes
+
+## Impacto en la Aplicación
+
+### Archivos a Modificar:
+
+1. **Backend - Repositorio**
+   - [postgres_tercero_descripcion_repository.py](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_tercero_descripcion_repository.py)
+   - Modificar `crear()` y `actualizar()` para normalizar referencias
+   - Modificar `buscar_por_referencia()` para normalizar en búsqueda
+
+2. **Backend - Script de Migración**
+   - Crear script SQL para normalizar referencias existentes
+
+3. **Frontend - Gestión de Aliases**
+   - Posiblemente mostrar advertencia si la referencia tiene ceros a la izquierda
+
+### Validaciones Adicionales:
+
+> [!IMPORTANT]
+> **Revisar otras normalizaciones necesarias**
+> 
+> - ¿Espacios en blanco al inicio/final?
+> - ¿Guiones o caracteres especiales?
+> - ¿Mayúsculas/minúsculas?
+
+## Recomendación Final
+
+Implementar **Opción 3 (Solución Híbrida)**:
+
+1. ✅ Crear función `normalizar_referencia()` en utils
+2. ✅ Aplicarla al guardar/actualizar aliases
+3. ✅ Aplicarla en búsqueda de referencias
+4. ✅ Script de migración SQL para normalizar datos existentes
+5. ✅ Agregar validación en frontend (opcional, para UX)
+
+Esto garantiza:
+- 🎯 Máxima compatibilidad con datos existentes
+- 🚀 Búsquedas eficientes futuras
+- 🛡️ Tolerancia a variaciones en formato de referencia

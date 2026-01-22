@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "Implemented a new ribbon to display 'Read', 'Duplicate', and 'To Load' statistics in the Extract Upload modal.",
+  "updatedAt": "2026-01-17T23:55:49.576315200Z"
+}

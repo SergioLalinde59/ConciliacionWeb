@@ -1,0 +1,38 @@
+# Implementation Plan - MasterCard Pesos Old Format Extractor
+
+## Goal Description
+Create a new Python extractor `mastercard_pesos_extracto_anterior_movimientos.py` to parse movements from "older format" MasterCard Pesos bank statements. This extractor will parse dates, descriptions, and values, applying a specific sign logic (-1 multiplier).
+
+## Proposed Changes
+
+### Backend - Extractors
+
+#### [NEW] [mastercard_pesos_extracto_anterior_movimientos.py](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_anterior_movimientos.py)
+- Create file based on `mastercard_pesos_extracto_movimientos.py`.
+- **Logic**:
+    - Iterate through PDF pages.
+    - **Header Validation (CRITICAL)**:
+        - Must strictly validate that the page belongs to the "PESOS" section.
+        - Normalize text: remove spaces and newlines (`text.replace(" ", "").replace("\n", "")`).
+        - Check for existence of the string: `"ESTADODECUENTAPESOS"`.
+        - If NOT found, skip the page. Use `continue`.
+    - **Regex Pattern**:
+        - Target columns: `Fecha de Transacción`, `Descripción`, `Valor Original`.
+        - Expected pattern: `(AuthorizationCode)? \s+ (Date) \s+ (Description) \s+ (Value) ...`
+        - The regex should handle the lines effectively.
+    - **Value Parsing**:
+        - Use `_parsear_valor_formato_col` (from `mastercard_pesos_extracto_anterior.py` logic) or similar robust parsing to handle `,` vs `.` logic if needed, or stick to standard Bancolombia if consistent.
+        - **Sign Logic**: Multiply parsed value by `-1`.
+
+
+## Verification Plan
+
+### Manual Verification
+- Since I cannot run the extraction against the images directly (no image processing), I will rely on the user to run the extraction or upload the file to a test location if possible.
+- However, I can write a small script to test the identifying logic and regex if I had the text.
+- **Action**: I will provide the file and ask the user to verify by running the backend or a test script. 
+- **Test Script**: I will create a temporary test script `manual_test_extractor.py` that mocks `pdfplumber` or usage if the user can provide text, but simpler is to ask user to review the code and deploy it.
+- **Integration**: The user didn't ask to register it in the DB yet, but implied it's part of the process. I will ask if they want me to add it to the `cuenta_extractores` configuration or if that's already handled.
+
+### Automated Tests
+- None possible without the actual PDF or exact text dump.

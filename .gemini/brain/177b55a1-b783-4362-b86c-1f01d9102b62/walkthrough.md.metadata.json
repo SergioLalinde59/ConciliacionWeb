@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "Implemented a fix to prevent the MasterCard Pesos extractor from processing USD statement pages.",
+  "updatedAt": "2026-01-18T01:05:04.394769200Z"
+}

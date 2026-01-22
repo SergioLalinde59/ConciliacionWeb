@@ -1,0 +1,6 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Create `cuenta_extractores` table to manage multiple extractor versions per account.",
+  "updatedAt": "2026-01-17T16:30:32.452436100Z",
+  "version": "1"
+}

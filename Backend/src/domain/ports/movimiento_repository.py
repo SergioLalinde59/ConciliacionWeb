@@ -51,6 +51,15 @@ class MovimientoRepository(ABC):
         pass
 
     @abstractmethod
+    def obtener_exacto(self, cuenta_id: int, fecha: date, valor: float, referencia: Optional[str] = None, descripcion: Optional[str] = None) -> Optional[Movimiento]:
+        """
+        Busca un movimiento exacto en el sistema.
+        Criterios: Cuenta, Fecha, Valor y (Referencia O Descripción).
+        Útil para evitar duplicados al crear desde conciliación.
+        """
+        pass
+
+    @abstractmethod
     def obtener_todos(self) -> List[Movimiento]:
         """Obtiene todos los movimientos activos"""
         pass
@@ -66,6 +75,7 @@ class MovimientoRepository(ABC):
                        centros_costos_excluidos: Optional[List[int]] = None,
                        solo_pendientes: bool = False,
                        tipo_movimiento: Optional[str] = None,
+                       descripcion_contiene: Optional[str] = None,
                        skip: int = 0,
                        limit: Optional[int] = None
     ) -> tuple[List[Movimiento], int]:
@@ -123,6 +133,17 @@ class MovimientoRepository(ABC):
         """
         Obtiene el desglose de gastos para el reporte jerárquico.
         nivel: 'tercero', 'grupo', 'concepto'
+        """
+        pass
+
+    @abstractmethod
+    def obtener_estadisticas_dashboard(self,
+                                      fecha_inicio: Optional[date] = None,
+                                      fecha_fin: Optional[date] = None
+    ) -> List[dict]:
+        """
+        Obtiene estadísticas agrupadas por yyyy-mmm, cuenta y centro de costos.
+        Separa ingresos y egresos.
         """
         pass
 

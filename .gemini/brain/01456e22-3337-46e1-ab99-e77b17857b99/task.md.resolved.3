@@ -1,0 +1,14 @@
+# Corrección Error FondoRenta Extractor
+
+## Tareas
+
+- [x] Corregir NameError en fondorenta.py
+  - [x] Reemplazar variable `snippet` por `search_area` en línea 142
+  - [x] Verificar sintaxis del archivo modificado
+  - [x] Confirmar que el backend carga sin errores
+- [/] Verificar la corrección
+  - [/] Probar carga de extracto FondoRenta
+  - [ ] Revisar logs para diagnóstico adicional
+- [ ] Ajustes adicionales si es necesario
+  - [ ] Analizar formato del PDF en logs
+  - [ ] Ajustar regex si el formato no coincide

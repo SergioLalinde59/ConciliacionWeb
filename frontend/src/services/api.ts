@@ -21,6 +21,8 @@ import { archivosService } from './files.service'
 import { reglasService, configFiltrosCentrosCostosService } from './config.service'
 import { conciliacionService } from './conciliacionService'
 import { extractoresService } from './extractores.service'
+import { matchingService } from './matching.service'
+import { dashboardService } from './dashboard.service'
 
 /**
  * Objeto apiService unificado para compatibilidad con código existente
@@ -57,7 +59,13 @@ export const apiService = {
 
     // Conciliacion
     conciliacion: conciliacionService,
-    extractores: extractoresService
+    extractores: extractoresService,
+
+    // Matching
+    matching: matchingService,
+
+    // Dashboard
+    dashboard: dashboardService
 }
 
 // Exportar servicios individuales para uso directo
@@ -73,5 +81,7 @@ export {
     reglasService,
     configFiltrosCentrosCostosService,
     conciliacionService,
-    extractoresService
+    extractoresService,
+    matchingService,
+    dashboardService
 }

@@ -1,0 +1,6 @@
+- [x] Locate the component responsible for "Cargar Extracto Bancario" modal <!-- id: 0 -->
+- [x] Create Implementation Plan <!-- id: 1 -->
+- [x] Implement `ExtractoStatsRibbon` component <!-- id: 2 -->
+- [x] Update Backend to check duplicates against `movimientos_extracto` <!-- id: 5 -->
+- [x] Integrate Ribbon into the Modal replacing the old message <!-- id: 3 -->
+- [ ] Verify changes <!-- id: 4 -->

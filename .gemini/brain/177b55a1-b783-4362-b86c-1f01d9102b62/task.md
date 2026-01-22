@@ -1,0 +1,4 @@
+- [x] Read `Backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_movimientos.py` <!-- id: 0 -->
+- [x] Determine how to distinguish Pesos vs Dolares pages based on user input <!-- id: 1 -->
+- [x] Modify the extractor to ignore "DOLARES" pages <!-- id: 2 -->
+- [x] Verify if `mastercard_pesos_extracto_anterior_movimientos.py` needs similar changes (optional, check if exists) <!-- id: 3 -->

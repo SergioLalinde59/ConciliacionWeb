@@ -1,0 +1,45 @@
+# Walkthrough - Implement CRUD for Extractores
+
+I have implemented the CRUD operations for `cuenta_extractores` table, enabling the management of extractor configurations from the frontend.
+
+## Changes
+
+### Backend
+
+- **Domain**: 
+    - Created [src/domain/models/cuenta_extractor.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/models/cuenta_extractor.py) model.
+    - Updated [src/domain/ports/cuenta_extractor_repository.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/ports/cuenta_extractor_repository.py) with CRUD methods.
+- **Infrastructure**:
+    - Updated [src/infrastructure/database/postgres_cuenta_extractor_repository.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_cuenta_extractor_repository.py) enabling full CRUD.
+    - Created [src/infrastructure/api/routers/extractores.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/extractores.py) to expose API endpoints.
+    - Updated [src/infrastructure/api/routers/catalogos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/catalogos.py) to expose `permite_carga` and `permite_conciliar` properties for accounts.
+    - Registered the new router in [src/infrastructure/api/main.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/main.py).
+
+### Frontend
+
+- **Types**: Added [CuentaExtractor](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/models/cuenta_extractor.py#5-13) interface in [src/types.ts](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/types.ts).
+- **Services**: 
+    - Created [src/services/extractores.service.ts](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/services/extractores.service.ts).
+    - Updated [src/services/api.ts](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/services/api.ts) to include the new service.
+- **Pages**: 
+    - Created [src/pages/CuentaExtractoresPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/CuentaExtractoresPage.tsx).
+    - Implemented UI refinements:
+        - Title changed to "Extractores PDF por Cuenta".
+        - Button text changed to "Guardar".
+        - Added account filter (ComboBox) above the list.
+        - Replaced HTML table with [DataTable](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/DataTable.tsx#79-304) component.
+        - Fixed TypeScript build error related to [Column](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/DataTable.tsx#8-28) type import.
+        - Filtered account dropdowns (Form and Filter) to only show accounts where `permite_conciliar` is true.
+- **Navigation**:
+    - Added route `/maestros/extractores` in [src/App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/App.tsx).
+    - Added "Extractores" menu item in [src/components/organisms/Sidebar.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/organisms/Sidebar.tsx).
+
+## Verification
+
+The new page should be accessible via the Sidebar under "Maestros" -> "Extractores".
+functionality includes:
+- Listing existing extractors in a sortable [DataTable](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/DataTable.tsx#79-304).
+- Filtering the list by Account (only showing conciliable accounts).
+- creating a new extractor with Cuenta, Tipo, Modulo, Orden, and Active status.
+- Editing existing extractors.
+- Deleting extractors.

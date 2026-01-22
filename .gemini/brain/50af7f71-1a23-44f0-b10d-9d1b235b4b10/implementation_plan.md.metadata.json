@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Refactor `ProcesadorArchivosService` to use lazy imports for extractors. This prevents a crash in one extractor from affecting the entire system startup.",
+  "updatedAt": "2026-01-17T15:47:51.733473500Z"
+}

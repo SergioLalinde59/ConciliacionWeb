@@ -1,0 +1,7 @@
+# Debugging PDF Extraction
+
+- [ ] Locate the PDF extraction logic (likely in `backend/app/services/extractors`) <!-- id: 0 -->
+- [ ] Analyze `analizar_extracto` endpoint in `backend/app/routers/conciliaciones.py` <!-- id: 1 -->
+- [ ] Review the specific extractor code (e.g., `fondorenta.py`) for the "No se pudo extraer el resumen" error <!-- id: 2 -->
+- [ ] Determine why the extraction is failing (regex mismatch, missing fields) <!-- id: 3 -->
+- [ ] Fix the extraction logic or improve error reporting <!-- id: 4 -->

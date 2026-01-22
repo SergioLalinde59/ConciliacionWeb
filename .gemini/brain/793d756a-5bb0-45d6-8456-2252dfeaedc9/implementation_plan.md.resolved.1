@@ -1,0 +1,34 @@
+# Implementation Plan - Extract Summary Ribbon (Update)
+
+The goal is to display a ribbon with "Read Records", "Duplicates", and "To Load" statistics.
+**Update**: The "Duplicates" check must be performed against the [movimientos_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#198-224) table, not the main [movimientos](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#225-312) table.
+
+## User Review Required
+
+> [!NOTE]
+> Checking against [movimientos_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#198-224) means we are checking if the *extract* has already been uploaded (e.g., if we are re-uploading the same file or period).
+
+## Proposed Changes
+
+### Backend
+
+#### [MODIFY] [movimiento_extracto_repository.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/ports/movimiento_extracto_repository.py)
+- Add [existe_movimiento](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_movimiento_repository.py#353-385) method signature to the interface.
+
+#### [MODIFY] [postgres_movimiento_extracto_repository.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_movimiento_extracto_repository.py)
+- Implement [existe_movimiento](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_movimiento_repository.py#353-385) method using SQL query against [movimientos_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#198-224) table.
+- Logic should match the one in [PostgresMovimientoRepository](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_movimiento_repository.py#9-919) but targeting the extract table columns.
+
+#### [MODIFY] [procesador_archivos_service.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py)
+- Update [analizar_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#315-493) to use `self.movimiento_extracto_repo.existe_movimiento` instead of `self.movimiento_repo`.
+- Ensure `movimiento_extracto_repo` is properly used.
+
+### Frontend
+- No changes required (interface remains the same).
+
+## Verification Plan
+
+### Manual Verification
+1.  **Analyze**: Upload an extract that has already been uploaded (same month/year).
+2.  **Verify**: "Duplicados" should equal "Leídos" (or close to it) if the previous data exists in [movimientos_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#198-224).
+3.  **To Load**: Should be 0 (or close) in that case.

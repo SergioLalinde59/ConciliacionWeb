@@ -14,7 +14,7 @@ class PostgresReglasRepository(ReglasRepository):
         cursor = self.conn.cursor()
         try:
             query = """
-                SELECT id, patron, tercero_id, grupo_id, concepto_id, tipo_match
+                SELECT id, patron, descripcion, tercero_id, centro_costo_id, concepto_id, tipo_match
                 FROM reglas_clasificacion
                 ORDER BY id DESC
             """
@@ -26,10 +26,11 @@ class PostgresReglasRepository(ReglasRepository):
                 reglas.append(ReglaClasificacion(
                     id=row[0],
                     patron=row[1],
-                    tercero_id=row[2],
-                    grupo_id=row[3],
-                    concepto_id=row[4],
-                    tipo_match=row[5]
+                    patron_descripcion=row[2],
+                    tercero_id=row[3],
+                    centro_costo_id=row[4],
+                    concepto_id=row[5],
+                    tipo_match=row[6]
                 ))
             return reglas
         finally:
@@ -42,21 +43,21 @@ class PostgresReglasRepository(ReglasRepository):
                 # Update
                 query = """
                     UPDATE reglas_clasificacion
-                    SET patron=%s, tercero_id=%s, grupo_id=%s, concepto_id=%s, tipo_match=%s
+                    SET patron=%s, descripcion=%s, tercero_id=%s, centro_costo_id=%s, concepto_id=%s, tipo_match=%s
                     WHERE id=%s
                 """
                 cursor.execute(query, (
-                    regla.patron, regla.tercero_id, regla.grupo_id, regla.concepto_id, regla.tipo_match, regla.id
+                    regla.patron, regla.patron_descripcion, regla.tercero_id, regla.centro_costo_id, regla.concepto_id, regla.tipo_match, regla.id
                 ))
             else:
                 # Insert
                 query = """
-                    INSERT INTO reglas_clasificacion (patron, tercero_id, grupo_id, concepto_id, tipo_match)
-                    VALUES (%s, %s, %s, %s, %s)
+                    INSERT INTO reglas_clasificacion (patron, descripcion, tercero_id, centro_costo_id, concepto_id, tipo_match)
+                    VALUES (%s, %s, %s, %s, %s, %s)
                     RETURNING id
                 """
                 cursor.execute(query, (
-                    regla.patron, regla.tercero_id, regla.grupo_id, regla.concepto_id, regla.tipo_match
+                    regla.patron, regla.patron_descripcion, regla.tercero_id, regla.centro_costo_id, regla.concepto_id, regla.tipo_match
                 ))
                 regla.id = cursor.fetchone()[0]
                 

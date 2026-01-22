@@ -1,0 +1,27 @@
+# Walkthrough - Conciliación Mensual Data Consistency Fix
+
+I have implemented a **self-healing data consistency check** and corrected the **default display logic** for the "conciliaciones" module.
+
+## The Issues
+1.  **Phantom Movements**: The view showed non-zero inputs/outputs for months with no actual movements, due to stale summary data in the database.
+2.  **Phantom Balance**: The view showed a "Saldo Anterior" (Previous Balance) for future/empty months even when no extract was ever loaded, due to the system trying to "guess" the starting balance from the previous month.
+
+## The Fixes
+
+### 1. Auto-Repair for Stale Data
+I modified the [PostgresConciliacionRepository](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_conciliacion_repository.py#7-222) to automatically verify data integrity.
+*   **Action**: When reading a reconciliation record, it compares the stored summary with the actual [movimientos_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#205-231) table.
+*   **Result**: If [movimientos_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#205-231) is empty, it forces the stored Entradas/Salidas to 0.
+
+### 2. Zero Default for New/Empty Periods
+I modified the [conciliaciones.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py) router logic.
+*   **Action**: When you view a month that has **no reconciliation record** in the database (e.g., Jan 2026), the system no longer "guesses" the Previous Balance.
+*   **Result**: It now defaults `extracto_saldo_anterior` to **$0**.
+
+## Verification
+- **Scenario A (Stale Data)**: Simulating a record with fake 5000 inputs -> Auto-corrected to 0 upon load.
+- **Scenario B (Ghost Data / Jan 2026)**: Viewing a future month with no DB record -> Now correctly shows $0 for all Extract columns, including Saldo Anterior.
+
+## How to Test
+Refresh the "Conciliación Mensual" page.
+- Jan 2026 (FondoRenta) should now show **$0** for all "Extracto (Manual)" columns.

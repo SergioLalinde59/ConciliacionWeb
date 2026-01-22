@@ -1,0 +1,14 @@
+# Automate Date Extraction for Bank Extracts
+
+- [ ] Analyze current implementation <!-- id: 0 -->
+    - [ ] Review `UploadExtractosPage.tsx` for form fields <!-- id: 1 -->
+    - [ ] Review `bancolombia.py` for date extraction logic <!-- id: 2 -->
+    - [ ] Review backend API endpoint for upload handling <!-- id: 3 -->
+- [ ] Backend Implementation <!-- id: 4 -->
+    - [ ] Implement/Verify date extraction in `bancolombia.py` <!-- id: 5 -->
+    - [ ] Update API endpoint to use extracted date instead of parameters <!-- id: 6 -->
+- [ ] Frontend Implementation <!-- id: 7 -->
+    - [ ] Remove Year/Month selectors from `UploadExtractosPage.tsx` <!-- id: 8 -->
+    - [ ] Update upload logic to send only the file (and account if needed) <!-- id: 9 -->
+- [ ] Verification <!-- id: 10 -->
+    - [ ] Verify PDF upload processes correctly without manual date <!-- id: 11 -->

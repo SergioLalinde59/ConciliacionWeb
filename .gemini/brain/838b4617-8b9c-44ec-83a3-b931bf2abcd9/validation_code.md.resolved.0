@@ -1,0 +1,70 @@
+# Validaciones en UploadExtractoPage.tsx
+
+## Ubicación
+**Archivo:** [frontend/src/pages/UploadExtractoPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/UploadExtractoPage.tsx)  
+**Líneas:** 220-233
+
+## Código de las Validaciones
+
+### 1. Advertencia de Valores que No Cuadran Matemáticamente
+
+```typescript
+{/* Validación básica matematica - tolerancia de 1 peso por aproximaciones */}
+{Math.abs((resumen.saldo_anterior + resumen.entradas - resumen.salidas) - resumen.saldo_final) > 1.00 && (
+    <div className="mt-4 p-3 bg-orange-50 text-orange-800 text-sm rounded-lg flex items-center gap-2">
+        <AlertCircle size={16} />
+        <span>Advertencia: Los valores leídos no cuadran matemáticamente. Verifique el PDF.</span>
+    </div>
+)}
+```
+
+**Cálculo:**
+- Calcula: `saldo_anterior + entradas - salidas`
+- Lo compara con: `saldo_final`
+- Si la diferencia absoluta es **mayor a 1.00 peso**, muestra la advertencia
+
+**Con tus valores:**
+- Saldo anterior: 17.103.116,49
+- Entradas: 17.103.117,00
+- Salidas: 17.945.937,00
+- Saldo final: 17.945.936,49
+
+Cálculo: `17.103.116,49 + 17.103.117,00 - 17.945.937,00 = 16.260.296,49`  
+Diferencia: `|16.260.296,49 - 17.945.936,49| = 1.685.640,00`
+
+**¡Esa diferencia es ENORME!** Por eso muestra la advertencia.
+
+---
+
+### 2. Error de Año y Mes No Identificado
+
+```typescript
+{(!resumen.year || !resumen.month) && (
+    <div className="mt-4 p-3 bg-red-50 text-red-800 text-sm rounded-lg flex items-center gap-2">
+        <AlertCircle size={16} />
+        <span>Error: No se pudo identificar el año y mes en el extracto. No podrá cargar este archivo automáticamente.</span>
+    </div>
+)}
+```
+
+**Cálculo:**
+- Si `resumen.year` es `null`, `undefined`, o `0` → Muestra error
+- Si `resumen.month` es `null`, `undefined`, o `0` → Muestra error
+
+---
+
+## El Problema Real
+
+Veo que los valores NO cuadran matemáticamente. La operación correcta para tarjetas de crédito debería ser:
+
+```
+Saldo Final = Saldo Anterior + Salidas - Entradas
+```
+
+Pero hay una diferencia de **1.685.640,00 pesos**, lo que indica un problema en la **lógica de extracción**. 
+
+¿Cómo debería calcularse el saldo para MasterCard según el extracto? ¿Es:
+- `Saldo Anterior + Compras - Pagos = Saldo Final`?
+- ¿O hay otra fórmula específica?
+
+Necesito ver el PDF original para entender la lógica correcta.

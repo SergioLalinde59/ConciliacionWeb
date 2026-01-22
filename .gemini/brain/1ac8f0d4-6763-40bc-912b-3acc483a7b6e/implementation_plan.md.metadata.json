@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Update `arranque_app.ps1` to reliably start the Vite development server. Includes checking for node_modules and handling port conflicts with Docker.",
+  "updatedAt": "2026-01-14T15:27:20.499290400Z"
+}

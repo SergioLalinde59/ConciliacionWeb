@@ -1,0 +1,11 @@
+# Debugging FondoRenta Movement Upload
+
+## Objetivo
+Identificar el error en el flujo de carga de movimientos para FondoRenta que resulta en 0 registros leídos.
+
+## Tareas
+
+- [ ] Trazar el flujo completo de llamadas desde el botón "Analizar archivo"
+- [ ] Identificar el punto de falla en la cadena de llamadas
+- [ ] Corregir la lógica de negocio
+- [ ] Verificar que la carga funcione correctamente

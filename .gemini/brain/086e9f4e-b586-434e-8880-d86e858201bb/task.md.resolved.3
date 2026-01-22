@@ -1,0 +1,24 @@
+# Task: Implementar Carga de Extracto PDF para Mastercard
+
+## Objetivo
+Implementar extractores de resumen para PDFs de extractos mensuales de Mastercard, soportando tanto pesos (COP) como dólares (USD).
+
+## Checklist
+
+### Análisis y Planificación
+- [x] Analizar estructura del PDF de extracto de Mastercard
+- [x] Definir campos a extraer: saldo anterior, compras/cargos, pagos/abonos, saldo final
+- [x] Crear plan de implementación
+
+### Implementación Backend
+- [x] Implementar [mastercard_pesos_extracto.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto.py) con función [extraer_resumen()](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto.py#12-47)
+- [x] Implementar [mastercard_usd_extracto.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto.py) con función [extraer_resumen()](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto.py#12-47)
+- [x] Actualizar exports en [bancolombia/__init__.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/__init__.py)
+- [x] Actualizar [procesador_archivos_service.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py) para usar los nuevos extractores
+- [/] Verificar que el tipo de cuenta existe en la BD
+
+### Verificación
+- [ ] Probar carga de extracto Mastercard en pesos
+- [ ] Probar carga de extracto Mastercard en dólares
+- [ ] Verificar que los datos se guardan correctamente en `conciliaciones`
+- [ ] Crear documento de walkthrough con resultados

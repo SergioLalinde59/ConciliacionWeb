@@ -1,0 +1,27 @@
+# Walkthrough - Fondo Renta Extractor Update
+
+I have updated the [fondorenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/verify_fondorenta.py) extractor to include additional fields requested from the PDF statement.
+
+## Changes
+
+### [Backend/src/infrastructure/extractors/fondorenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/fondorenta.py)
+
+- **New Fields Extracted**:
+    - `Valor Unidad al Final`
+    - `Rentabilidad Periodo`
+- **Exposed Summary Fields**:
+    - `rendimientos` (Rend. Netos)
+    - `retenciones` (Retención)
+- **Logic Updates**:
+    - Improved regex to handle header values.
+    - Added clean decimal conversion for values with trailing negative signs (e.g., `5,89-`).
+
+## Verification Results
+
+### Manual Verification
+A verification script [verify_fondorenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/verify_fondorenta.py) was created with mock text derived from the original images. The script asserted that all extracted values match the expected values from the image.
+
+**Test Output:**
+![Verification Result](/brain/7afcea13-1565-4161-af0b-20cf6248fb61/uploaded_image_1768531669147.png)
+
+The verification was **SUCCESSFUL**. All fields are correctly extracted and matched against the expected values.

@@ -1,0 +1,31 @@
+# Verification Walkthrough: Bank Movements Upload Results Modal
+
+I have implemented a new results modal that appears after uploading bank movements, providing detailed statistics about the operation.
+
+## Changes Created
+
+### Frontend
+- **Modified `UploadMovimientosPage.tsx`**:
+    - Added `Modal` component integration.
+    - Implemented `showSuccessModal` state to control visibility.
+    - Replaced the inline "Carga Exitosa" message with a detailed modal showing:
+        - Total records read from the PDF.
+        - New records successfully inserted.
+        - Duplicate records ignored.
+        - Errors encountered (if any).
+
+## Verification Steps
+
+### Manual Verification
+1.  Navigate to the **"Cargar Movimientos Bancarios"** page.
+2.  Select a valid **"Cuenta Asociada"**.
+3.  Upload a bank statement PDF (e.g., `MovimientosTusCuentasBancolombia13Ene2026.pdf`).
+4.  Click **"Analizar Archivo"** to see the preview.
+5.  Click the green **"Cargar X Registros"** button.
+6.  **Verify**:
+    - [ ] A central modal appears titled **"Resumen de Carga"**.
+    - [ ] The modal displays the counts for "Total Leídos", "Nuevos Cargados", "Duplicados Ignorados", and "Errores".
+    - [ ] The "Entendido" button closes the modal and resets the form.
+
+## Automated Tests
+- No new automated tests were added as this is a UI-driven feature relying on existing backend logic.

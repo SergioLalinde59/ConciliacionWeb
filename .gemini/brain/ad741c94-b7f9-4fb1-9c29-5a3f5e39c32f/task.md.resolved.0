@@ -1,0 +1,18 @@
+# Task List
+
+- [ ] Investigate "Conceptos" backend implementation <!-- id: 0 -->
+    - [ ] Locate model, repository, and service for Concepts <!-- id: 1 -->
+    - [ ] Locate model, repository, and service for Cost Centers (Centros de Costo) <!-- id: 2 -->
+    - [ ] Check API endpoints for Concepts <!-- id: 3 -->
+- [ ] Analyze Database Schema and Relationships <!-- id: 4 -->
+    - [ ] Check Foreign Key constraints between Concepts and Cost Centers <!-- id: 5 -->
+    - [ ] Verify SQLAlchemy models match the database schema <!-- id: 6 -->
+- [ ] Reproduce/Diagnose the FK Issue <!-- id: 7 -->
+    - [ ] Check logs for specific error messages <!-- id: 8 -->
+    - [ ] Review code for potential missing FK handling or incorrect mapping <!-- id: 9 -->
+- [ ] Fix the Issue <!-- id: 10 -->
+    - [ ] Update backend code if necessary <!-- id: 11 -->
+    - [ ] Update database schema if necessary <!-- id: 12 -->
+- [ ] Verify the Fix <!-- id: 13 -->
+    - [ ] Test creating/retrieving concepts via API <!-- id: 14 -->
+    - [ ] Confirm UI works as expected <!-- id: 15 -->

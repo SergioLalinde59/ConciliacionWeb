@@ -14,12 +14,12 @@ def create_table_filters():
         # Create table if not exists
         print("Creating table config_filtros_grupos...")
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS config_filtros_grupos (
+            CREATE TABLE IF NOT EXISTS config_filtros_centro_costos (
                 id SERIAL PRIMARY KEY,
-                grupo_id INTEGER NOT NULL UNIQUE,
+                centro_costo_id INTEGER NOT NULL UNIQUE,
                 etiqueta VARCHAR(100) NOT NULL,
                 activo_por_defecto BOOLEAN DEFAULT TRUE,
-                CONSTRAINT fk_grupo FOREIGN KEY (grupo_id) REFERENCES grupos(grupoid)
+                CONSTRAINT fk_centro_costo FOREIGN KEY (centro_costo_id) REFERENCES centro_costos(centro_costo_id)
             );
         """)
         
@@ -33,9 +33,9 @@ def create_table_filters():
         print("Inserting/Updating initial filters...")
         for gid, label, default_active in filters:
             cur.execute("""
-                INSERT INTO config_filtros_grupos (grupo_id, etiqueta, activo_por_defecto)
+                INSERT INTO config_filtros_centro_costos (centro_costo_id, etiqueta, activo_por_defecto)
                 VALUES (%s, %s, %s)
-                ON CONFLICT (grupo_id) DO UPDATE 
+                ON CONFLICT (centro_costo_id) DO UPDATE 
                 SET etiqueta = EXCLUDED.etiqueta,
                     activo_por_defecto = EXCLUDED.activo_por_defecto;
             """, (gid, label, default_active))

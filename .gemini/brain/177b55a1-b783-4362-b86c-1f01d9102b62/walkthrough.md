@@ -1,0 +1,20 @@
+# Walkthrough - Fix MasterCard Pesos Extractor
+
+I have updated the MasterCard Pesos extractor to correctly identify and ignore pages that belong to the USD statement.
+
+## Changes
+
+### `Backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_movimientos.py`
+
+- Added a validation check inside the page iteration loop.
+- The extractor now looks for the text `ESTADO DE CUENTA EN: DOLARES` (case insensitive, with flexible spacing).
+- If this text is found, the page is skipped, preventing USD transactions from being mixed into the Pesos account.
+
+## Verification
+
+### Automated Checks
+- Verified that `mastercard_pesos_extracto_anterior_movimientos.py` (the old format extractor) already includes strict header validation for "PESOS", so no changes were needed there.
+
+### Manual Verification Required
+- Please re-upload the MasterCard PDF that caused the issue.
+- Verify that the USD transactions (like those from "APPLE.COM/BILL" in dollars) no longer appear in the Pesos account (Cuenta ID 6).

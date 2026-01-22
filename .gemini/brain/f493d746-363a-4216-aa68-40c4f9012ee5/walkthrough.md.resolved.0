@@ -1,0 +1,28 @@
+# Walkthrough: Verificación de Procesamiento de Movimientos
+
+He revisado el archivo [procesador_archivos_service.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py) y confirmado que la lógica para extraer y guardar movimientos ya está implementada correctamente.
+
+## Cambios Verificados
+
+### [procesador_archivos_service.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py)
+
+El archivo incluye:
+
+1.  **Inyección de Dependencia**: `MovimientoExtractoRepository` se inyecta correctamente en el [__init__](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#18-32).
+2.  **Lógica de Procesamiento**: El método [procesar_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#361-485) contiene el bloque `# NUEVO` que:
+    *   Determina el extractor adecuado usando [_obtener_modulo_extractor_movimientos](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#343-360).
+    *   Llama a `extractor_module.extraer_movimientos`.
+    *   Convierte los datos crudos a objetos `MovimientoExtracto`.
+    *   Elimina movimientos anteriores del mismo periodo.
+    *   Guarda los nuevos movimientos en lote.
+3.  **Manejo de Errores**: Se incluye `try/except` para no interrumpir todo el proceso si falla la extracción de movimientos.
+
+### Verificación de Imports
+
+Se ejecutó un script de prueba para importar la clase [ProcesadorArchivosService](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#17-485) y verificar que todas las dependencias (incluyendo los extractores en `bancolombia`) se resuelven correctamente.
+
+Resultado: **Éxito**.
+
+## Conclusión
+
+El archivo ya cuenta con los cambios solicitados para la Fase 3. No se requirieron modificaciones adicionales.

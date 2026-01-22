@@ -1,0 +1,259 @@
+# Refactorización de Extractores - Organización por Institución Financiera
+
+## 📋 Resumen
+
+Se completó exitosamente la refactorización de los extractores de PDF, reorganizándolos por institución financiera y separando la lógica de **movimientos** de **extractos** para mayor claridad y mantenibilidad.
+
+## 🎯 Objetivos Alcanzados
+
+### ✅ Separación Clara de Responsabilidades
+- Cada tipo de archivo (movimientos vs extractos) tiene su propio módulo
+- FondoRenta ahora está correctamente identificado como parte de Bancolombia (Cibest Capital)
+- MasterCard maneja ambas monedas (COP y USD) en un solo extractor
+
+### ✅ Estructura Escalable
+
+```
+infrastructure/extractors/
+├── utils.py                         # Utilidades compartidas
+└── bancolombia/                     # Productos Bancolombia/Cibest
+    ├── __init__.py                  # Exports centralizados
+    ├── ahorros_movimientos.py       # 🆕 Cuenta Ahorros - Movimientos
+    ├── ahorros_extracto.py          # 🆕 Cuenta Ahorros - Extracto
+    ├── fondorenta_movimientos.py    # 🆕 FondoRenta - Movimientos
+    ├── fondorenta_extracto.py       # 🆕 FondoRenta - Extracto
+    ├── mastercard_movimientos.py    # 🆕 MasterCard - Movimientos (COP/USD)
+    ├── mastercard_pesos_extracto.py # 🔮 Placeholder futuro
+    └── mastercard_usd_extracto.py   # 🔮 Placeholder futuro
+```
+
+## 📁 Archivos Creados
+
+### 1. [bancolombia/\_\_init\_\_.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/__init__.py)
+
+Módulo centralizador que exporta todas las funciones con nombres claros:
+
+```python
+from src.infrastructure.extractors import bancolombia
+
+# Funciones disponibles:
+bancolombia.extraer_movimientos_ahorros(file_obj)
+bancolombia.extraer_resumen_ahorros(file_obj)
+bancolombia.extraer_movimientos_fondorenta(file_obj)
+bancolombia.extraer_resumen_fondorenta(file_obj)
+bancolombia.extraer_movimientos_mastercard(file_obj)
+```
+
+---
+
+### 2. Extractores de Ahorros
+
+#### [ahorros_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/ahorros_movimientos.py)
+
+- Extrae movimientos diarios de cuenta de ahorros
+- Parsea formato: `DD Mmm YYYY | Descripción | Referencia | Valor`
+- 2,771 bytes (código enfocado)
+
+#### [ahorros_extracto.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/ahorros_extracto.py)
+
+- Extrae resumen mensual (SALDO ANTERIOR, ABONOS, CARGOS, SALDO ACTUAL)
+- Identifica periodo automáticamente
+- Valida integridad matemática
+- 7,198 bytes
+
+---
+
+### 3. Extractores de FondoRenta
+
+#### [fondorenta_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/fondorenta_movimientos.py)
+
+- Multi-línea: descripción + fecha/valores + complemento
+- Maneja traslados "hacia" (negativos) y "desde" (positivos)
+- Debug logging integrado
+- 5,753 bytes
+
+#### [fondorenta_extracto.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/fondorenta_extracto.py)
+
+- Extrae tabla compleja: SALDO ANTERIOR, ADICIONES, RETIROS, RENDIMIENTOS, RETENCIÓN
+- Calcula entradas/salidas consolidadas
+- Regex posicional robusto
+- 9,191 bytes
+
+---
+
+### 4. Extractor de MasterCard
+
+#### [mastercard_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/mastercard_movimientos.py)
+
+- **Unificado** para COP y USD
+- Identifica moneda por registro
+- Invierte signos (compras = negativos)
+- 4,244 bytes
+
+#### Placeholders para Futuro
+
+- [mastercard_pesos_extracto.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto.py)
+- [mastercard_usd_extracto.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto.py)
+
+Listos para implementar cuando se necesite cargar extractos de TC.
+
+---
+
+## 🔄 Cambios en el Servicio
+
+### [procesador_archivos_service.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py)
+
+```diff
+  # ANTES: Imports dispersos
+- from src.infrastructure.extractors.bancolombia import extraer_movimientos_bancolombia
+- from src.infrastructure.extractors.creditcard import extraer_movimientos_credito
+- from src.infrastructure.extractors.fondorenta import extraer_movimientos_fondorenta
+
+  # DESPUÉS: Import unificado
++ from src.infrastructure.extractors import bancolombia
+```
+
+**Mejoras**:
+- ✅ Imports simplificados (1 línea vs 4)
+- ✅ Namespace claro (`bancolombia.extraer_*`)
+- ✅ Eliminada lógica de `importlib.reload()` (ya no necesaria)
+- ✅ Código más mantenible
+
+---
+
+## 🗑️ Archivos Eliminados
+
+```diff
+- bancolombia.py      (238 líneas → dividido en 2 archivos)
+- fondorenta.py       (369 líneas → dividido en 2 archivos)  
+- creditcard.py       (82 líneas  → renombrado y relocado)
+```
+
+**Total**: ~689 líneas reorganizadas en 8 archivos especializados.
+
+---
+
+## 📚 Documentación Creada
+
+### [docs/AGREGAR_NUEVO_BANCO.md](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/docs/AGREGAR_NUEVO_BANCO.md)
+
+Guía completa para desarrolladores que incluye:
+
+- 📖 Estructura de extractores
+- 🔧 Tipos de extractores (movimientos y resumen)
+- ➕ Paso a paso para agregar nuevo banco
+- 📦 Cómo agregar producto a banco existente
+- 🛠️ Utilidades disponibles (`parsear_fecha`, `parsear_valor`)
+- ✅ Best practices
+- 💡 Ejemplo completo de referencia
+
+---
+
+## ✅ Verificación
+
+### Compilación de Sintaxis
+
+```bash
+✓ ahorros_extracto.py compilado correctamente
+✓ ahorros_movimientos.py compilado correctamente
+✓ fondorenta_extracto.py compilado correctamente
+✓ fondorenta_movimientos.py compilado correctamente
+✓ mastercard_movimientos.py compilado correctamente
+✓ mastercard_pesos_extracto.py compilado correctamente
+✓ mastercard_usd_extracto.py compilado correctamente
+✓ __init__.py compilado correctamente
+```
+
+### Imports Verificados
+
+```python
+>>> from src.infrastructure.extractors import bancolombia
+✓ Import successful
+
+>>> bancolombia.__all__
+['extraer_movimientos_ahorros',
+ 'extraer_resumen_ahorros',
+ 'extraer_movimientos_fondorenta',
+ 'extraer_resumen_fondorenta',
+ 'extraer_movimientos_mastercard']
+```
+
+---
+
+## 🎨 Beneficios de la Nueva Estructura
+
+### 1. **Mantenibilidad** 📝
+- Archivos más pequeños y enfocados (promedio ~5KB vs >10KB)
+- Responsabilidad única por archivo
+- Fácil localizar y corregir bugs
+
+### 2. **Escalabilidad** 📈
+- Agregar nuevo banco: crear carpeta + 2-4 archivos
+- Agregar producto a banco: crear 2 archivos + actualizar `__init__.py`
+- Patrón claro y replicable
+
+### 3. **Claridad** 🔍
+- Nombre de archivo describe exactamente qué hace
+- Separación clara: movimientos ≠ extractos
+- Namespace bancolombia agrupa productos relacionados
+
+### 4. **Facilidad de Testing** 🧪
+- Cada extractor es testeable independientemente
+- Mocks más simples (imports específicos)
+- Coverage por producto
+
+---
+
+## 📊 Métricas
+
+| Métrica | Antes | Después | Mejora |
+|---------|-------|---------|--------|
+| **Archivos** | 3 monolíticos | 8 especializados | +167% modularidad |
+| **Promedio líneas/archivo** | 230 | 86 | -63% complejidad |
+| **Imports en servicio** | 4 líneas | 1 línea | -75% |
+| **Instituciones organizadas** | 0 | 1 (Bancolombia) | Estructura clara |
+| **Documentación** | 0 | 1 guía completa | ✅ |
+
+---
+
+## 🚀 Próximos Pasos Recomendados
+
+### Testing Manual (Pendiente)
+
+Deberías probar en la aplicación:
+
+1. **Cargar movimientos Bancolombia Ahorros** → `/upload-movimientos`
+2. **Cargar extracto Bancolombia Ahorros** → `/upload-extractos`
+3. **Cargar movimientos FondoRenta** → `/upload-movimientos`
+4. **Cargar extracto FondoRenta** → `/upload-extractos`
+5. **Cargar MasterCard COP** → `/upload-movimientos`
+6. **Cargar MasterCard USD** → `/upload-movimientos`
+
+### Mejoras Futuras (Opcional)
+
+- [ ] Implementar extractos para MasterCard (cuando sea necesario)
+- [ ] Crear tests unitarios para cada extractor
+- [ ] Agregar validación de schema a los datos extraídos
+- [ ] Considerar factory pattern para selección de extractor
+
+---
+
+## 🎓 Para el Futuro: Agregar Otro Banco
+
+Ejemplo para Davivienda:
+
+```bash
+# 1. Crear estructura
+mkdir backend/src/infrastructure/extractors/davivienda
+
+# 2. Crear archivos
+touch davivienda/__init__.py
+touch davivienda/ahorros_movimientos.py
+touch davivienda/ahorros_extracto.py
+
+# 3. Implementar extractores (ver docs/AGREGAR_NUEVO_BANCO.md)
+
+# 4. Registrar en procesador_archivos_service.py
+```
+
+¡La estructura está lista para escalar! 🎉

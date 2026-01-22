@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_TASK",
+  "summary": "Debugging and fixing the issue where movements are not being correctly extracted from the PDF, specifically for MasterCard Pesos (Anterior) format.",
+  "updatedAt": "2026-01-17T22:07:55.809827600Z"
+}

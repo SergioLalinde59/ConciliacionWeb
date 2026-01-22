@@ -1,0 +1,35 @@
+# Implementation Plan - Data Consistency for Conciliaciones
+
+The goal is to ensure that the "Extracto (Manual)" values in the Conciliación Mensual view are always consistent with the actual `movimientos_extracto` records. Currently, the `conciliaciones` table keeps stale aggregate data even if the detailed movements are deleted or changed.
+
+## User Review Required
+> [!IMPORTANT]
+> This change introduces a "self-healing" mechanism on read. When you view a monthly reconciliation, if the system detects a mismatch between the stored summary and the actual extract movements, it will automatically update the summary in the database. This ensures strict consistency but might cause values to "change" before your eyes if they were previously wrong.
+
+## Proposed Changes
+
+### Backend
+#### [MODIFY] [PostgresConciliacionRepository.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_conciliacion_repository.py)
+- **Add Method**: `_verificar_y_sincronizar_extracto(self, conciliacion)`
+    - This method will query `movimientos_extracto` for the given account/year/month.
+    - It will calculate `total_entradas` and `total_salidas`.
+    - It will compare these calculated values with `conciliacion.extracto_entradas` and `conciliacion.extracto_salidas`.
+    - If there is a mismatch (tolerance > 0.01):
+        - It will UPDATE the `conciliaciones` table with the correct values.
+        - It will also recalculate `extracto_saldo_final` = `conciliacion.extracto_saldo_anterior` + `real_entradas` - `real_salidas`.
+        - It will return a modified `Conciliacion` object.
+- **Update Method**: `obtener_por_periodo`
+    - Call `_verificar_y_sincronizar_extracto` before returning the result.
+
+## Verification Plan
+
+### Automated Tests
+- I will create a python script `verify_fix.py` that:
+    1.  Inserts a dummy `conciliacion` record with fake non-zero values (e.g. Entradas = 1000).
+    2.  Ensures `movimientos_extracto` is empty for that period.
+    3.  Calls `repo.obtener_por_periodo`.
+    4.  Asserts that the returned object has Entradas = 0.
+    5.  Asserts that the `conciliaciones` table has been updated to Entradas = 0.
+
+### Manual Verification
+- The user can reload the "Conciliación Mensual" page. The months with missing extract data should immediately show 0 for Entradas/Salidas/Saldo Final (assuming Saldo Anterior is handled or cascades).

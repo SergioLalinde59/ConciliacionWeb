@@ -1,0 +1,78 @@
+# Renaming "Grupo" to "Centro Costos" Implementation Plan
+
+## Goal Description
+Rename all instances of "grupo" (singular) and "grupos" (plural) to "centro_costos" (singular) and "centros_costos" (plural) respectively, across the Database, Backend, and Frontend. This aligns the terminology with the business domain "Centro de Costos".
+
+## User Review Required
+> [!WARNING]
+> This is a **breaking change** for the database and codebase. All components must be updated simultaneously.
+> **Database Backups**: It is highly recommended to backup the database before proceeding.
+> **Terminology**:
+> - `grupos` table -> `centros_costos` table.
+> - `grupoid` column -> `centro_costos_id` column.
+> - `grupo` column (name) -> `centro_costos` column (or [nombre](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_grupo_repository.py#46-52) if preferred, but plan defaults to `centro_costos` based on instructions).
+
+## Proposed Changes
+
+### Database (PostgreSQL)
+Run SQL commands to rename tables and columns.
+
+1.  **Rename Tables**:
+    - `grupos` -> `centros_costos`
+    - `config_filtros_grupos` -> `config_filtros_centros_costos`
+2.  **Rename Columns**:
+    - In `centros_costos` (ex-`grupos`):
+        - `grupoid` -> `centro_costos_id`
+        - `grupo` -> `centro_costos` (The name/description field)
+    - In `conceptos`:
+        - `grupo_id` -> `centro_costos_id`
+    - In `movimientos`:
+        - `grupo_id` -> `centro_costos_id`
+    - In `config_filtros_centros_costos` (ex-`config_filtros_grupos`):
+        - `grupo_id` -> `centro_costos_id`
+
+### Backend (Python)
+Refactor code to match new DB schema and terminology.
+
+#### [MODIFY] Domain Models
+- [src/domain/models/grupo.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/models/grupo.py) -> Rename file to `centro_costos.py`. Class [Grupo](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/models/grupo.py#4-14) -> `CentroCostos`. Fields `grupoid` -> `centro_costos_id`, `grupo` -> `centro_costos`.
+- `src/domain/models/config_filtro_grupo.py` -> Rename to `config_filtro_centro_costos.py`. Update references.
+- `src/domain/models/concepto.py` & `movimiento.py` -> Update fields `grupo_id` -> `centro_costos_id`.
+
+#### [MODIFY] Ports & Repositories
+- `src/domain/ports/grupo_repository.py` -> `centro_costos_repository.py`.
+- [src/infrastructure/database/postgres_grupo_repository.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_grupo_repository.py) -> `postgres_centro_costos_repository.py`. Update SQL queries internally.
+
+#### [MODIFY] API Routers
+- `src/infrastructure/api/routers/grupos.py` -> `centros_costos.py`. Update URL prefix `/grupos` -> `/centros-costos` (optional, but consistent).
+
+### Frontend (React/TypeScript)
+Refactor components and types.
+
+#### [MODIFY] Types & Services
+- [src/types.ts](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/types.ts): Rename interfaces [Grupo](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/models/grupo.py#4-14) -> `CentroCostos`, properties `grupo_id` -> `centro_costos_id`.
+- `src/services/catalogs.service.ts`: Update API endpoints and type references.
+
+#### [MODIFY] Components & Pages
+- Rename Files & Component Names:
+    - `src/pages/GruposPage.tsx` -> `CentrosCostosPage.tsx`
+    - `src/components/organisms/tables/GruposTable.tsx` -> `CentrosCostosTable.tsx`
+    - `src/components/organisms/modals/GrupoModal.tsx` -> `CentroCostosModal.tsx`
+    - `src/pages/ConfigFiltrosGruposPage.tsx` -> `ConfigFiltrosCentrosPage.tsx`
+- Search & Replace in UI Text: "Grupo" -> "Centro de Costos".
+
+## Verification Plan
+
+### Automated Tests
+- None currently exist that cover this specific renaming.
+
+### Manual Verification
+1.  **Start Application**: Run [arranque_app.ps1](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/arranque_app.ps1).
+2.  **Verify UI Loading**: Ensure the app loads without "White Screen" (which would indicate broken imports).
+3.  **Navigation**:
+    - Go to "Centros de Costos" (renamed from Grupos) page.
+    - Check if the list of Cost Centers loads (verifies DB read).
+    - Create a new Centro de Costos (verifies DB write).
+4.  **Relationships**:
+    - Go to `Conceptos` page, ensure they still link to their respective Centro de Costos.
+    - Go to `Movimientos` page, check if `centro_costos_id` is populated correctly.

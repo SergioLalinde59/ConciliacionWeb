@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_TASK",
+  "summary": "Checklist detallado para implementar el sistema de matching de conciliación en 6 fases: base de datos, dominio backend, infraestructura, frontend atomic design, funcionalidades de usuario, y testing.",
+  "updatedAt": "2026-01-18T15:16:03.007254800Z"
+}

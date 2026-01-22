@@ -1,0 +1,20 @@
+# Task List: Rename "Grupo" to "Centro Costos"
+
+- [ ] Explore codebase and database schema to identify all instances of "grupo"/"grupos" <!-- id: 0 -->
+    - [ ] Check SQL schema files <!-- id: 1 -->
+    - [ ] Check Backend models and repositories (Python) <!-- id: 2 -->
+    - [ ] Check Frontend components and interfaces (React/TypeScript) <!-- id: 3 -->
+- [ ] Create Implementation Plan <!-- id: 4 -->
+- [ ] **User Approval** <!-- id: 5 -->
+- [ ] Execute Database Changes <!-- id: 6 -->
+    - [ ] Rename table `grupos` to `centro_costos` <!-- id: 7 -->
+    - [ ] Update Foreign Keys in `conceptos` and `movimientos` <!-- id: 8 -->
+- [ ] Execute Backend Changes <!-- id: 9 -->
+    - [ ] Rename models/classes <!-- id: 10 -->
+    - [ ] Update queries and repositories <!-- id: 11 -->
+    - [ ] Rename API endpoints if necessary <!-- id: 12 -->
+- [ ] Execute Frontend Changes <!-- id: 13 -->
+    - [ ] Rename interfaces/types <!-- id: 14 -->
+    - [ ] Update components and UI text <!-- id: 15 -->
+- [ ] Verify Changes <!-- id: 16 -->
+    - [ ] Run application and check functionality <!-- id: 17 -->

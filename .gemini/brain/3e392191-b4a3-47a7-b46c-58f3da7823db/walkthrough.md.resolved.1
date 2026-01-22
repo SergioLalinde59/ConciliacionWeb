@@ -1,0 +1,28 @@
+# Walkthrough - Unify Currency Presentation
+
+I have unified the presentation of monetary values across the application. Now, positive values appear in **Green** and negative values appear in **Red**, providing immediate visual feedback on the financial data.
+
+## Changes
+
+### Frontend
+- **[App.css](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.css)**:
+    - Added utility classes `.text-currency-positive` (Green) and `.text-currency-negative` (Red).
+- **[StatCard.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/StatCard/StatCard.tsx)**:
+    - Updated to automatically apply the correct color class based on the card's value.
+- **[App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx)**:
+    - Updated "Import Preview" and "Report Results" tables to apply these classes to monetary columns.
+
+## Verification Results
+
+### Dashboard
+Confirms that the main KPIs respect the new color coding.
+- **Positive Example**: "Subtotal Acumulado" (Green).
+- **Negative Example**: "Total Descuentos" (Red).
+
+![Dashboard Currency Colors](/brain/3e392191-b4a3-47a7-b46c-58f3da7823db/dashboard_total_descuentos_1768401989287.png)
+
+### Report Table
+Confirms that detailed lists also follow the rule.
+- Columns `Subtotal`, `Descuentos`, `IVA`, and `Total` are all colored.
+
+![Report Table Currency Colors](/brain/3e392191-b4a3-47a7-b46c-58f3da7823db/report_table_verification_1768402279852.png)

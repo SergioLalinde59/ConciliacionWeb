@@ -1,0 +1,28 @@
+# Extracto Formatting Implementation Plan
+
+To ensure "Extracto (Manual)" numbers are formatted with thousands separators and no decimals (matching the "Sistema" columns), while remaining editable, I will replace the raw `<input>` elements with a new `EditableCurrencyCell` component.
+
+## User Review Required
+> [!NOTE]
+> Fields will look like static, formatted text (Green/Red/Blue, separators, no decimals). When you click them, they will turn into an input field for editing. When you click away (blur), they return to the formatted view.
+
+## Proposed Changes
+
+### New Component
+#### [NEW] [EditableCurrencyCell.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/components/molecules/EditableCurrencyCell.tsx)
+- **State**: `isEditing` (boolean).
+- **View Mode**: Renders `<CurrencyDisplay />`. OnClick -> `isEditing = true`.
+- **Edit Mode**: Renders `Input` (or strict `<input>`). OnBlur -> `isEditing = false`. Auto-focuses.
+- **Props**: `value`, `onChange`, `onSave` (optional).
+
+### Update ConciliacionPage
+#### [MODIFY] [ConciliacionPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx)
+- Import `EditableCurrencyCell`.
+- Replace the 4 `<input>` columns in the "Extracto" section with `<EditableCurrencyCell>`.
+- Pass necessary props (value, update handler).
+
+## Verification Plan
+1.  **Visual Check**: Verify "Extracto" columns look identical to "Sistema" columns initially (separators, no decimals, correct colors).
+2.  **Interaction**: Click a value. Verify it becomes an input.
+3.  **Editing**: Type a value. Verify input text color follows the positive/negative logic.
+4.  **Save/Blur**: Click away. Verify it reverts to formatted text with new value.

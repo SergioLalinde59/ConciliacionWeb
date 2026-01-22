@@ -44,13 +44,13 @@ class TerceroNotFoundException(EntityNotFoundException):
         )
 
 
-class GrupoNotFoundException(EntityNotFoundException):
-    """El grupo solicitado no existe."""
+class CentroCostoNotFoundException(EntityNotFoundException):
+    """El centro de costo solicitado no existe."""
     
-    def __init__(self, grupo_id: int):
+    def __init__(self, centro_costo_id: int):
         super().__init__(
-            message=f"Grupo con ID {grupo_id} no encontrado",
-            details={"grupo_id": grupo_id}
+            message=f"Centro de costo con ID {centro_costo_id} no encontrado",
+            details={"centro_costo_id": centro_costo_id}
         )
 
 

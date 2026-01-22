@@ -1,0 +1,42 @@
+# Refactorización de Extractores por Institución Financiera
+
+## Contexto
+Reorganizar los extractores de PDF separando por:
+- **Institución financiera** (Bancolombia/Cibest Capital)
+- **Tipo de producto** (Ahorros, MasterCard, FondoRenta)
+- **Tipo de archivo** (Movimientos vs Extractos)
+
+## Tareas
+
+### [ ] 1. Diseño de la Estructura
+- [ ] Definir estructura de carpetas final con usuario
+- [ ] Documentar convenciones de nombres
+- [ ] Validar que cubre productos futuros
+
+### [ ] 2. Creación de Nueva Estructura
+- [ ] Crear carpeta [bancolombia/](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia.py#78-110) en extractors
+- [ ] Crear archivos separados para movimientos y extractos
+- [ ] Mover utilidades compartidas a ubicación apropiada
+
+### [ ] 3. Migración de Código
+- [ ] Dividir [bancolombia.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia.py) → `ahorros_movimientos.py` + `ahorros_extracto.py`
+- [ ] Dividir [fondorenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/verify_fondorenta.py) → `fondorenta_movimientos.py` + `fondorenta_extracto.py`
+- [ ] Separar [creditcard.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/creditcard.py) → `mastercard_pesos_movimientos.py` + `mastercard_usd_movimientos.py`
+- [ ] Crear archivos extracto para tarjetas (placeholder para futuro)
+
+### [ ] 4. Actualización de Dependencias
+- [ ] Actualizar imports en [procesador_archivos_service.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py)
+- [ ] Actualizar imports en [bancolombia_adapter.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia_adapter.py) (si aplica)
+- [ ] Crear archivos [__init__.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/__init__.py) apropiados para exports limpios
+
+### [ ] 5. Verificación
+- [ ] Probar carga de movimientos Bancolombia Ahorros
+- [ ] Probar carga de extracto Bancolombia Ahorros
+- [ ] Probar carga de movimientos FondoRenta
+- [ ] Probar carga de extracto FondoRenta
+- [ ] Probar carga de movimientos MasterCard (ambas monedas)
+- [ ] Eliminar archivos antiguos
+
+### [ ] 6. Documentación
+- [ ] Actualizar README si existe
+- [ ] Documentar cómo agregar nuevos bancos/productos

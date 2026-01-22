@@ -3,8 +3,11 @@ import type { Movimiento, SugerenciaClasificacion, ContextoClasificacionResponse
 import { apiService } from '../services/api'
 import { ComboBox } from '../components/molecules/ComboBox'
 import { TerceroModal } from '../components/organisms/modals/TerceroModal'
+import { ModalClasificarSimilares } from '../components/ModalClasificarSimilares'
 import { CurrencyDisplay } from '../components/atoms/CurrencyDisplay'
-import { Save, Layers, Clock, CheckCircle, ArrowRight, Search, Copy } from 'lucide-react'
+import { Save, Layers, Clock, CheckCircle, ArrowRight, Search, Copy, RefreshCw } from 'lucide-react'
+import { DataTable } from '../components/molecules/DataTable'
+import type { Column } from '../components/molecules/DataTable'
 
 export const ClasificarMovimientosPage: React.FC = () => {
     // --- State ---
@@ -20,6 +23,8 @@ export const ClasificarMovimientosPage: React.FC = () => {
     const [terceroId, setTerceroId] = useState<number | null>(null)
     const [centroCostoId, setCentroCostoId] = useState<number | null>(null)
     const [conceptoId, setConceptoId] = useState<number | null>(null)
+    const [descripcion, setDescripcion] = useState<string>('')
+    const [referencia, setReferencia] = useState<string>('')
 
     // Modals
     const [showTerceroModal, setShowTerceroModal] = useState(false)
@@ -30,6 +35,10 @@ export const ClasificarMovimientosPage: React.FC = () => {
     const [batchPreview, setBatchPreview] = useState<Movimiento[]>([])
     const [batchPatron, setBatchPatron] = useState('')
     const [loadingBatch, setLoadingBatch] = useState(false)
+    const [batchSelectedIds, setBatchSelectedIds] = useState<Set<number>>(new Set())
+
+    // Modal Clasificar Similares
+    const [showSimilaresModal, setShowSimilaresModal] = useState(false)
 
     // Catalogos
     const [centrosCostos, setCentrosCostos] = useState<{ id: number, nombre: string }[]>([])
@@ -90,6 +99,8 @@ export const ClasificarMovimientosPage: React.FC = () => {
         setTerceroId(null)
         setCentroCostoId(null)
         setConceptoId(null)
+        setDescripcion('')
+        setReferencia('')
     }
 
     const aplicarSugerencia = (sug: SugerenciaClasificacion) => {
@@ -97,10 +108,17 @@ export const ClasificarMovimientosPage: React.FC = () => {
         setTerceroId(sug.tercero_id ?? null)
         setCentroCostoId(sug.centro_costo_id ?? null)
         setConceptoId(sug.concepto_id ?? null)
+        // Keep current descripcion and referencia from movimientoActual
+        if (movimientoActual) {
+            setDescripcion(movimientoActual.descripcion || '')
+            setReferencia(movimientoActual.referencia || '')
+        }
     }
 
     const seleccionarMovimiento = (mov: Movimiento) => {
         setMovimientoActual(mov)
+        setDescripcion(mov.descripcion || '')
+        setReferencia(mov.referencia || '')
     }
 
     const guardarClasificacion = async () => {
@@ -115,6 +133,8 @@ export const ClasificarMovimientosPage: React.FC = () => {
                 tercero_id: terceroId,
                 centro_costo_id: centroCostoId,
                 concepto_id: conceptoId,
+                descripcion: descripcion,
+                referencia: referencia,
             }
 
             await apiService.movimientos.actualizar(movimientoActual.id, payload)
@@ -137,15 +157,22 @@ export const ClasificarMovimientosPage: React.FC = () => {
         }
 
         const palabras = movimientoActual.descripcion.split(' ')
+        // Default pattern: First 2 words, but user can edit now
         const patronDefault = palabras.slice(0, 2).join(' ')
 
         setBatchPatron(patronDefault)
-        setLoadingBatch(true)
+        setBatchSelectedIds(new Set())
+        await obtenerPreviewLote(patronDefault)
+        setShowBatchModal(true)
+    }
 
+    const obtenerPreviewLote = async (patron: string) => {
+        setLoadingBatch(true)
         try {
-            const preview = await apiService.clasificacion.previewLote(patronDefault) as Movimiento[]
+            const preview = await apiService.clasificacion.previewLote(patron) as Movimiento[]
             setBatchPreview(preview)
-            setShowBatchModal(true)
+            // Select all by default
+            setBatchSelectedIds(new Set(preview.map(m => m.id)))
         } catch (error) {
             console.error("Error obteniendo preview:", error)
             alert("Error al obtener preview: " + error)
@@ -154,18 +181,24 @@ export const ClasificarMovimientosPage: React.FC = () => {
         }
     }
 
+    const handleRefreshPreview = () => {
+        if (!batchPatron.trim()) return
+        obtenerPreviewLote(batchPatron)
+    }
+
     const confirmarLote = async () => {
         if (!batchPatron || !terceroId || !centroCostoId || !conceptoId) return
+        if (batchSelectedIds.size === 0) return
 
         try {
             const dto = {
-                patron: batchPatron,
+                // patron: batchPatron, // Ya no usamos patron para el guardado final, sino IDs explícitos
+                movimiento_ids: Array.from(batchSelectedIds),
                 tercero_id: terceroId,
                 centro_costo_id: centroCostoId,
                 concepto_id: conceptoId
             }
-            const res = await apiService.clasificacion.clasificarLote(dto)
-            alert(res.mensaje)
+            await apiService.clasificacion.clasificarLote(dto)
             setShowBatchModal(false)
             setBatchPreview([])
             // Recargar todo
@@ -198,6 +231,66 @@ export const ClasificarMovimientosPage: React.FC = () => {
             alert("Error creando tercero")
         }
     }
+
+    // --- DataTable Logic for Batch Modal ---
+    const handleToggleBatchSelect = (id: number) => {
+        const newSelected = new Set(batchSelectedIds)
+        if (newSelected.has(id)) {
+            newSelected.delete(id)
+        } else {
+            newSelected.add(id)
+        }
+        setBatchSelectedIds(newSelected)
+    }
+
+    const handleToggleBatchSelectAll = () => {
+        if (batchSelectedIds.size === batchPreview.length) {
+            setBatchSelectedIds(new Set())
+        } else {
+            setBatchSelectedIds(new Set(batchPreview.map(m => m.id)))
+        }
+    }
+
+    const batchColumns: Column<Movimiento>[] = [
+        {
+            key: 'id',
+            header: 'ID',
+            width: 'w-16',
+            accessor: (row) => <span className="text-gray-500">#{row.id}</span>
+        },
+        { key: 'fecha', header: 'Fecha', sortable: true, width: 'w-24' },
+        {
+            key: 'descripcion',
+            header: 'Descripción',
+            sortable: true,
+            accessor: (row) => <div className="truncate max-w-xs" title={row.descripcion}>{row.descripcion}</div>
+        },
+        {
+            key: 'valor',
+            header: 'Valor',
+            sortable: true,
+            align: 'right',
+            accessor: (row) => <CurrencyDisplay value={row.valor} />
+        },
+        {
+            key: 'seleccionar',
+            header: 'Clasificar',
+            width: 'w-24',
+            align: 'center',
+            sortable: false,
+            headerClassName: 'text-center',
+            accessor: (row) => (
+                <div className="flex justify-center">
+                    <input
+                        type="checkbox"
+                        checked={batchSelectedIds.has(row.id)}
+                        onChange={() => handleToggleBatchSelect(row.id)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                    />
+                </div>
+            )
+        }
+    ]
 
     // --- Render ---
 
@@ -362,6 +455,30 @@ export const ClasificarMovimientosPage: React.FC = () => {
                                     </div>
                                 </div>
 
+                                {/* Descripción y Referencia */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                                        <input
+                                            type="text"
+                                            value={descripcion}
+                                            onChange={(e) => setDescripcion(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="Descripción del movimiento..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Referencia</label>
+                                        <input
+                                            type="text"
+                                            value={referencia}
+                                            onChange={(e) => setReferencia(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="Referencia..."
+                                        />
+                                    </div>
+                                </div>
+
                                 {/* Botones en una sola línea */}
                                 <div className="flex items-center gap-3 pt-2">
                                     <button
@@ -394,61 +511,88 @@ export const ClasificarMovimientosPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* History Context */}
-                        {sugerenciaData && sugerenciaData.contexto.length > 0 && (
+                        {/* History Context - SIEMPRE MOSTRAR */}
+                        {sugerenciaData && (
                             <div className="bg-white rounded-lg shadow-sm p-6">
                                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                                     <Clock className="h-5 w-5 text-gray-400" />
-                                    Historial Relacionado
+                                    Historial Relacionado ({sugerenciaData.contexto.length})
                                 </h3>
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full text-sm">
-                                        <thead>
-                                            <tr className="bg-gray-50 text-left text-gray-500">
-                                                <th className="px-4 py-2">Fecha</th>
-                                                <th className="px-4 py-2">Cuenta</th>
-                                                <th className="px-4 py-2">Referencia</th>
-                                                <th className="px-4 py-2">Descripción</th>
-                                                <th className="px-4 py-2">Valor</th>
-                                                <th className="px-4 py-2">Tercero</th>
-                                                <th className="px-4 py-2">Clasificación Asignada</th>
-                                                <th className="px-4 py-2">Acción</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {sugerenciaData.contexto.map((ctx) => (
-                                                <tr key={ctx.id} className="border-b hover:bg-gray-50">
-                                                    <td className="px-4 py-2 whitespace-nowrap">{ctx.fecha}</td>
-                                                    <td className="px-4 py-2 text-sm text-blue-600 font-medium whitespace-nowrap">
-                                                        {ctx.cuenta_display || '-'}
-                                                    </td>
-                                                    <td className="px-4 py-2 text-sm font-medium text-gray-900 whitespace-nowrap">{ctx.referencia || '-'}</td>
-                                                    <td className="px-4 py-2 text-xs text-gray-500 max-w-xs line-clamp-3" title={ctx.descripcion}>{ctx.descripcion}</td>
-                                                    <td className="px-4 py-2"><CurrencyDisplay value={ctx.valor} /></td>
-                                                    <td className="px-4 py-2">
-                                                        <div className="text-gray-900 font-medium">{ctx.tercero_display?.split('-')[1] || '-'}</div>
-                                                    </td>
-                                                    <td className="px-4 py-2">
-                                                        <div className="text-xs text-gray-500">{ctx.centro_costo_display?.split('-')[1]} / {ctx.concepto_display?.split('-')[1]}</div>
-                                                    </td>
-                                                    <td className="px-4 py-2">
-                                                        <button
-                                                            className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
-                                                            onClick={() => {
-                                                                if (ctx.tercero_id) setTerceroId(ctx.tercero_id)
-                                                                if (ctx.centro_costo_id) setCentroCostoId(ctx.centro_costo_id)
-                                                                if (ctx.concepto_id) setConceptoId(ctx.concepto_id)
-                                                            }}
-                                                            title="Copiar clasificación"
-                                                        >
-                                                            <Copy className="h-4 w-4" />
-                                                        </button>
-                                                    </td>
+
+                                {sugerenciaData.contexto.length === 0 ? (
+                                    <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                                        <p className="text-gray-500 text-sm mb-2">
+                                            📋 No se encontraron registros similares para este movimiento
+                                        </p>
+                                        <p className="text-gray-400 text-xs">
+                                            Esto puede ocurrir si es un movimiento nuevo o único
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="min-w-full text-sm">
+                                            <thead>
+                                                <tr className="bg-gray-50 text-left text-gray-500">
+                                                    <th className="px-4 py-2">Fecha</th>
+                                                    <th className="px-4 py-2">Cuenta</th>
+                                                    <th className="px-4 py-2">Referencia</th>
+                                                    <th className="px-4 py-2">Descripción</th>
+                                                    <th className="px-4 py-2">Valor</th>
+                                                    <th className="px-4 py-2">Tercero</th>
+                                                    <th className="px-4 py-2">Clasificación Asignada</th>
+                                                    <th className="px-4 py-2">Acción</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                            </thead>
+                                            <tbody>
+                                                {sugerenciaData.contexto.map((ctx) => (
+                                                    <tr key={ctx.id} className="border-b hover:bg-gray-50">
+                                                        <td className="px-4 py-2 whitespace-nowrap">{ctx.fecha}</td>
+                                                        <td className="px-4 py-2 text-sm text-blue-600 font-medium whitespace-nowrap">
+                                                            {ctx.cuenta_display || '-'}
+                                                        </td>
+                                                        <td className="px-4 py-2 text-sm font-medium text-gray-900 whitespace-nowrap">{ctx.referencia || '-'}</td>
+                                                        <td className="px-4 py-2 text-xs text-gray-500 max-w-xs line-clamp-3" title={ctx.descripcion}>{ctx.descripcion}</td>
+                                                        <td className="px-4 py-2"><CurrencyDisplay value={ctx.valor} /></td>
+                                                        <td className="px-4 py-2">
+                                                            <div className="text-gray-900 font-medium">{ctx.tercero_display?.split('-')[1] || '-'}</div>
+                                                        </td>
+                                                        <td className="px-4 py-2">
+                                                            <div className="text-xs text-gray-500">{ctx.centro_costo_display?.split('-')[1]} / {ctx.concepto_display?.split('-')[1]}</div>
+                                                        </td>
+                                                        <td className="px-4 py-2">
+                                                            <button
+                                                                className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
+                                                                onClick={() => {
+                                                                    if (ctx.tercero_id) setTerceroId(ctx.tercero_id)
+                                                                    if (ctx.centro_costo_id) setCentroCostoId(ctx.centro_costo_id)
+                                                                    if (ctx.concepto_id) setConceptoId(ctx.concepto_id)
+                                                                    if (ctx.descripcion) setDescripcion(ctx.descripcion)
+                                                                    if (ctx.referencia) setReferencia(ctx.referencia)
+                                                                }}
+                                                                title="Copiar clasificación"
+                                                            >
+                                                                <Copy className="h-4 w-4" />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+
+                                        {/* Botón para clasificar similares */}
+                                        {movimientoActual && terceroId && centroCostoId && conceptoId && (
+                                            <div className="mt-4 flex justify-end">
+                                                <button
+                                                    onClick={() => setShowSimilaresModal(true)}
+                                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                                >
+                                                    <Layers className="h-4 w-4" />
+                                                    Clasificar Todos los Similares
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -459,6 +603,28 @@ export const ClasificarMovimientosPage: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Modal Clasificar Similares */}
+            {movimientoActual && terceroId && centroCostoId && conceptoId && (
+                <ModalClasificarSimilares
+                    isOpen={showSimilaresModal}
+                    onClose={() => setShowSimilaresModal(false)}
+                    movimientoReferencia={movimientoActual}
+                    clasificacion={{
+                        tercero_id: terceroId,
+                        centro_costo_id: centroCostoId,
+                        concepto_id: conceptoId,
+                        tercero_display: terceros.find(t => t.id === terceroId)?.nombre || '',
+                        centro_costo_display: centrosCostos.find(c => c.id === centroCostoId)?.nombre || '',
+                        concepto_display: conceptos.find(c => c.id === conceptoId)?.nombre || ''
+                    }}
+                    onConfirm={() => {
+                        // Recargar pendientes después de clasificar
+                        cargarDatosIniciales()
+                    }}
+                />
+            )}
+
             <TerceroModal
                 isOpen={showTerceroModal}
                 tercero={null}
@@ -482,8 +648,29 @@ export const ClasificarMovimientosPage: React.FC = () => {
                         {/* Content */}
                         <div className="p-6 overflow-auto flex-1">
                             <div className="mb-4 bg-gray-50 rounded-lg p-4">
-                                <p className="text-sm text-gray-600 mb-2">Patrón de búsqueda:</p>
-                                <p className="font-medium text-lg">"{batchPatron}"</p>
+                                <label className="block text-sm text-gray-700 mb-1">Patrón de búsqueda:</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={batchPatron}
+                                        onChange={(e) => setBatchPatron(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleRefreshPreview()}
+                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                        placeholder="Escriba patrón para buscar..."
+                                    />
+                                    <button
+                                        onClick={handleRefreshPreview}
+                                        disabled={loadingBatch}
+                                        className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                        {loadingBatch ? (
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        ) : (
+                                            <RefreshCw className="h-4 w-4" />
+                                        )}
+                                        Refrescar
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="mb-4 grid grid-cols-3 gap-4 text-sm">
@@ -501,39 +688,30 @@ export const ClasificarMovimientosPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="border rounded-lg overflow-hidden">
-                                <div className="bg-gray-100 px-4 py-2 font-medium text-sm text-gray-600">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="font-medium text-sm text-gray-600">
                                     Movimientos a clasificar ({batchPreview.length})
                                 </div>
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="bg-gray-50 text-left text-gray-500">
-                                            <th className="px-4 py-2">ID</th>
-                                            <th className="px-4 py-2">Fecha</th>
-                                            <th className="px-4 py-2">Descripción</th>
-                                            <th className="px-4 py-2 text-right">Valor</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {batchPreview.map((mov) => (
-                                            <tr key={mov.id} className="border-t hover:bg-gray-50">
-                                                <td className="px-4 py-2 text-gray-500">#{mov.id}</td>
-                                                <td className="px-4 py-2">{mov.fecha}</td>
-                                                <td className="px-4 py-2 truncate max-w-xs">{mov.descripcion}</td>
-                                                <td className="px-4 py-2 text-right">
-                                                    <CurrencyDisplay value={mov.valor} />
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {batchPreview.length === 0 && (
-                                            <tr>
-                                                <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
-                                                    No hay movimientos que coincidan con el patrón
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
+                                {batchPreview.length > 0 && (
+                                    <button
+                                        onClick={handleToggleBatchSelectAll}
+                                        className="text-sm text-purple-600 hover:text-purple-800 hover:underline"
+                                    >
+                                        {batchSelectedIds.size === batchPreview.length ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="border rounded-lg overflow-hidden">
+                                <DataTable
+                                    data={batchPreview}
+                                    columns={batchColumns}
+                                    loading={loadingBatch}
+                                    emptyMessage="No hay movimientos que coincidan con el patrón"
+                                    getRowKey={(row) => row.id}
+                                    showActions={false}
+                                    className="max-h-[400px]"
+                                />
                             </div>
                         </div>
 
@@ -550,11 +728,11 @@ export const ClasificarMovimientosPage: React.FC = () => {
                             </button>
                             <button
                                 onClick={confirmarLote}
-                                disabled={batchPreview.length === 0}
+                                disabled={batchSelectedIds.size === 0}
                                 className="px-6 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition disabled:opacity-50 flex items-center gap-2"
                             >
                                 <CheckCircle className="h-5 w-5" />
-                                Aplicar a {batchPreview.length} Movimientos
+                                Aplicar a {batchSelectedIds.size} Movimientos
                             </button>
                         </div>
                     </div>

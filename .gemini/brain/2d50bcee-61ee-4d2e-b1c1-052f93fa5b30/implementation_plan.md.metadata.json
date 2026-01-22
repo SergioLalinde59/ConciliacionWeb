@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Implementation plan for Phase 4 of the intelligent reconciliation matching system. This phase focuses on creating the MatchingService domain service that implements the core business logic for matching movements between extract and system, calculating similarity scores using configurable criteria (date, amount, description), and managing bindings (create, delete, validate). The service will use the Levenshtein algorithm for text similarity and apply configurable weights to different matching criteria.",
+  "updatedAt": "2026-01-19T00:48:51.334775Z"
+}

@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Plan to fix FondoRenta movement extraction by adding debug logging to identify the actual PDF format, then adjusting the regex pattern to correctly parse movement lines from the PDF",
+  "updatedAt": "2026-01-16T13:41:24.526082300Z"
+}

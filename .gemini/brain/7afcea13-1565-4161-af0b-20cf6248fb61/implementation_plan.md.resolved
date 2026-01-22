@@ -1,0 +1,40 @@
+# Implementation Plan - Fondo Renta Extractor Update
+
+## Goal Description
+Update the [fondorenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/fondorenta.py) extractor to capture additional fields from the PDF statement as requested by the user, specifically: "Valor Unidad al Final", "Rentabilidad Periodo", "Rendimientos Netos", and "Retención".
+
+## User Review Required
+> [!IMPORTANT]
+> The extracted data structure (JSON) will change. New fields `valor_unidad`, `rentabilidad`, `rendimientos`, and `retencion` will be added to the result of [extraer_resumen_fondorenta](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/fondorenta.py#98-147). Ensure the consuming service (likely `conciliaciones.py` or similar) can handle or store these extra fields if needed, or if they are just for display/JSON storage.
+
+## Proposed Changes
+
+### Backend [Extractors]
+
+#### [MODIFY] [fondorenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/fondorenta.py)
+- **Header Extraction**:
+    - Add regex to capture `Valor Unidad al Final` (floating point with many decimals).
+    - Add regex to capture `Rentabilidad Periodo` (percentage, handling negative sign suffix like `5,89- %`).
+- **Summary Extraction**:
+    - Update [_extraer_resumen_desde_texto_full](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/fondorenta.py#148-285) to include `rendimientos` (Rend. Netos) and `retenciones` (Retención) in the returned dictionary. Currently they are calculated but not explicitly returned in the dictionary keys.
+    - Ensure `valor_unidad` and `rentabilidad` are added to the returned dictionary.
+
+## Verification Plan
+
+### Automated Tests
+Since I do not have the original PDF file, I will create a python script `verify_fondorenta.py` that mocks the text extraction (using text derived from the provided images) and calls the updated functions to verify specific outputs.
+
+1. **Mock Text Creation**: Create a string variable that exactly mimics the content visible in the images.
+2. **Run Extractor**: Call [_extraer_resumen_desde_texto_full](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/fondorenta.py#148-285) with the mock text.
+3. **Assert Output**:
+   - `valor_unidad` == 39897.86978598
+   - `rentabilidad` == -5.89 (handle the trailing minus sign correctly)
+   - `rendimientos` == -18542.76
+   - `retencion` == 1087.38
+   - `saldo_anterior` == 2457535.91
+   - `adiciones` == 23500000.00
+   - `retiros` == 18700000.00
+   - `saldo_final` == 7237905.77
+
+### Manual Verification
+- Run the verification script: `python verify_fondorenta.py`

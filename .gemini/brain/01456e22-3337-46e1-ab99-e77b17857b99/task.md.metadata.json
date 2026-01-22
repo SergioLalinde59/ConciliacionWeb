@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_TASK",
+  "summary": "Checklist of tasks to fix the NameError in the FondoRenta PDF extractor, including code correction, verification, testing, and potential additional adjustments based on log analysis.",
+  "updatedAt": "2026-01-16T13:02:12.851503200Z"
+}

@@ -1,0 +1,34 @@
+# Added `permite_conciliar` Field
+
+## Overview
+Added a new boolean field `permite_conciliar` to the [cuentas](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/cuentas.py#22-31) table and exposed it via the API. This field controls which accounts are eligible for reconciliation.
+
+## Changes
+
+### Database
+- **Schema**: Added `permite_conciliar` column (Boolean, default `False`) to the [cuentas](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/cuentas.py#22-31) table.
+
+### Backend
+- **Model**: Updated [Cuenta](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/models/cuenta.py#4-16) model in [src/domain/models/cuenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/models/cuenta.py).
+- **Repository**: Updated [PostgresCuentaRepository](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_cuenta_repository.py#6-64) in [src/infrastructure/database/postgres_cuenta_repository.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_cuenta_repository.py) to handle the new field in CRUD operations.
+- **API**: Updated [src/infrastructure/api/routers/cuentas.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/cuentas.py) to include `permite_conciliar` in [CuentaDTO](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/cuentas.py#11-15) and [CuentaResponse](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/cuentas.py#16-21).
+
+## Verification Results
+
+### Database Verification
+Successfully verified that the column exists in the database.
+
+### API Verification
+Ran [verify_cuentas_api.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/verify_cuentas_api.py) which confirmed:
+1.  **Creation**: Can create an account with `permite_conciliar=True`.
+2.  **Retrieval**: The API returns the correct value for `permite_conciliar`.
+3.  **Persistence**: Data is correctly saved and retrieved from the database.
+
+```log
+Verifying API endpoints...
+Creating account via API: {'cuenta': 'API Test ...', 'permite_conciliar': True}
+SUCCESS: API returned allows_conciliar=True on creation.
+Found created account in list: {...}
+SUCCESS: API list returned permite_conciliar=True.
+Account deleted.
+```

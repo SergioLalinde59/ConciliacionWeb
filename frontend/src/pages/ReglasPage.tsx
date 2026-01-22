@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { apiService } from '../services/api'
 import type { ReglaClasificacion, Tercero, CentroCosto, Concepto } from '../types'
-import { Trash2, Plus, Zap, Edit, X } from 'lucide-react'
+import { Plus, Zap, Edit, X } from 'lucide-react'
 import { ComboBox } from '../components/molecules/ComboBox'
 import { CsvExportButton } from '../components/molecules/CsvExportButton'
+import { DataTable } from '../components/molecules/DataTable'
+import type { Column } from '../components/molecules/DataTable'
 
 export const ReglasPage: React.FC = () => {
     const [reglas, setReglas] = useState<ReglaClasificacion[]>([])
@@ -19,6 +21,7 @@ export const ReglasPage: React.FC = () => {
     const [selectedTerceroId, setSelectedTerceroId] = useState<number | null>(null)
     const [selectedCentroCostoId, setSelectedCentroCostoId] = useState<number | null>(null)
     const [selectedConceptoId, setSelectedConceptoId] = useState<number | null>(null)
+    const [descripcion, setDescripcion] = useState('')
     const [editingId, setEditingId] = useState<number | null>(null)
 
     useEffect(() => {
@@ -45,14 +48,35 @@ export const ReglasPage: React.FC = () => {
 
     const handleGuardar = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!patron.trim() || !selectedCentroCostoId || !selectedConceptoId) {
-            alert('Complete al menos Patrón, Grupo y Concepto')
+        if (!selectedCentroCostoId || !selectedConceptoId) {
+            alert('Complete Centro de Clasificación y Concepto')
+            return
+        }
+
+        // Validación para Nueva Regla: Tercero es requerido para obtener el patrón
+        if (!editingId && !selectedTerceroId) {
+            alert('Para crear una nueva regla, debe seleccionar un Tercero (el nombre del tercero será el patrón)')
+            return
+        }
+
+        // Determinar patrón: 
+        // - Si es edición, mantenemos el que estaba (estado 'patron') 
+        // - Si es nuevo, usamos el nombre del tercero seleccionado
+        let finalPatron = patron
+        if (!editingId && selectedTerceroId) {
+            const t = terceros.find(x => x.id === selectedTerceroId)
+            if (t) finalPatron = t.nombre
+        }
+
+        if (!finalPatron.trim()) {
+            alert('No se pudo determinar el patrón del tercero')
             return
         }
 
         try {
             const reglaData: ReglaClasificacion = {
-                patron: patron.trim(),
+                patron: finalPatron.trim(),
+                patron_descripcion: descripcion.trim() || undefined,
                 tercero_id: selectedTerceroId ?? undefined,
                 centro_costo_id: selectedCentroCostoId ?? undefined,
                 concepto_id: selectedConceptoId ?? undefined,
@@ -77,6 +101,7 @@ export const ReglasPage: React.FC = () => {
         setSelectedTerceroId(null)
         setSelectedCentroCostoId(null)
         setSelectedConceptoId(null)
+        setDescripcion('')
         setEditingId(null)
     }
 
@@ -85,11 +110,13 @@ export const ReglasPage: React.FC = () => {
         setSelectedTerceroId(regla.tercero_id || null)
         setSelectedCentroCostoId(regla.centro_costo_id || null)
         setSelectedConceptoId(regla.concepto_id || null)
+        setDescripcion(regla.patron_descripcion || '')
         setEditingId(regla.id!)
     }
 
-    const handleEliminar = async (id: number) => {
-        if (!confirm('¿Eliminar esta regla?')) return
+    const handleEliminar = async (regla: ReglaClasificacion) => {
+        const id = regla.id
+        if (!id) return
         try {
             await apiService.reglas.eliminar(id)
             setReglas(reglas.filter(r => r.id !== id))
@@ -102,12 +129,12 @@ export const ReglasPage: React.FC = () => {
     const getNombre = (coleccion: any[], id: number | null | undefined) => {
         if (!id) return '-'
         const item = coleccion.find(item => item.id === id)
-        return item ? `${item.id} - ${item.nombre}` : id
+        return item ? `${item.id} - ${item.nombre}` : id.toString()
     }
     const getConceptoNombre = (id: number | null | undefined) => {
         if (!id) return '-'
         const c = conceptos.find(item => item.id === id)
-        return c ? `${c.id} - ${c.nombre}` : id
+        return c ? `${c.id} - ${c.nombre}` : id.toString()
     }
 
     // Filtrar conceptos por centro de costo seleccionado en el formulario
@@ -138,6 +165,44 @@ export const ReglasPage: React.FC = () => {
         { key: 'concepto_nombre', label: 'Concepto', accessor: (r: ReglaClasificacion) => getConceptoSoloNombre(r.concepto_id) },
     ]
 
+    const columns: Column<ReglaClasificacion>[] = [
+        {
+            key: 'patron',
+            header: 'Patrón',
+            sortable: true,
+            accessor: (r) => <span className="font-medium text-slate-800">"{r.patron}"</span>
+        },
+        {
+            key: 'patron_descripcion',
+            header: 'Descripción',
+            sortable: true,
+            accessor: (r) => r.patron_descripcion || <span className="text-slate-400 italic text-xs">Sin descripción</span>
+        },
+        {
+            key: 'tercero_id',
+            header: 'Tercero Asignado',
+            sortable: true,
+            accessor: (r) => getNombre(terceros, r.tercero_id),
+            // Custom sort function could be added here if needed, but string comparison of the result works well enough usually
+            // or we can sort by the underlying ID using 'tercero_id' which is default. 
+            // To sort by name properly we'd need to augment the data or use a custom comparator in DataTable, 
+            // but for now ID-based sort or simple string sort of the accessor result (if DataTable supports it) is fine.
+            // DataTable sorts by the value of the key efficiently. 
+        },
+        {
+            key: 'centro_costo_id',
+            header: 'Centro Costo',
+            sortable: true,
+            accessor: (r) => getNombre(centrosCostos, r.centro_costo_id)
+        },
+        {
+            key: 'concepto_id',
+            header: 'Concepto',
+            sortable: true,
+            accessor: (r) => getConceptoNombre(r.concepto_id)
+        }
+    ]
+
     return (
         <div className="p-6 max-w-6xl mx-auto">
             <div className="flex justify-between items-center mb-6">
@@ -163,112 +228,94 @@ export const ReglasPage: React.FC = () => {
                         </button>
                     )}
                 </div>
-                <form onSubmit={handleGuardar} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                    <div className="md:col-span-3">
-                        <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Patrón (Texto Contenido)</label>
+                <form onSubmit={handleGuardar} className="space-y-4">
+                    {/* Fila 2: Tercero, Centro Costo, Concepto */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="">
+                            <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Tercero (Requerido)</label>
+                            <ComboBox
+                                options={terceros}
+                                value={selectedTerceroId ? selectedTerceroId.toString() : ""}
+                                onChange={(val) => setSelectedTerceroId(val ? parseInt(val) : null)}
+                                placeholder="Buscar Tercero..."
+                            />
+                        </div>
+
+                        <div className="">
+                            <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Centro de Costo</label>
+                            <ComboBox
+                                options={centrosCostos}
+                                value={selectedCentroCostoId ? selectedCentroCostoId.toString() : ""}
+                                onChange={(val) => {
+                                    const id = val ? parseInt(val) : null
+                                    setSelectedCentroCostoId(id)
+                                    setSelectedConceptoId(null) // Reset concepto al cambiar centro de costo
+                                }}
+                                placeholder="Seleccionar Centro Costo"
+                            />
+                        </div>
+
+                        <div className="">
+                            <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Concepto</label>
+                            <ComboBox
+                                options={conceptosFiltrados}
+                                value={selectedConceptoId ? selectedConceptoId.toString() : ""}
+                                onChange={(val) => setSelectedConceptoId(val ? parseInt(val) : null)}
+                                placeholder="Concepto"
+                            // disabled prop is not supported by ComboBox yet, so using key to reset or custom logic
+                            />
+                        </div>
+                    </div>
+
+                    {/* Fila 3: Descripción */}
+                    <div>
+                        <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Descripción (Opcional)</label>
                         <input
                             type="text"
-                            value={patron}
-                            onChange={(e) => setPatron(e.target.value)}
+                            value={descripcion}
+                            onChange={(e) => setDescripcion(e.target.value)}
                             className="w-full border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Ej: Netflix"
+                            placeholder="Descripción adicional de la regla"
                         />
                     </div>
 
-                    <div className="md:col-span-3">
-                        <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Tercero (Opcional)</label>
-                        <ComboBox
-                            options={terceros}
-                            value={selectedTerceroId ? selectedTerceroId.toString() : ""}
-                            onChange={(val) => setSelectedTerceroId(val ? parseInt(val) : null)}
-                            placeholder="Buscar Tercero..."
-                        />
-                    </div>
-
-                    <div className="md:col-span-3">
-                        <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Centro de Costo</label>
-                        <ComboBox
-                            options={centrosCostos}
-                            value={selectedCentroCostoId ? selectedCentroCostoId.toString() : ""}
-                            onChange={(val) => {
-                                const id = val ? parseInt(val) : null
-                                setSelectedCentroCostoId(id)
-                                setSelectedConceptoId(null) // Reset concepto al cambiar centro de costo
-                            }}
-                            placeholder="Seleccionar Centro Costo"
-                        />
-                    </div>
-
-                    <div className="md:col-span-2">
-                        <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Concepto</label>
-                        <ComboBox
-                            options={conceptosFiltrados}
-                            value={selectedConceptoId ? selectedConceptoId.toString() : ""}
-                            onChange={(val) => setSelectedConceptoId(val ? parseInt(val) : null)}
-                            placeholder="Concepto"
-                        // disabled prop is not supported by ComboBox yet, so using key to reset or custom logic
-                        />
-                    </div>
-
-                    <div className="md:col-span-1">
-                        <button
-                            type="submit"
-                            className={`w-full text-white p-2.5 rounded-lg flex justify-center items-center ${editingId ? 'bg-amber-500 hover:bg-amber-600' : 'bg-blue-600 hover:bg-blue-700'}`}
-                            title={editingId ? "Actualizar Regla" : "Crear Regla"}
-                        >
-                            {editingId ? <Edit size={20} /> : <Plus size={20} />}
-                        </button>
+                    {/* Fila 4: Patrón (Read-only) + Botón */}
+                    <div className="flex flex-col md:flex-row gap-4 items-end">
+                        <div className="flex-grow">
+                            <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Patrón Generado (Automático)</label>
+                            <div className="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-lg text-slate-600 font-mono text-sm h-[42px] flex items-center overflow-hidden">
+                                {editingId ? patron : (
+                                    selectedTerceroId ?
+                                        (terceros.find(t => t.id === selectedTerceroId)?.nombre || '-')
+                                        : <span className="text-slate-400 italic">Seleccione un Tercero para generar el patrón</span>
+                                )}
+                            </div>
+                        </div>
+                        <div className="md:w-auto">
+                            <button
+                                type="submit"
+                                className={`w-full md:w-auto px-6 text-white p-2.5 rounded-lg flex justify-center items-center gap-2 ${editingId ? 'bg-amber-500 hover:bg-amber-600' : 'bg-blue-600 hover:bg-blue-700'}`}
+                                title={editingId ? "Actualizar Regla" : "Crear Regla"}
+                            >
+                                {editingId ? <><Edit size={20} /> Actualizar</> : <><Plus size={20} /> Crear Regla</>}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
 
             {/* Lista de Reglas */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <table className="w-full text-left text-sm text-slate-600">
-                    <thead className="bg-slate-50 border-b border-slate-200 font-semibold text-xs uppercase tracking-wider">
-                        <tr>
-                            <th className="px-6 py-4">Patrón</th>
-                            <th className="px-6 py-4">Tercero Asignado</th>
-                            <th className="px-6 py-4">Centro Costo</th>
-                            <th className="px-6 py-4">Concepto</th>
-                            <th className="px-6 py-4 text-right">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {loading ? (
-                            <tr><td colSpan={5} className="px-6 py-8 text-center">Cargando reglas...</td></tr>
-                        ) : reglas.length === 0 ? (
-                            <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-400">No hay reglas definidas</td></tr>
-                        ) : (
-                            reglas.map((regla) => (
-                                <tr key={regla.id} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-6 py-3 font-medium text-slate-800">"{regla.patron}"</td>
-                                    <td className="px-6 py-3">{getNombre(terceros, regla.tercero_id)}</td>
-                                    <td className="px-6 py-3">{getNombre(centrosCostos, regla.centro_costo_id)}</td>
-                                    <td className="px-6 py-3">{getConceptoNombre(regla.concepto_id)}</td>
-                                    <td className="px-6 py-3 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <button
-                                                onClick={() => handleEditar(regla)}
-                                                className="text-blue-400 hover:text-blue-600 p-1 rounded hover:bg-blue-50"
-                                                title="Editar regla"
-                                            >
-                                                <Edit size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => regla.id && handleEliminar(regla.id)}
-                                                className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50"
-                                                title="Eliminar regla"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                <DataTable
+                    data={reglas}
+                    columns={columns}
+                    loading={loading}
+                    getRowKey={(r) => r.id || Math.random()}
+                    onEdit={handleEditar}
+                    onDelete={handleEliminar}
+                    deleteConfirmMessage="¿Seguro que deseas eliminar esta regla?"
+                    emptyMessage="No hay reglas definidas"
+                />
             </div>
         </div>
     )

@@ -229,6 +229,43 @@ def obtener_movimientos_extracto(
         for m in movimientos
     ]
 
+@router.get("/{cuenta_id}/{year}/{month}/movimientos-sistema")
+def obtener_movimientos_sistema(
+    cuenta_id: int,
+    year: int,
+    month: int,
+    repo: MovimientoRepository = Depends(get_movimiento_repository)
+):
+    """
+    Obtiene los movimientos del sistema para un periodo específico.
+    """
+    from datetime import date
+    import calendar
+    
+    ultimo_dia = calendar.monthrange(year, month)[1]
+    movimientos, _ = repo.buscar_avanzado(
+        fecha_inicio=date(year, month, 1),
+        fecha_fin=date(year, month, ultimo_dia),
+        cuenta_id=cuenta_id
+    )
+    
+    return [
+        {
+            'id': m.id,
+            'fecha': str(m.fecha),
+            'descripcion': m.descripcion,
+            'referencia': m.referencia,
+            'valor': float(m.valor),
+            'usd': float(m.usd) if m.usd is not None else None,
+            'trm': float(m.trm) if m.trm is not None else None,
+            'cuenta_id': m.cuenta_id,
+            'tercero_nombre': m.tercero_nombre,
+            'centro_costo_nombre': m.centro_costo_nombre,
+            'concepto_nombre': m.concepto_nombre
+        }
+        for m in movimientos
+    ]
+
 @router.get("/{cuenta_id}/{year}/{month}/comparacion")
 def comparar_movimientos(
     cuenta_id: int,

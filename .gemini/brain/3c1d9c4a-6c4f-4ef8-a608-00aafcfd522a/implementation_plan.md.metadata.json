@@ -1,0 +1,6 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Updated plan to fix frontend invalid parameter issue instead of backend extraction logic.",
+  "updatedAt": "2026-01-16T04:13:14.503403900Z",
+  "version": "1"
+}

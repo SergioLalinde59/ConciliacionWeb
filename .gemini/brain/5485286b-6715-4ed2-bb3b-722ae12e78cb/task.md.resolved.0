@@ -1,0 +1,5 @@
+# Task List
+
+- [ ] Modify `cuentas` table in PostgreSQL to add `permite_conciliar` (boolean)
+- [ ] Update backend models to include `permite_conciliar`
+- [ ] (Optional) Update frontend to handle the new field

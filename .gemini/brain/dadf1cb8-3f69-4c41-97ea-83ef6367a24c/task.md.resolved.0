@@ -1,0 +1,19 @@
+# Diagnóstico y Reparación de Facturas.local
+
+## Contexto
+La aplicación muestra una página en blanco tras la refactorización a Atomic Design. El servidor (Vite) y el proxy (Nginx) están funcionando. El objetivo es identificar y corregir la causa de que los componentes [Sidebar](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/organisms/Sidebar/Sidebar.tsx#15-95) y `Header` no se rendericen.
+
+## Pasos de Trabajo
+
+- [ ] Diagnóstico de Errores de Frontend <!-- id: 0 -->
+    - [ ] Verificar consola del navegador por errores de JavaScript o React.
+    - [ ] Verificar existencia y carga de hojas de estilo críticas (`tokens.css`, [App.css](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.css)).
+    - [ ] Inspeccionar el DOM para ver si los componentes están montados pero ocultos.
+- [ ] Revisión de Integración de Componentes <!-- id: 1 -->
+    - [ ] Verificar importaciones y exportaciones de [Sidebar](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/organisms/Sidebar/Sidebar.tsx#15-95) y componentes `atoms`/`molecules`.
+    - [ ] Configurar plan de corrección para archivos afectados.
+- [ ] Corrección de Código <!-- id: 2 -->
+    - [ ] Aplicar correcciones en [App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx) o componentes específicos según hallazgos.
+    - [ ] Restaurar visibilidad de la interfaz.
+- [ ] Verificación Final <!-- id: 3 -->
+    - [ ] Confirmar carga correcta de `facturas.local`.

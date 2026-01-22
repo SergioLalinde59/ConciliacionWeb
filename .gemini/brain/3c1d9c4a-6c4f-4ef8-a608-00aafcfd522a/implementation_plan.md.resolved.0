@@ -1,0 +1,34 @@
+# Debugging PDF Extraction Failure Plan
+
+## Goal Description
+Resolve the "No se pudo extraer el resumen del archivo" error when uploading "FondoRenta" PDF statements.
+The current issue is that the text extraction logic returns no data, likely due to regex mismatches with the PDF format.
+To debug this, we need to see the raw text extracted from the PDF, which requires ensuring the latest code (with debug logging) is running.
+
+## User Review Required
+> [!IMPORTANT]
+> **Action Required**: You may need to re-upload the PDF file after I restart the backend service. This will generate a debug file (`debug_extract_dump.txt`) containing the PDF text, allowing me to fix the extraction logic.
+
+## Proposed Changes
+
+### Phase 1: Activate Debug Logging
+1.  **Restart Backend**: Run `docker-compose restart backend` to ensure the latest code (with `debug_extract_dump.txt` writing logic) is active.
+2.  **Verify Logs**: detailed debug logs should appear in `frontend` or `backend` logs when the user attempts the upload again.
+
+### Phase 2: Analyze and Fix Extraction Logic
+1.  **Analyze Dump**: Read `backend/logs/debug_extract_dump.txt` (or logs) to see the raw PDF text.
+2.  **Adjust Regex**: Modify `backend/app/infrastructure/extractors/fondorenta.py` to match the actual text patterns found in the dump.
+    *   Target file: [fondorenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/fondorenta.py)
+    *   Update [_extraer_resumen_desde_texto_full](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/fondorenta.py#154-312) to correctly identify "SALDO ANTERIOR", "ENTRADAS", "SALIDAS", "SALDO FINAL".
+
+## Verification Plan
+
+### Automated Tests
+- I will create a test script `test_extraction.py` in the backend folder that reads the content of `debug_extract_dump.txt` (once captured) and runs the [extraer_resumen_fondorenta](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/fondorenta.py#102-153) logic against it to verify the fix locally.
+
+### Manual Verification
+- **User Action**: Upload the PDF again via the "Cargar Extracto Bancario" interface.
+- **Success Criteria**:
+    - No 400 error.
+    - The "Analizar Extracto" button returns success.
+    - The correct values (Saldo Anterior, Entradas, Salidas, Saldo Final) are displayed or stored.

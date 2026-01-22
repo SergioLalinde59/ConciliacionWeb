@@ -1,0 +1,21 @@
+# Tarea: Afinar Extracción MasterCard
+
+## Objetivo
+Corregir la extracción de extractos de MasterCard para que diferencie correctamente entre Pesos y USD basándose en la cuenta seleccionada, y solucionar el error 500 que se presenta al analizar extractos.
+
+## Tareas
+
+### Análisis del Error
+- [x] Revisar imágenes y logs de error
+- [x] Identificar que el error ocurre en [mastercard_pesos_extracto.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto.py) línea 44
+- [/] Analizar el PDF real para entender el formato
+
+### Solución
+- [x] Agregar logging para ver el texto extraído del PDF
+- [/] Ajustar los regex patterns según el formato real del PDF
+- [ ] Verificar que la diferenciación entre Pesos/USD funcione correctamente
+- [ ] Probar con el PDF subido
+
+### Verificación
+- [ ] Confirmar que el extracto se procesa sin errores 500
+- [ ] Validar que los valores se extraen correctamente

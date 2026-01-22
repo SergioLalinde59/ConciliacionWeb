@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_OTHER",
+  "summary": "Complete tracing of API calls from the 'Analizar archivo' button for FondoRenta movement upload, identifying where the business logic error occurs.",
+  "updatedAt": "2026-01-16T13:39:38.118578600Z"
+}

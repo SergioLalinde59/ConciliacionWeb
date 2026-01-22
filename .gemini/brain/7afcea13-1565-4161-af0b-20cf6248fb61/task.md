@@ -1,0 +1,10 @@
+# Task: Update Fondo Renta PDF Extractor
+
+- [x] Analyze `Backend/src/infrastructure/extractors/fondorenta.py` <!-- id: 0 -->
+- [x] Create Implementation Plan <!-- id: 1 -->
+- [x] Update Header/Period Extraction (Desde, Hasta, Valor Unidad, Rentabilidad) <!-- id: 2 -->
+- [x] Update Summary Extraction (Saldo Anterior, Adiciones, Retiros, Nuevo Saldo, Rend. Netos, Retención) <!-- id: 3 -->
+- [x] Update Movements Extraction (Fecha, Transacción, Valor) <!-- id: 4 -->
+    - [x] Refactor code to test logic <!-- id: 6 -->
+    - [x] Verify using mock data <!-- id: 7 -->
+- [x] Verification <!-- id: 5 -->

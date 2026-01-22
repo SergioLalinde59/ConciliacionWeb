@@ -1,0 +1,7 @@
+# Task: Modificar procesador_archivos_service.py
+
+- [x] Leer archivo `procesador_archivos_service.py` <!-- id: 0 -->
+- [x] Verificar consistencia de código con requerimientos de la Fase 3 (Extracción y Guardado de Movimientos) <!-- id: 1 -->
+- [x] Aplicar correcciones si es necesario (El archivo ya estaba actualizado) <!-- id: 2 -->
+- [x] Verificar imports y estructura de directorios <!-- id: 3 -->
+- [ ] Notificar al usuario sobre el estado del archivo <!-- id: 4 -->

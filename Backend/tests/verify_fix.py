@@ -15,11 +15,11 @@ try:
         cuenta_display="Sin Cuenta",
         moneda_display="Sin Moneda",
         tercero_display=None,
-        grupo_display=None,
+        centro_costo_display=None,
         concepto_display=None,
         # Other required fields I missed
         tercero_id=None,
-        grupo_id=None,
+        centro_costo_id=None,
         concepto_id=None,
         created_at=datetime.now(),
         detalle=None,

@@ -1,0 +1,7 @@
+# Task: Add Year and Month to Upload Success Modal
+
+- [ ] Analyze frontend `UploadExtractoPage.tsx` to find the success modal implementation <!-- id: 0 -->
+- [ ] Check backend response for upload endpoint <!-- id: 1 -->
+- [ ] If backend missing data, modify backend to return year and month <!-- id: 2 -->
+- [ ] Update frontend to display year and month in the success modal <!-- id: 3 -->
+- [ ] Verify changes <!-- id: 4 -->

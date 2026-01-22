@@ -1,0 +1,41 @@
+# Implementation Plan - Extract Summary Ribbon
+
+The goal is to display a ribbon with "Read Records", "Duplicates", and "To Load" statistics after analyzing a bank extract, replacing the simple "Movements found" message.
+
+## User Review Required
+
+> [!IMPORTANT]
+> This change involves modifying the backend service `ProcesadorArchivosService.analizar_extracto` to perform duplicate checking against the database. This might slightly increase the processing time of the analysis step as it will now query the database for every extracted movement to check for duplicates.
+
+## Proposed Changes
+
+### Backend
+
+#### [MODIFY] [procesador_archivos_service.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py)
+- Update [analizar_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#315-441) method.
+- Instead of just counting movements, it should iterate through them and check for duplicates (using logic similar to [analizar_archivo](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#122-226)).
+- Add `total_leidos`, `total_duplicados`, and `total_nuevos` (or similar) to the returned dictionary.
+
+### Frontend
+
+#### [NEW] [ExtractoResumenCinta.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/ExtractoResumenCinta.tsx)
+- Create a new React component to display the three stat cards (Leídos, Duplicados, A Cargar).
+- It will accept the counts as props.
+
+#### [MODIFY] [UploadExtractoPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/UploadExtractoPage.tsx)
+- Update [ResumenExtracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/UploadExtractoPage.tsx#9-21) interface to include `total_leidos`, `total_duplicados`, `total_nuevos` (optional fields).
+- Import and use `ExtractoResumenCinta`.
+- Replace the "Se encontraron {n} movimientos" message with the new component.
+
+## Verification Plan
+
+### Manual Verification
+1.  **Start App**: Run the application (backend and frontend).
+2.  **Navigate**: Go to "Cargar Extracto Bancario".
+3.  **Upload**: Upload a PDF extract that has known data (and potentially some duplicates if possible, or just upload a file for a month that already has data in the system to verify duplicates counting).
+4.  **Verify UI**:
+    - Check that the ribbon appears with 3 cards.
+    - Verify "Registros Leídos" matches total movements in PDF.
+    - Verify "Duplicados" shows a number > 0 if duplicates exist.
+    - Verify "A Cargar" = Leídos - Duplicados.
+    - Verify the colors match the design (Blue, Orange, Green).

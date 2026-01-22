@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_TASK",
+  "summary": "Checklist for refactoring PDF extractors into a cleaner structure organized by financial institution (Bancolombia group) with separate files for movements and extracts.",
+  "updatedAt": "2026-01-16T14:31:59.565491800Z"
+}

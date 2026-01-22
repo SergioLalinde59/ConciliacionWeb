@@ -1,0 +1,27 @@
+# Multi-Month Reconciliation View
+
+I have updated the "Conciliación Mensual" page to support displaying and editing reconciliation data for a range of months.
+
+## Changes Verified
+
+### Multi-Month Display
+- [x] When a date range spanning multiple months is selected (e.g., Nov 2025 - Jan 2026), the system now calculates all months in that range.
+- [x] For each visible list account, a separate row is rendered for *each month* in the selected range.
+- [x] Each row displays the account name and the specific month/year it corresponds to.
+
+### Data Management
+- [x] Data fetching now iterates through all selected months for all selected accounts.
+- [x] State keying has been updated to use `${cuentaId}-${year}-${month}` to uniquely identify each row.
+- [x] Update, Save, and Recalculate actions now correctly target the specific month row being interacted with.
+
+## Visuals
+
+Users can now see a breakdown like:
+- **Ahorros** - *Noviembre 2025*
+- **Ahorros** - *Diciembre 2025*
+- **Ahorros** - *Enero 2026*
+
+This allows for easier verification of balances over time without switching filters constantly.
+
+### Sorting
+- [x] Records are now displayed in reverse chronological order (Newest to Oldest) within each account group.

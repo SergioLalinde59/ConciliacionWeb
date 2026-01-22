@@ -1,0 +1,7 @@
+# Tasks
+
+- [ ] Check backend `conciliaciones.py` to see how accounts are fetched. <!-- id: 0 -->
+- [ ] Check frontend `types.ts` to see if `permite_conciliar` is defined. <!-- id: 1 -->
+- [ ] Check frontend component rendering the list (likely `ConciliacionPage.tsx` or a sub-component) to see where to apply the filter. <!-- id: 2 -->
+- [ ] Apply the filter to show only accounts with `permite_conciliar === true`. <!-- id: 3 -->
+- [ ] Verify the changes. <!-- id: 4 -->

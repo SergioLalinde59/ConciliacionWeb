@@ -1,0 +1,32 @@
+# Walkthrough - Unify Currency Presentation
+
+I have unified the presentation of monetary values across the application. Now, positive currency values appear in **Green** and negative currency values appear in **Red**, while non-currency counts remain **Black**.
+
+## Changes
+
+### Frontend
+- **[App.css](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.css)**:
+    - Added utility classes `.text-currency-positive` (Green) and `.text-currency-negative` (Red).
+- **[StatCard.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/StatCard/StatCard.tsx)**:
+    - Updated logic to **only** apply color when the value contains a currency symbol (`$`).
+    - Counts and other numbers remain neutral (Black).
+- **[App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx)**:
+    - Updated "Import Preview" and "Report Results" tables to apply these classes to monetary columns.
+
+## Verification Results
+
+### Dashboard
+Confirms that the main KPIs respect the new color coding rules:
+- **Total Facturas (Count)**: 11 (Black) - Correct.
+- **Subtotal Acumulado (Currency)**: $ 4.571.993 (Green) - Correct.
+- **Total Descuentos (Currency)**: -$ 608.938 (Red) - Correct.
+
+![Dashboard Refined Colors](/brain/3e392191-b4a3-47a7-b46c-58f3da7823db/dashboard_view_verification_1768405641464.png)
+
+### Import View (Carga BD)
+Confirms that the import summary also follows the rule:
+- **Total Leídos (Count)**: 11 (Black).
+- **Subtotal Total (Currency)**: Green.
+- **Descuentos Total (Currency)**: Red.
+
+![Import View Colors](/brain/3e392191-b4a3-47a7-b46c-58f3da7823db/carga_view_verification_1768405939270.png)

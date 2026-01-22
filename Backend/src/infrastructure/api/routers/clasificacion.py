@@ -36,10 +36,15 @@ class ContextoClasificacionResponse(BaseModel):
     referencia: Optional[str] = None
 
 class ClasificacionLoteDTO(BaseModel):
-    patron: str
+    patron: Optional[str] = None
+    movimiento_ids: Optional[List[int]] = None  # NUEVO: para clasificar por IDs
     tercero_id: int
     centro_costo_id: int
     concepto_id: int
+
+class PreviewSimilaresResponse(BaseModel):
+    total: int
+    movimientos: List[Dict[str, Any]]  # Incluye movimiento + similitud
 
 def get_clasificacion_service(
     mov_repo: MovimientoRepository = Depends(get_movimiento_repository),
@@ -99,16 +104,65 @@ def auto_clasificar_todos(service: ClasificacionService = Depends(get_clasificac
 @router.post("/clasificar-lote")
 def clasificar_lote(
     dto: ClasificacionLoteDTO,
+    service: ClasificacionService = Depends(get_clasificacion_service),
+    mov_repo: MovimientoRepository = Depends(get_movimiento_repository)
+):
+    """
+    Clasifica masivamente movimientos pendientes.
+    Acepta un patrón de descripción O una lista de IDs de movimientos.
+    """
+    try:
+        if dto.movimiento_ids:
+            # Clasificar por lista de IDs
+            afectados = 0
+            for mov_id in dto.movimiento_ids:
+                movimiento = mov_repo.obtener_por_id(mov_id)
+                if movimiento and not movimiento.tercero_id:  # Solo si está pendiente
+                    movimiento.tercero_id = dto.tercero_id
+                    movimiento.centro_costo_id = dto.centro_costo_id
+                    movimiento.concepto_id = dto.concepto_id
+                    mov_repo.guardar(movimiento)
+                    afectados += 1
+            return {"filas_afectadas": afectados, "mensaje": f"{afectados} movimientos actualizados correctamente"}
+        elif dto.patron:
+            # Clasificar por patrón (comportamiento original)
+            afectados = service.aplicar_regla_lote(
+                dto.patron, dto.tercero_id, dto.centro_costo_id, dto.concepto_id
+            )
+            return {"filas_afectadas": afectados, "mensaje": f"{afectados} movimientos actualizados correctamente"}
+        else:
+            raise HTTPException(status_code=400, detail="Debe proporcionar 'patron' o 'movimiento_ids'")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/preview-similares/{movimiento_id}")
+def preview_similares(
+    movimiento_id: int,
     service: ClasificacionService = Depends(get_clasificacion_service)
 ):
     """
-    Clasifica masivamente movimientos pendientes que coinciden con un patrón.
+    Obtiene una vista previa de todos los movimientos pendientes similares a un movimiento dado.
+    Retorna la lista con porcentajes de similitud para que el usuario revise antes de clasificar.
     """
     try:
-        afectados = service.aplicar_regla_lote(
-            dto.patron, dto.tercero_id, dto.centro_costo_id, dto.concepto_id
-        )
-        return {"filas_afectadas": afectados, "mensaje": f"{afectados} movimientos actualizados correctamente"}
+        candidatos = service.obtener_movimientos_similares_pendientes(movimiento_id)
+        
+        # Convertir a DTOs
+        movimientos_dto = []
+        for item in candidatos:
+            mov = item['movimiento']
+            mov_response = _to_response(mov)
+            movimientos_dto.append({
+                **mov_response.dict(),
+                'similitud': item['similitud']
+            })
+        
+        return {
+            "total": len(movimientos_dto),
+            "movimientos": movimientos_dto
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

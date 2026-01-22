@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Plan detallado de implementación del sistema de matching de conciliación siguiendo arquitectura hexagonal en backend y atomic design en frontend. Incluye 3 fases: backend (dominio, puertos, adaptadores), frontend (componentes atómicos, moleculares, organismos), y verificación manual. Define estructura de archivos, algoritmo de matching con scoring configurable, detección de traslados, y vista de dos paneles con acciones de usuario.",
+  "updatedAt": "2026-01-18T15:17:58.773985600Z"
+}

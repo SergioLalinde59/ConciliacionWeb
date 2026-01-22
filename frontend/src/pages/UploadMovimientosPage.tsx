@@ -223,8 +223,14 @@ export const UploadMovimientosPage: React.FC = () => {
                                                     <td className="px-4 py-2">{mov.descripcion}</td>
                                                     <td className="px-4 py-2 font-mono text-xs text-center">{mov.referencia || '-'}</td>
                                                     <td className="px-4 py-2 text-center text-xs font-medium text-gray-500">{mov.moneda}</td>
-                                                    <td className={`px-4 py-2 text-right font-medium ${mov.valor < 0 ? 'text-red-600' : 'text-blue-600'}`}>
-                                                        {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(mov.valor)}
+                                                    <td className={`px-4 py-2 text-right font-medium ${(() => {
+                                                        const val = Number(mov.valor);
+                                                        if (val > 0) return 'text-green-600';
+                                                        if (val < 0) return 'text-red-600';
+                                                        return 'text-blue-600';
+                                                    })()
+                                                        }`}>
+                                                        {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(Number(mov.valor))}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -285,8 +291,12 @@ export const UploadMovimientosPage: React.FC = () => {
                             </div>
 
                             <div>
-                                <h4 className="text-xl font-bold text-gray-900 mb-2">¡Carga Completada!</h4>
-                                <p className="text-gray-500">El archivo se ha procesado exitosamente.</p>
+                                <h4 className="text-xl font-bold text-gray-900 mb-1 text-center">
+                                    {cuentaId} - {tipoCuenta}
+                                </h4>
+                                <p className="text-gray-500 text-center font-medium">
+                                    {result.periodo || 'YYYY-MMM'}
+                                </p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4 text-left bg-gray-50 p-4 rounded-xl">

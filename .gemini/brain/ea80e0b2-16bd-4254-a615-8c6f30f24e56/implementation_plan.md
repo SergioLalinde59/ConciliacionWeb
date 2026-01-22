@@ -1,0 +1,27 @@
+# Implementation Plan - Fix USD Column Visibility
+
+The goal is to fix the issue where `usd` and `trm` columns are hidden in the "Detalle de Movimientos (Extracto)" table when there are only USD expenses (egresos) but no USD income (ingresos).
+
+## Proposed Changes
+
+### Frontend - `ConciliacionMovimientosTab.tsx`
+
+#### [MODIFY] [ConciliacionMovimientosTab.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/organisms/ConciliacionMovimientosTab.tsx)
+
+- Update the `showUsd` logic to include checks for `egresos_usd` in both `sistema` and `extracto` properties.
+- Ensure that if any USD-related value (income or expense) is present and non-zero, the columns are displayed.
+
+```typescript
+    // Calcular si mostramos columnas USD (si hay valores USD en stats)
+    const showUsd = 
+        (stats.sistema.ingresos_usd !== undefined && Math.abs(stats.sistema.ingresos_usd) > 0) ||
+        (stats.sistema.egresos_usd !== undefined && Math.abs(stats.sistema.egresos_usd) > 0) ||
+        (stats.extracto.ingresos_usd !== undefined && Math.abs(stats.extracto.ingresos_usd) > 0) ||
+        (stats.extracto.egresos_usd !== undefined && Math.abs(stats.extracto.egresos_usd) > 0);
+```
+
+## Verification Plan
+
+### Manual Verification
+1.  **Mock Data Check (Mental)**: Verify that if `stats.sistema.egresos_usd` is > 0 and `ingresos_usd` is 0, `showUsd` evaluates to `true`.
+2.  **User Verification**: Ask the user to reload the page and verify if the columns appear for the MasterCard USD account which has 0 income but > 0 expenses.

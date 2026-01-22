@@ -1,0 +1,23 @@
+# Walkthrough - Fix Concept Management Frontend Issues
+
+## Changes Implemented
+### Frontend
+- **[src/services/catalogs.service.ts](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/services/catalogs.service.ts)**:
+    - Updated `conceptosService.listar` to accept an optional `centroCostoId`.
+- **[src/pages/ConceptosPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConceptosPage.tsx)**:
+    - Refactored data loading to ONLY load `Cost Centers` on initial mount.
+    - [Conceptos](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConceptosPage.tsx#11-172) are now fetched **on demand** when a `Centro de Costo` is selected.
+    - If "Todos los centros de costos" (value 0) is selected, the concepts list is explicitly cleared to empty.
+    - Updated [handleSave](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConceptosPage.tsx#82-103) and [handleDelete](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConceptosPage.tsx#70-81) to refresh the list respecting the current filter.
+
+## Verification
+### User Verification Steps
+1. Navigate to **Gestión de Conceptos**.
+2. **Verify Loading**: The page should load without the "Error al cargar datos maestros" message initially (assuming Cost Centers load fine).
+3. **Verify Empty State**: Initially (with "Todos os centros de costos" selected), the list should say "No hay conceptos registrados" (or match the empty message).
+4. **Verify Filtering**:
+    - Select a specific **Centro de Costo**.
+    - The concepts for that Cost Center should load.
+5. **Verify CRUD**:
+    - Create a new concept for the selected Cost Center.
+    - Verify it appears in the list immediately.

@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Plan to debug extraction issue by adding detailed logging to identifying why movements are not being matched.",
+  "updatedAt": "2026-01-17T22:08:38.043455500Z"
+}

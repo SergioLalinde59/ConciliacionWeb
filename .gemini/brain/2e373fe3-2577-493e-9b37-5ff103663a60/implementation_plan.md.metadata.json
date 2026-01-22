@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Technical implementation plan for refactoring PDF extractors by financial institution with clear separation between movements and extract files",
+  "updatedAt": "2026-01-16T14:31:59.565491800Z"
+}

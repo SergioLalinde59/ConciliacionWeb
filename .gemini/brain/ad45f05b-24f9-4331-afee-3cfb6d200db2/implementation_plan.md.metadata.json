@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Fix for the 'Carga a BD' and 'Reporte Facturas' white screen (crash) issue caused by missing `formatCurrency` function. Includes creating a utility file and importing it.",
+  "updatedAt": "2026-01-14T16:21:30.262866400Z"
+}

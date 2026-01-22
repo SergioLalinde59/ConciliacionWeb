@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_TASK",
+  "summary": "Task checklist for debugging FondoRenta movement upload issue where 0 records are being read from the PDF",
+  "updatedAt": "2026-01-16T13:38:42.014492300Z"
+}

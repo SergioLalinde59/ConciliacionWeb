@@ -1,0 +1,27 @@
+# Fix MasterCard USD Extraction Logic
+
+The goal is to fix the `mastercard_usd_extracto_movimientos.py` extractor to correctly identify and extract only the movements from the "ESTADO DE CUENTA EN: DOLARES" section of the PDF, ignoring Pesos movements and undefined rows.
+
+## User Review Required
+> [!IMPORTANT]
+> This change assumes that the string "ESTADO DE CUENTA EN: DOLARES" is reliably present in the PDF to identify the USD section. If this header varies, the extraction might fail.
+
+## Proposed Changes
+
+### Infrastructure Layer
+
+#### [MODIFY] [mastercard_usd_extracto_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto_movimientos.py)
+- Implement a state flag `in_usd_section` initialized to `False`.
+- Iterate through lines:
+    - Set `in_usd_section = True` when "ESTADO DE CUENTA EN: DOLARES" is found.
+    - Set `in_usd_section = False` when a different section header (e.g., "ESTADO DE CUENTA EN: PESOS" or "TOTALES") is found (optional, but good for safety).
+    - Only apply the movement regex if `in_usd_section` is `True`.
+- Ensure strict date validation continues to apply (regex already requires `\d{2}/\d{2}/\d{4}`).
+
+## Verification Plan
+
+### Manual Verification
+1.  **Dry Run with Script**: Create a temporary Python script that mocks the PDF text content (based on the user's image and description) and runs the modified `_extraer_movimientos_desde_texto` function.
+    -   Input: Text containing both "ESTADO DE CUENTA EN: PESOS" ... movements ... and "ESTADO DE CUENTA EN: DOLARES" ... movements ...
+    -   Expected Output: Only the movements under the DOLARES section.
+2.  **User Verification**: Ask the user to re-upload the questionable PDF and verify that only the 5 expected USD movements appear.

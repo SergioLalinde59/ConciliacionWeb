@@ -1,0 +1,6 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Implement EditableCurrencyCell to handle formatting in Extracto columns.",
+  "updatedAt": "2026-01-16T00:18:48.761360500Z",
+  "version": "1"
+}

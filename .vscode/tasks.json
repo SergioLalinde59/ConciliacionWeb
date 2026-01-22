@@ -1,0 +1,26 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Antigravity: Archivar Conversación",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "antigravity_docs.py",
+                "${input:full_content}"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "full_content",
+            "type": "promptString",
+            "description": "Pega aquí el bloque completo de Antigravity"
+        }
+    ]
+}

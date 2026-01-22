@@ -1,0 +1,7 @@
+# Task: Implement Statistics Modal for "movimientos_extracto" Load
+
+- [ ] Explore codebase for existing Atomic Design components (Modal, etc.) <!-- id: 0 -->
+- [ ] Analyze `ConciliacionPage.tsx` and data loading logic <!-- id: 1 -->
+- [ ] Design/Adapt Modal component for statistics <!-- id: 2 -->
+- [ ] Implement logic to calculate and display statistics <!-- id: 3 -->
+- [ ] Verify implementation <!-- id: 4 -->

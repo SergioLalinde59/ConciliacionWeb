@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Implementation plan to fix the NameError in FondoRenta PDF extractor. Includes the specific code change needed (line 142), comprehensive verification plan with syntax check and integration testing, log analysis strategy, potential additional adjustments if extraction still fails, success criteria, risk assessment, and next steps for both immediate fix and long-term improvements.",
+  "updatedAt": "2026-01-16T12:55:14.100394900Z"
+}

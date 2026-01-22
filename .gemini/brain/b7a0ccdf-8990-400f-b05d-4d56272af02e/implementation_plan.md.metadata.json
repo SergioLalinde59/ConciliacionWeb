@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Plan to create `mastercard_pesos_extracto_anterior_movimientos.py` for extracting movements from older MasterCard Pesos statements.",
+  "updatedAt": "2026-01-17T21:42:30.958947Z"
+}

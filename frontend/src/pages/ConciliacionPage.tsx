@@ -419,7 +419,7 @@ export const ConciliacionPage = () => {
                 // Disable unused filters
                 showClasificacionFilters={false}
                 showIngresosEgresos={false}
-                showSoloPendientes={false}
+
             />
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

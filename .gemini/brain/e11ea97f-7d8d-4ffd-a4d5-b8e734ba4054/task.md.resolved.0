@@ -1,0 +1,7 @@
+# UI Refactoring for Import Page
+
+- [ ] Locate relevant components for "Directorio de Trabajo" and filters
+- [ ] Refactor "Directorio de Trabajo" to be on a single line
+- [ ] Compact filters section (dates and provider)
+- [ ] Reduce vertical spacing/margins
+- [ ] Verify changes

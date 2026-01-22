@@ -1,0 +1,7 @@
+# Task Checklist
+
+- [ ] Analyze [fondorenta_extracto_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/fondorenta_extracto_movimientos.py) to understand current extraction logic.
+- [ ] Verify user proposal ("ADICION" = positive, others = negative) against the uploaded image (`uploaded_image_1768684778299.png`).
+- [ ] Create implementation plan.
+- [ ] Implement the logic in [fondorenta_extracto_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/fondorenta_extracto_movimientos.py).
+- [ ] Verify the implementation.

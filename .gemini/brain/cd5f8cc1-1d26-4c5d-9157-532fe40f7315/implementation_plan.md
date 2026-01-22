@@ -1,0 +1,32 @@
+# Implementation Plan - Fix MasterCard USD Extractor
+
+The MasterCard USD extractor is correctly extracting movement lines but fails to distinguish between USD transactions (international) and COP transactions (domestic) which appear in the same 'Valor Movimiento' column (or are read as such) but with Peso values. This results in massive Peso amounts being stored as USD.
+
+## Proposed Changes
+
+### Backend
+
+#### [MODIFY] [mastercard_usd_extracto_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto_movimientos.py)
+
+-   **Page Filtering Logic**:
+    -   Iterate through each page of the PDF.
+    -   Check if the page text contains the string `"ESTADO DE CUENTA EN:   DOLARES"` (handling potential whitespace variations).
+    -   **If found**: Process the page to extract movements.
+    -   **If not found**: Skip the page (assumed to be a Pesos page or other content).
+
+-   **Column Mapping**:
+    -   For all extracted movements on valid USD pages:
+        -   Store the extracted amount in the `usd` column.
+        -   Set `valor` (Pesos) = `0`.
+        -   Set `trm` = `0`.
+
+
+## Verification Plan
+
+### Manual Verification
+1.  **Analyze Logs**: Since I cannot upload the PDF to test, I will verify the logic against the provided log lines in the user request.
+    -   *Test Case 1*: `APPLE.COM/BILL $ 3,43`. `3.43 < 1000`. -> **USD**. Correct.
+    -   *Test Case 2*: `DROGUERIA PASTEUR` `61.856,00`. `> 50,000`. -> **COP**. Correct.
+    -   *Test Case 3*: `SMART FIT` `19.900,00`. `< 50,000` but `> 1,000`. Check interest. If `0,0000%` present -> **COP**. Correct.
+    -   *Test Case 4*: `TIENDA D1` `1.700,00`. `> 1,000`. Interest check. -> **COP**. Correct.
+2.  **User Review**: Ask the user to re-run the extraction and confirm the values are now correctly categorized (no more "Error al decir que son movimientos de MasterCard USD").

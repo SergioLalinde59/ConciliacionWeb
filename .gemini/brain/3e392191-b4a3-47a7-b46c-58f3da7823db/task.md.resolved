@@ -1,0 +1,9 @@
+# Refactor into Atomic Currency Component
+
+- [x] Create [CurrencyValue.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/atoms/CurrencyValue/CurrencyValue.tsx) and [CurrencyValue.css](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/atoms/CurrencyValue/CurrencyValue.css) in `components/atoms`
+- [x] Update [StatCard](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/StatCard/StatCard.tsx#23-58) to accept `React.ReactNode` for `value`
+- [x] Update [App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx) to use `<CurrencyValue />` in Dashboard (StatCards)
+- [x] Update [App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx) to use `<CurrencyValue />` in Report/Import Tables
+- [x] Fixed "Monto Total" not using component in [App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx)
+- [x] Rebuild Frontend Container
+- [x] Verification

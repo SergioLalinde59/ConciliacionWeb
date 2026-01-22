@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Plan to replace the hardcoded table in `ConciliacionPage.tsx` with the atomic `DataTable` component. Includes flattening data structure and mapping columns with existing styling logic.",
+  "updatedAt": "2026-01-18T00:12:21.728382Z"
+}

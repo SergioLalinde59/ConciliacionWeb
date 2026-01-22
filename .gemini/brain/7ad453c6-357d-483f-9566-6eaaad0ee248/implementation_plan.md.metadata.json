@@ -1,0 +1,6 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Support displaying reconciliation for multiple months when a date range is selected.",
+  "updatedAt": "2026-01-15T23:36:37.343977Z",
+  "version": "1"
+}

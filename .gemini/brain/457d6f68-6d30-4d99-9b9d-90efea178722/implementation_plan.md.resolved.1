@@ -1,0 +1,39 @@
+# Implementation Plan - MasterCard USD Extracto Anterior Movimientos
+
+We will create a new extractor file `mastercard_usd_extracto_anterior_movimientos.py` to handle the "ESTADO DE CUENTA EN: DOLARES" section of the previous format MasterCard statements.
+
+> [!NOTE]
+> Fixed filename typos from original request: `mastercar` -> `mastercard`, `movientos` -> [movimientos](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_anterior_movimientos.py#16-68).
+
+## User Review Required
+> [!IMPORTANT]
+> This creates a **NEW** file: `mastercard_usd_extracto_anterior_movimientos.py`.
+> The extractor will:
+> 1. VALIDATE pages contain "ESTADO DE CUENTA DOLARES" (ignoring spaces).
+> 2. EXTRACT `Fecha`, `Descripción`, `Valor Original`.
+> 3. MAP `usd` = `Valor Original` * -1.
+> 4. SET [valor](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_movimientos.py#106-124) = 0, `trm` = 0.
+
+## Proposed Changes
+
+### Backend - Extractors
+
+#### [NEW] [mastercard_usd_extracto_anterior_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto_anterior_movimientos.py)
+- **Imports**: `pdfplumber`, `re`, `decimal`, `datetime`, `logging`.
+- **Function**: [extraer_movimientos(file_obj)](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_anterior_movimientos.py#16-68).
+- **Validation**: Normalize text (remove spaces/newlines) and check for `ESTADODECUENTADOLARES`.
+- **Regex**: Capture Date, Description, Original Value.
+    - Pattern: `r'^\s*(\d{2}/\d{2}/\d{4})\s+(.+?)\s+([-]?\$\s*[-]?[\d.,]+)'` (Adjusted for "Valor Original" column).
+- **Logic**:
+    - Iterate pages.
+    - Apply regex.
+    - Parse date (DD/MM/YYYY).
+    - Parse value: Remove symbols, handle separators, multiply by -1.
+    - Return list of dicts.
+
+## Verification Plan
+
+### Manual Verification
+- Verify the file is created with the correct name.
+- Review the code to ensure it matches the logic requirements (especially the * -1 and column mapping).
+- User will run their own verification.

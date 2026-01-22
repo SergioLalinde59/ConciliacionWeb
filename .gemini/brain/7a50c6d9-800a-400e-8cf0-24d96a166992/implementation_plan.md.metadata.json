@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Replace hardcoded table with Atomic Design DataTable in ConciliacionMovimientosTab",
+  "updatedAt": "2026-01-17T21:09:17.092896300Z"
+}

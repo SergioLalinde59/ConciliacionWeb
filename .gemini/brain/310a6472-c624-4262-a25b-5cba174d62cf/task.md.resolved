@@ -1,0 +1,7 @@
+# Task: Unify Report View with Atomic Design
+
+- [ ] Analyze [App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx) to locate the Report View implementation <!-- id: 0 -->
+- [x] Update [StatCardGrid](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/organisms/StatCardGrid/StatCardGrid.tsx#13-29) in Report View to use [CurrencyValue](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/atoms/CurrencyValue/CurrencyValue.tsx#12-37) <!-- id: 1 -->
+- [x] Update Result Table in Report View to use [CurrencyValue](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/atoms/CurrencyValue/CurrencyValue.tsx#12-37) <!-- id: 2 -->
+- [ ] Remove unused imports <!-- id: 4 -->
+- [ ] Verify changes locally <!-- id: 3 -->

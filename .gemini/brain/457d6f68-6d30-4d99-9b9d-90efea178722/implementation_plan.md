@@ -1,0 +1,45 @@
+# Implementation Plan - Display USD/TRM in Reconciliation View
+
+The user reports that USD and TRM data is not showing in the detailed reconciliation boxes ("Sistema" vs "Extracto").
+The issue stems from the frontend condition `showUsd` in `ConciliacionMovimientosTab.tsx`, which only enables these fields if the **aggregated statistics** (ingresos/egresos USD) are greater than 0.
+Since the backend or database might be returning 0 for legacy data or if no movements have been classified yet, the columns remain hidden.
+
+To fix this, we will:
+1.  Frontend: Allow forcing the display of USD columns if the Account is a "MasterCard USD" account (or similar logic), or simply relax the `showUsd` condition.
+2.  Backend: Ensure the `comparacion` endpoint returns `usd` and `trm` stats correctly (validated in analysis step).
+
+## User Review Required
+> [!NOTE]
+> We will modify `ConciliacionMovimientosTab.tsx` to be less strict about hiding USD columns, or specifically check if we are viewing a "USD" account.
+> For now, we will relax the check to also look at `saldo_neto_usd` and potential check `cuentaId` (if known to be USD).
+> **Correction**: The user wants to see it. We should just show it if there's any USD data *at all*, OR if it's the MasterCard USD account.
+
+## Proposed Changes
+
+### Frontend - Components
+
+#### [MODIFY] [ConciliacionMovimientosTab.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/components/organisms/ConciliacionMovimientosTab.tsx)
+- Update `showUsd` logic.
+- Currently: `(stats.sistema.ingresos_usd !== undefined && Math.abs(stats.sistema.ingresos_usd) > 0) ...`
+- Change: Add a check for `cuentaId` (6 is MasterCard Pesos, 7 is usually MasterCard USD, or similar).
+    - Hardcoding IDs is bad practice, but quick for now.
+    - Better: Check if `stats.sistema.ingresos_usd` is distinct from null/undefined?
+    - The stats always return a number (0) if no data.
+    - We will change the logic to: `const showUsd = true;` // Force it for testing, or better:
+    - User specifically mentioned "MasterCard Pesos" earlier (ID 6). If this is for MasterCard USD (ID 7?), it should definitely show.
+    - We'll look for *any* non-null USD field, or if the account is "MasterCard USD" (we might need to fetch account details or infer it).
+    - **Decision**: Update `showUsd` to be true if `stats` contains `ingresos_usd` keys (which it does) AND (value != 0 OR account is known to be USD).
+    - Since we don't have account type in props, we will assume if the endpoint returns `ingresos_usd` we should respect values.
+    - **Wait**, the backend `comparar_movimientos` returns `ingresos_usd` as 0 if constructed via `sum()`.
+    - I will modify the Frontend to **always show USD columns** if `ingresos_usd` is present in the response object, even if 0, **IF** the user explicitly wants to see "USD boxes".
+    - Actually, the user's uploaded image shows "MasterCardUSD - Marzo 2025". This is clearly a USD account.
+    - I will pass a new prop `isUsdAccount` or infer it.
+    - **Plan**: Update `ConciliacionPage.tsx` to pass `tipoCuenta` or similar to `ConciliacionMovimientosTab`, OR just make `showUsd` more inclusive in the Tab.
+
+### Backend
+
+#### [No Changes]
+Backend seems to be calculating correctly (`sum(m.usd)`). If data is 0, it returns 0.
+
+## Verification
+- User will verify visually.

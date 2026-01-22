@@ -1,0 +1,43 @@
+# Formatting Number Display Implementation Plan
+
+I will update the "Conciliación" view to strictly follow the requirement:
+- **Positive**: Green
+- **Negative**: Red
+- **Zero**: Blue
+- **Format**: Thousands separator, no decimals.
+
+## User Review Required
+> [!NOTE]
+> Inputs (editable fields) will use `type="number"` and show the correct color, but will NOT show thousands separators while editing, as this is standard browser behavior for number inputs. Read-only fields will show separators.
+
+## Proposed Changes
+
+### Frontend Components
+
+#### [MODIFY] [CurrencyDisplay.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/components/atoms/CurrencyDisplay.tsx)
+- Export the `getNumberColorClass` logic so it can be reused by inputs.
+- Ensure the default format (COP) uses correctly 0 decimals (already does).
+- Ensure the color logic matches exactly (Positive=Green, Negative=Red, Zero=Blue). Reference classes: `text-emerald-600` (Green), `text-rose-600` (Red), `text-blue-600` (Blue).
+
+#### [MODIFY] [ConciliacionPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx)
+- Import [CurrencyDisplay](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/components/atoms/CurrencyDisplay.tsx#76-125) and `getNumberColorClass`.
+- Remove local [formatMoney](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx#145-148) function.
+- Replace manually formatted table cells:
+    - System columns: Entradas, Salidas, Saldo Final -> Use `<CurrencyDisplay />`.
+    - Difference column: Use `<CurrencyDisplay />`.
+- Update Extracto Inputs:
+    - Use `getNumberColorClass(value)` to dynamically color the text inside the inputs.
+
+## Verification Plan
+
+### Manual Verification
+1.  Open the "Conciliación" page in the browser (`http://facturas.local` equivalent).
+    - *Note*: I will use the browser tool to verify.
+2.  Observed "Sistema (Calculado)" columns:
+    - Verify positive numbers are Green + Separators + No decimals.
+    - Verify negative numbers are Red + Separators + No decimals.
+    - Verify zero is Blue.
+3.  Observe "Extracto (Manual)" inputs:
+    - Verify text color changes as you type positive/negative values.
+4.  Observe "Diferencia" column:
+    - Verify it adheres to the same rules (Green/Red/Blue).

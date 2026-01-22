@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "Fixed the issue where USD account uploads showed zero values in the success modal.",
+  "updatedAt": "2026-01-18T02:42:35.701399700Z"
+}

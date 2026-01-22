@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_OTHER",
+  "summary": "Summary of changes made to fix FondoRenta movement extraction, including the new multi-line parsing logic and Spanish date handling",
+  "updatedAt": "2026-01-16T13:48:24.377437800Z"
+}

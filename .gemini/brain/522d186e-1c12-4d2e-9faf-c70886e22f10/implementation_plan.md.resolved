@@ -1,0 +1,33 @@
+# Fix Extract Synchronization for USD Accounts
+
+## Goal Description
+The "Upload Bank Extract" feature incorrectly shows "0" values in the success modal for USD accounts (e.g., MasterCard USD), even though the initial preview shows correct data. This is caused by a synchronization step in the backend ([_verificar_y_sincronizar_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_conciliacion_repository.py#58-138)) that recalculates the totals from the [movimientos_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#205-231) table but ignores the [usd](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#264-266) column (where USD values are stored) and only checks the `valor` column (which is 0 for USD transactions). This erroneously overwrites the correct summary with zeros.
+
+The goal is to update the synchronization query to correctly aggregate values from both `valor` and [usd](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#264-266) columns, ensuring valid summaries for both COP and USD accounts.
+
+## Proposed Changes
+
+### Backend
+
+#### [MODIFY] [postgres_conciliacion_repository.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_conciliacion_repository.py)
+
+- **Function**: [_verificar_y_sincronizar_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_conciliacion_repository.py#58-138)
+- **Change**: Update the SQL query `query_check` to include [usd](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#264-266) in the summation.
+- **Logic**: 
+    - Change `SUM(CASE WHEN valor > 0...` to a logic that sums `valor + COALESCE(usd, 0)`.
+    - Ensure that we handle the sign correctly using the combined value.
+    - `entradas` will be sum of positive combined values.
+    - `salidas` will be sum of absolute negative combined values.
+
+## Verification Plan
+
+### Manual Verification
+1.  **Restart Backend**: Ensure the backend service is restarted to pick up changes.
+2.  **Upload USD Extract**:
+    - Go to "Cargar Extracto Bancario".
+    - Select "MasterCardUSD" account.
+    - Upload a PDF that contains movements.
+    - Verify "Resumen del Periodo" shows correct non-zero values (This already works).
+    - Click "Confirmar y Cargar".
+3.  **Verify Success Modal**:
+    - The "¡Carga Completada!" modal should now show the **same values** as the preview for Entradas, Salidas, and Saldos, instead of $0.00.

@@ -1,0 +1,14 @@
+# Debugging FondoRenta Movement Upload
+
+## Objetivo
+Identificar el error en el flujo de carga de movimientos para FondoRenta que resulta en 0 registros leídos.
+
+## Tareas
+
+- [x] Trazar el flujo completo de llamadas desde el botón "Analizar archivo"
+- [x] Identificar el punto de falla en la cadena de llamadas (regex en fondorenta.py)
+- [x] Agregar logging para ver el formato real del PDF
+- [ ] Reiniciar backend y cargar el PDF nuevamente
+- [ ] Examinar el output del debug logging
+- [ ] Ajustar el regex según el formato real
+- [ ] Verificar que la carga funcione correctamente

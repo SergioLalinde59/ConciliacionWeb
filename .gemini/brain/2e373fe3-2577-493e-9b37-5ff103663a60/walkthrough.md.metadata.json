@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "Completed refactoring of PDF extractors into organized structure by financial institution. All extractors migrated from 3 monolithic files to 8 focused files in bancolombia/ directory, with clean module exports and updated service layer imports.",
+  "updatedAt": "2026-01-16T14:43:33.467838400Z"
+}

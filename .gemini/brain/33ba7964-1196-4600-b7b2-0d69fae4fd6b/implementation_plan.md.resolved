@@ -1,0 +1,29 @@
+# Fix Extract Movements Issue
+
+## Goal Description
+The current regex for extracting movements from "Ahorros" type extracts is too brittle and fails to match valid lines in the user's PDF, resulting in "0 movements found". Additionally, we need to address the "Failed to fetch" error, which is likely a side-effect or a network timeout, by ensuring robust extraction and error handling. We will refactor the extraction logic to be more flexible, parsing lines by identifying key columns relative to the end of the line (Saldo, Valor) rather than fixed regular expressions.
+
+## User Review Required
+> [!NOTE]
+> The new extraction logic assumes that the last numeric token on a transaction line is the "Saldo" and the one preceding it is the "Valor". This covers standard Bancolombia formats.
+
+## Proposed Changes
+
+### Backend
+
+#### [MODIFY] [ahorros_extracto_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/ahorros_extracto_movimientos.py)
+- Rewrite [_extraer_movimientos_desde_texto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/ahorros_extracto_movimientos.py#47-99) to:
+    - Iterate through lines looking for a date pattern at the start.
+    - Split the line into tokens.
+    - Parse the last token as `Saldo`.
+    - Parse the second-to-last token as `Valor`.
+    - Treat everything between Date and Value as `Description` (and potentially `Reference` if digits are found at the end of the description block).
+    - Determine the sign of `Valor` if a single column is used (looking for `-` or relying on standard formatting).
+    - If extraction of 2 numbers fails, try to fallback to Debit/Credit logic if applicable (3 numbers at end).
+
+## Verification Plan
+
+### Manual Verification
+- The user will upload the file `2025-12 6377.pdf` again.
+- Verify that the "Se encontraron X movimientos" message appears in the modal (instead of 0).
+- Verify that "Confirmar y Cargar" proceeds without "Failed to fetch".

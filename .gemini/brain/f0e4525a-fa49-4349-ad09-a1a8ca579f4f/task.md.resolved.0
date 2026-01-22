@@ -1,0 +1,11 @@
+# Conciliación Mensual
+
+- [ ] **Database Schema**
+    - [ ] Create `conciliaciones` table <!-- id: 0 -->
+- [ ] **Backend Implementation**
+    - [ ] Create `Conciliacion` model
+    - [ ] Create `ConciliacionRepository`
+    - [ ] Implement `actualizar_saldos_sistema` logic
+- [ ] **Frontend Implementation**
+    - [ ] Create Reconciliation View
+    - [ ] Display Extract vs System comparison

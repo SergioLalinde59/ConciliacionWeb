@@ -1,0 +1,41 @@
+# Sistema de Movimientos de Extracto
+
+## Infraestructura Base
+- [ ] Crear tabla `movimientos_extracto` en PostgreSQL
+- [ ] Crear modelo de dominio `MovimientoExtracto`
+- [ ] Crear repository port `MovimientoExtractoRepository`
+- [ ] Crear repository implementation `PostgresMovimientoExtractoRepository`
+- [ ] Añadir dependency injection en `dependencies.py`
+
+## Extractores de Movimientos
+- [ ] Crear `ahorros_extracto_movimientos.py`
+- [ ] Crear `fondorenta_extracto_movimientos.py`
+- [ ] Crear `mastercard_pesos_extracto_movimientos.py`
+- [ ] Crear `mastercard_usd_extracto_movimientos.py`
+
+## Servicio de Procesamiento
+- [ ] Actualizar [procesador_archivos_service.py](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py) para extraer movimientos
+- [ ] Añadir método `_obtener_modulo_extractor_movimientos()`
+- [ ] Integrar guardado de movimientos en `procesar_extracto()`
+
+## API Backend
+- [ ] Crear endpoint `GET /api/conciliaciones/{cuenta_id}/{year}/{month}/movimientos-extracto`
+- [ ] Crear endpoint `GET /api/conciliaciones/{cuenta_id}/{year}/{month}/comparacion`
+- [ ] Actualizar respuesta de `POST /api/archivos/cargar-extracto` con count de movimientos
+
+## Frontend - Estadísticas en Página de Carga
+- [ ] Actualizar `UploadExtractoPage.tsx` para mostrar estadísticas de movimientos
+- [ ] Crear/actualizar modal de éxito con datos de resumen + movimientos extraídos
+- [ ] Mostrar: Total movimientos, Ingresos, Egresos, Saldo Neto del extracto
+- [ ] Integrar con el servicio que retorna la información
+
+## Frontend - Página de Conciliación
+- [ ] Añadir tab "Detalle Movimientos" en [ConciliacionPage.tsx](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/ConciliacionPage.tsx)
+- [ ] Crear componente para comparar movimientos Sistema vs Extracto
+- [ ] Mostrar diferencias y movimientos faltantes
+
+## Verificación
+- [ ] Probar carga de extracto de Ahorros
+- [ ] Verificar que se guardan movimientos en BD
+- [ ] Verificar modal de estadísticas
+- [ ] Verificar endpoints de API

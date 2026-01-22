@@ -1,0 +1,48 @@
+# Implementation Plan - Dynamic Extractor Configuration
+
+We will move the hardcoded account-to-extractor mapping from [procesador_archivos_service.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py) to the `cuentas` database table.
+
+## User Review Required
+
+> [!IMPORTANT]
+> This change requires a database migration (adding a column). I will execute the SQL command directly.
+
+## Proposed Changes
+
+### Database
+- Add column [modulo_extractor_movimientos](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#372-386) (VARCHAR(100)) to table `cuentas`.
+- Update existing rows with the correct module names:
+    - ID 1 (Ahorros) -> `ahorros_extracto_movimientos`
+    - ID 3 (FondoRenta) -> `fondorenta_extracto_movimientos`
+    - ID 6 (MasterCardPesos) -> `mastercard_pesos_extracto_movimientos`
+    - ID 7 (MasterCardUSD) -> `mastercard_usd_extracto_movimientos`
+
+### Backend
+
+#### [Modify] [cuenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/models/cuenta.py)
+- Add optional field `modulo_extractor_movimientos: Optional[str] = None`.
+
+#### [Modify] [postgres_cuenta_repository.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_cuenta_repository.py)
+- Update `SELECT` and `INSERT/UPDATE` queries to include the new column.
+
+#### [Modify] [procesador_archivos_service.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py)
+- Remove `EXTRACTORES_MOVIMIENTOS` dictionary.
+- In [_obtener_modulo_extractor_movimientos](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#372-386), fetch the [Cuenta](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/models/cuenta.py#4-16) object using `self.tercero_repo` (wait, I need [CuentaRepository](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_cuenta_repository.py#6-64) here, currently it has `TerceroRepository`).
+- **Correction**: [ProcesadorArchivosService](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#17-516) does not have [CuentaRepository](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_cuenta_repository.py#6-64) injected. I need to inject it.
+- **Refactor**: Inject [CuentaRepository](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_cuenta_repository.py#6-64) into [ProcesadorArchivosService](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#17-516).
+- Use `cuenta.modulo_extractor_movimientos` to dynamically import the module.
+
+#### [Modify] [archivos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/archivos.py)
+- Update the dependency injection factory `get_procesador_service` to include [CuentaRepository](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_cuenta_repository.py#6-64).
+
+## Verification Plan
+
+### Automated Tests
+- None available for this specific integration.
+
+### Manual Verification
+1.  **Database Check**: Verify the column exists and data is populated.
+    ```sql
+    SELECT * FROM cuentas;
+    ```
+2.  **Upload Test**: Upload an extract for 'MasterCardPesos' and verify it still processes correctly using the database configuration.

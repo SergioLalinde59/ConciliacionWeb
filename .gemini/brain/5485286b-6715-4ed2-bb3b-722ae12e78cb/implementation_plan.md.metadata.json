@@ -1,0 +1,6 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Update frontend to include `permite_conciliar` in `CuentasPage`.",
+  "updatedAt": "2026-01-15T22:32:10.023766900Z",
+  "version": "2"
+}

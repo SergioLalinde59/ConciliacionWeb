@@ -1,0 +1,181 @@
+# Plan de Implementación: Corrección Error FondoRenta Extractor
+
+Corrección del error `NameError: name 'snippet' is not defined` en el extractor de PDF de FondoRenta, que actualmente impide el análisis de extractos bancarios de esta cuenta.
+
+---
+
+## Cambios Propuestos
+
+### [Infrastructure Layer]
+
+#### [MODIFY] [fondorenta.py](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/fondorenta.py)
+
+**Ubicación**: Función `extraer_resumen_fondorenta()`, línea 142
+
+**Cambio**: Reemplazar la variable no definida `snippet` por `search_area` que ya contiene información relevante para debugging.
+
+**Código actual** (línea 138-142):
+```python
+search_area = full_text[full_text.find('SALDO'):full_text.find('SALDO')+500] if 'SALDO' in full_text else 'No SALDO found'
+logger.error(f"DEBUG FondoRenta FAILED. Search Area for SALDO: {search_area}")
+
+# Lanzar error con snippet
+raise ValueError(f"No se pudieron extraer datos. Verifique logs. Preview: {snippet[:200]}")
+```
+
+**Código corregido**:
+```python
+search_area = full_text[full_text.find('SALDO'):full_text.find('SALDO')+500] if 'SALDO' in full_text else 'No SALDO found'
+logger.error(f"DEBUG FondoRenta FAILED. Search Area for SALDO: {search_area}")
+
+# Lanzar error con preview del área donde se esperaba encontrar datos
+raise ValueError(f"No se pudieron extraer datos. Verifique logs. Preview: {search_area[:200]}")
+```
+
+**Justificación**:
+- Corrige el `NameError` inmediato
+- Mantiene la intención original de proporcionar un preview para debugging
+- Usa la variable `search_area` que ya está calculada y es más relevante (muestra específicamente dónde se buscó "SALDO")
+- El slice `[:200]` previene mensajes de error excesivamente largos
+
+---
+
+## Plan de Verificación
+
+### 1. Verificación de Sintaxis
+
+**Acción**: Confirmar que no hay errores de sintaxis en el archivo modificado.
+
+**Comando**: 
+```bash
+cd Backend
+python -m py_compile src/infrastructure/extractors/fondorenta.py
+```
+
+**Resultado esperado**: Sin errores de compilación.
+
+---
+
+### 2. Prueba de Integración
+
+**Acción**: Subir el extracto PDF de FondoRenta que causó el error original.
+
+**Pasos**:
+1. Navegar a "Cargar Extracto Bancario"
+2. Seleccionar cuenta "FondoRenta"
+3. Cargar el archivo `MovimientosTusInversionesBancolombia13Ene26.pdf`
+4. Presionar "Analizar Extracto"
+5. Observar respuesta del backend
+
+**Resultado esperado**: 
+- ❌ **Todavía puede fallar**, pero ahora con un error **informativo** en lugar de `NameError`
+- ✅ Los logs mostrarán:
+  - El texto extraído del PDF (primeros 3000 caracteres)
+  - El área de búsqueda de "SALDO"
+  - Un mensaje de error descriptivo con preview
+
+**Resultado exitoso**: Si la extracción funciona correctamente, se mostrarán:
+- Saldo anterior
+- Entradas
+- Salidas
+- Saldo final
+
+---
+
+### 3. Análisis de Logs
+
+**Acción**: Revisar los logs del backend para entender por qué falla la extracción (si aún falla).
+
+**Archivos a revisar**:
+1. **Terminal del backend**: Buscar líneas que comienzan con:
+   - `DEBUG FondoRenta: Texto extraido`
+   - `DEBUG FondoRenta FAILED. Search Area for SALDO:`
+   - `DEBUG FondoRenta Posicional:`
+
+2. **Archivo de debug** (si se generó): `Backend/logs/debug_extract_dump.txt`
+
+**Información a extraer**:
+- ¿Se extrajo texto del PDF correctamente?
+- ¿Contiene la palabra "SALDO"?
+- ¿Qué formato tiene el cuadro de resumen?
+- ¿Los regex actuales coinciden con ese formato?
+
+---
+
+### 4. Ajustes Adicionales (si es necesario)
+
+> [!NOTE]
+> Esta fase solo es necesaria si después de la corrección del `NameError`, la extracción aún falla porque los regex no coinciden con el formato del PDF.
+
+**Posibles problemas y soluciones**:
+
+#### Problema 1: El cuadro de resumen tiene formato diferente
+
+**Diagnóstico**: Los regex en `_extraer_resumen_desde_texto_full()` no encuentran los valores esperados.
+
+**Solución**: 
+1. Analizar el `full_text` extraído en los logs
+2. Identificar el formato real del cuadro de resumen
+3. Ajustar los regex en las líneas 239, 249, 265 del archivo
+
+#### Problema 2: Los encabezados cambiaron
+
+**Diagnóstico**: La búsqueda de "SALDO ANTERIOR", "REND. NETOS", etc. no encuentra coincidencias.
+
+**Solución**:
+1. Identificar los nuevos encabezados en el texto extraído
+2. Actualizar los patrones de búsqueda (funciones `buscar_valores_despues_de`)
+3. Añadir variantes alternativas de encabezados
+
+#### Problema 3: El archivo tiene múltiples páginas con formato inconsistente
+
+**Diagnóstico**: Los valores se encuentran en diferentes páginas o en orden inesperado.
+
+**Solución**:
+1. Revisar cómo se concatena `full_text` de múltiples páginas
+2. Ajustar la lógica de extracción para manejar saltos de página
+3. Considerar procesar página por página en lugar de concatenar
+
+---
+
+## Criterios de Éxito
+
+✅ **Éxito Mínimo** (Primera Fase):
+- El error `NameError: name 'snippet' is not defined` está resuelto
+- Al subir un PDF, se muestra un mensaje de error **descriptivo** con información útil
+- Los logs contienen el texto extraído del PDF para análisis
+
+✅ **Éxito Completo** (Objetivo Final):
+- El PDF se procesa correctamente
+- Se extraen todos los valores requeridos:
+  - Saldo anterior
+  - Entradas
+  - Salidas
+  - Saldo final
+  - Año y mes del periodo
+- Los datos se muestran en el frontend sin errores
+- Se puede guardar la información en la base de datos
+
+---
+
+## Riesgos y Mitigaciones
+
+| Riesgo | Probabilidad | Impacto | Mitigación |
+|--------|--------------|---------|------------|
+| La extracción aún falla después de corregir el `NameError` | Alta | Medio | Los logs detallados permitirán diagnosticar el problema real |
+| El formato del PDF cambió desde la última versión funcional | Media | Alto | Analizar `debug_extract_dump.txt` y ajustar regex |
+| Hay múltiples formatos de PDF de FondoRenta | Media | Alto | Implementar detección de formato y múltiples estrategias |
+| Otros extractos tienen el mismo patrón de error | Baja | Medio | Revisar extractors de otras cuentas |
+
+---
+
+## Próximos Pasos Después de la Corrección
+
+1. **Inmediato**: Aplicar el fix del `NameError` y reiniciar el backend
+2. **Corto plazo**: Probar con el PDF problemático y analizar logs
+3. **Mediano plazo**: Ajustar regex si es necesario basándose en los logs
+4. **Largo plazo**: Considerar hacer más robusto el extractor con:
+   - Múltiples estrategias de extracción
+   - Validación de datos extraídos
+   - Tests unitarios con PDFs de ejemplo
+   - Mejor manejo de errores con mensajes específicos

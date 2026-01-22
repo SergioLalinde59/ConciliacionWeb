@@ -1,0 +1,72 @@
+# Adding Upload Statistics Modal to Extract Upload Page
+
+Implementation plan to add a statistics modal window that displays upload results after processing an extract, following the same pattern as `UploadMovimientosPage.tsx`.
+
+## Current State
+
+The extract upload page ([UploadExtractoPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/UploadExtractoPage.tsx)) currently displays upload results inline as a green success box (lines 259-273) with basic information about the conciliation update.
+
+The movements upload page ([UploadMovimientosPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/UploadMovimientosPage.tsx)) already has a comprehensive statistics modal implementation (lines 268-321) that displays:
+- Total records read
+- New records inserted
+- Duplicates ignored
+- Errors
+
+## Proposed Changes
+
+### [UploadExtractoPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/UploadExtractoPage.tsx)
+
+**Changes:**
+1. Import `Modal` component from `../components/molecules/Modal`
+2. Import `Button` component from `../components/atoms/Button`
+3. Add `showSuccessModal` state variable
+4. Add modal state management in event handlers
+5. Replace inline success display with Modal component
+6. Display upload statistics in modal format
+
+**Specific modifications:**
+- **Line 1-4**: Add imports for `Modal` and `Button` components
+- **Line 20-30**: Add `showSuccessModal` state
+- **Line 42-46**: Update `handleFileChange` to reset modal state
+- **Line 89-96**: Update `handleCargarDefinitivo` to show modal on success
+- **Line 99-104**: Keep existing reset logic
+- **Line 258-274**: Replace inline success display with Modal component showing:
+  - Success icon and title
+  - Extracted summary values (saldo anterior, entradas, salidas, saldo final)
+  - Period information
+- Add `handleCloseSuccessModal` function to manage modal closure
+
+## Verification Plan
+
+### Manual Verification
+
+1. **Start the application**
+   ```powershell
+   cd f:\1. Cloud\4. AI\1. Antigravity\ConciliacionWeb
+   . .\arranque_app.ps1
+   ```
+
+2. **Navigate to the Extract Upload page**
+   - Open browser to the application URL
+   - Click on "Cargar Extracto Bancario" in the sidebar
+
+3. **Test successful upload flow**
+   - Select a cuenta (e.g., "MasterCardUSD")
+   - Upload a valid extract PDF
+   - Click "Analizar Extracto"
+   - Verify summary is displayed correctly
+   - Click "Confirmar y Cargar"
+   - **Verify**: Modal appears with success message and statistics
+   - **Verify**: Modal displays the extracted values correctly formatted
+   - **Verify**: Modal shows the period information
+   - Click "Entendido" button
+   - **Verify**: Modal closes and form is reset
+
+4. **Test modal behavior**
+   - **Verify**: Cannot close modal by clicking outside
+   - **Verify**: "Entendido" button closes modal properly
+   - **Verify**: After closing modal, can upload another extract
+
+### Automated Tests
+
+No existing automated tests for this component. Manual verification is sufficient for UI changes.

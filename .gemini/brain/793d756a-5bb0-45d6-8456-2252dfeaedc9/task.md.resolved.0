@@ -1,0 +1,7 @@
+# Task List
+
+- [ ] Locate the component responsible for "Cargar Extracto Bancario" modal <!-- id: 0 -->
+- [ ] Create Implementation Plan <!-- id: 1 -->
+- [ ] Implement `ExtractoStatsRibbon` component <!-- id: 2 -->
+- [ ] Integrate Ribbon into the Modal replacing the old message <!-- id: 3 -->
+- [ ] Verify changes <!-- id: 4 -->

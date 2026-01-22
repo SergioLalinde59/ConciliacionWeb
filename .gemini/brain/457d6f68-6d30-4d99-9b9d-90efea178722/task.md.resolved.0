@@ -1,0 +1,13 @@
+# Task: Implement MasterCard Extracto Anterior Movimientos Extractor
+
+- [ ] Analyze existing extractors and requirements <!-- id: 0 -->
+    - [ ] List files in `Backend/src/infrastructure/extractors/bancolombia` <!-- id: 1 -->
+    - [ ] Read `mastercard_pesos_extracto_movimientos.py` for reference <!-- id: 2 -->
+    - [ ] Read `mastercard_usd_extracto_movimientos.py` for reference <!-- id: 3 -->
+- [ ] Create Implementation Plan <!-- id: 4 -->
+- [ ] Implement Extractor `mastercard_pesos_extracto_anterior_movimientos.py` <!-- id: 5 -->
+    - [ ] logic for "ESTADO DE CUENTA EN: DOLARES" validation <!-- id: 6 -->
+    - [ ] Regex for movements (Fecha Transacción, Descripción, Valor Original) <!-- id: 7 -->
+    - [ ] Mapping logic (Valor Original -> usd, valor -> 0, trm -> 0) <!-- id: 8 -->
+    - [ ] Multiply values by -1 <!-- id: 9 -->
+- [ ] Verify Implementation <!-- id: 10 -->

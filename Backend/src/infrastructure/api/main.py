@@ -25,7 +25,9 @@ from src.infrastructure.api.routers import (
     tercero_descripciones,
     tercero_descripciones,
     conciliaciones,
-    extractores
+    extractores,
+    matching,
+    dashboard
 )
 
 
@@ -103,6 +105,8 @@ app.include_router(config_filtros_centros_costos.router)
 app.include_router(tercero_descripciones.router)
 app.include_router(conciliaciones.router)
 app.include_router(extractores.router)
+app.include_router(matching.router)
+app.include_router(dashboard.router)
 
 logger.info("Todos los routers registrados")
 

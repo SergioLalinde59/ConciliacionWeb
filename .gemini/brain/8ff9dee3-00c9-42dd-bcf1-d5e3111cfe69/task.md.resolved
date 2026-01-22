@@ -1,0 +1,8 @@
+# Task: Repair Detailed Reconciliation View
+
+- [x] Investigate "No hay datos de comparación disponibles" error <!-- id: 0 -->
+    - [x] Inspect frontend code for data fetching logic ([ConciliacionMovimientosTab](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/components/organisms/ConciliacionMovimientosTab.tsx#34-173) or similar) <!-- id: 1 -->
+    - [x] Check backend logs for errors during the request <!-- id: 2 -->
+    - [x] Verify backend endpoint `/api/conciliaciones/{cuenta_id}/{year}/{month}/movimientos` (or similar) <!-- id: 3 -->
+- [x] Fix identified issues <!-- id: 4 -->
+- [ ] Verify fix <!-- id: 5 -->

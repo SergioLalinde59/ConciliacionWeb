@@ -1,0 +1,8 @@
+# Task List
+
+- [ ] Analyze the new MasterCard Pesos PDF format from the user provided image <!-- id: 0 -->
+- [ ] Read current [mastercard_pesos_extracto_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_movimientos.py) <!-- id: 1 -->
+- [ ] Implement [extraer_movimientos](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_movimientos.py#9-30) in [mastercard_pesos_extracto_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_movimientos.py) adapting the logic from [fondorenta_extracto_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/fondorenta_extracto_movimientos.py) <!-- id: 2 -->
+- [ ] Add regex to capture `Fecha`, `Movimientos`, and `Valor movimiento` <!-- id: 3 -->
+- [ ] Add logging and error handling similar to FondoRenta <!-- id: 4 -->
+- [ ] Verify the implementation (by running the user's workflow or asking for verification) <!-- id: 5 -->

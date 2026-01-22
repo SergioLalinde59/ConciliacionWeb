@@ -1,0 +1,18 @@
+# Implementation Plan - Fix Concept Management FK Error
+
+## Goal Description
+Fix the error in "Gestión de Conceptos" where an FK (Foreign Key) issue is preventing correct operation. The user mentioned reviewing the API and the FK topic.
+
+## Proposed Changes
+*Analysis Phase - exact changes to be determined after code review*
+
+### Backend
+- **Investigate**: `src/domain/models/concept.py` (assumed)
+- **Investigate**: `src/infrastructure/repositories/postgres_concept_repository.py` (assumed)
+- **Investigate**: `src/infrastructure/api/routers/concept_router.py` (assumed)
+
+## Verification Plan
+### Manual Verification
+- Attempt to fetch concepts.
+- Attempt to create a concept linked to a cost center.
+- Check application logs for FK violation errors.

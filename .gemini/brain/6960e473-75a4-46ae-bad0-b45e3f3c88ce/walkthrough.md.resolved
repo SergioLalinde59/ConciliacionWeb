@@ -1,0 +1,42 @@
+# Walkthrough - Reconciliation Page Refactor
+
+I have refactored the [ConciliacionPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx) to align with the application's Atomic Design system and unify the UI with the "Gestión de Movimientos" page.
+
+## Changes
+
+### 1. Unified UI & Atomic Design
+-   **FiltrosReporte**: Integrated the [FiltrosReporte](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/components/organisms/FiltrosReporte.tsx#53-160) organism to provide consistent filtering capabilities.
+-   **Table Styling**: Updated the reconciliation table to match the visual style of the [MovimientosPage](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/MovimientosPage.tsx#13-499) (white background, rounded corners, shadow, consistent padding/fonts).
+-   **Layout**: Ensured proper integration with the [MainLayout](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/components/templates/MainLayout.tsx#9-22) (provided by [App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/App.tsx)).
+
+### 2. New Filters
+-   **Date Range**: Replaced the simple Year/Month dropdowns with the standard Date Range picker. The logic automatically derives the reconciliation month from the selected start date.
+-   **Account Filter**: Added a specific "Cuenta" filter to allow viewing a single account or all accounts at once.
+
+## Code Changes
+
+### [src/pages/ConciliacionPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx)
+
+```tsx
+// Key implementation details
+export const ConciliacionPage = () => {
+    // ...
+    // Using reusable FiltrosReporte
+    <FiltrosReporte
+        desde={desde}
+        hasta={hasta}
+        onDesdeChange={setDesde}
+        onHastaChange={setHasta}
+        cuentaId={cuentaId}             // New Account Filter
+        onCuentaChange={setCuentaId}
+        cuentas={cuentas}
+        // ...
+    />
+    // ...
+}
+```
+
+## Verification
+-   Verified imports align with project structure.
+-   Ensured [MainLayout](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/components/templates/MainLayout.tsx#9-22) is not double-wrapped (removed local wrapper).
+-   Matched standard Tailwind classes for table/typography.

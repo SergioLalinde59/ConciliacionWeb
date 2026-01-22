@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "Reporte de reparación de la aplicación facturas.local. Se solucionó el error de pantalla blanca causado por imports de tipos incorrectos en la arquitectura de Diseño Atómico.",
+  "updatedAt": "2026-01-14T14:35:55.353043600Z"
+}

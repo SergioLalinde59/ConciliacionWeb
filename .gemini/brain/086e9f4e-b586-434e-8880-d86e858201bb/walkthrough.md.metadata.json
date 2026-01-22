@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "Summary of changes made to implement Mastercard extract parsers and refactor account name handling. Documents backend extractors, service updates, frontend simplification, and files changed with testing recommendations.",
+  "updatedAt": "2026-01-16T19:20:38.264808Z"
+}

@@ -1,0 +1,27 @@
+# Walkthrough - Atomic Table Implementation
+
+I have replaced the hardcoded `<table>` implementation in the "Conciliación Mensual" view with the reusable [DataTable](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/DataTable.tsx#65-276) component from the Atomic Design system.
+
+## Changes
+
+### 1. Refactored [ConciliacionPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/ConciliacionPage.tsx)
+
+-   **Data Transformation**: Implemented logic to flatten the nested account/month data into a linear array (`ConciliacionRow[]`) suitable for [DataTable](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/DataTable.tsx#65-276).
+-   **Component Replacement**: Removed the manual `<table>` and replaced it with `<DataTable />`.
+-   **Column Configuration**: Defined a robust `columns` array that includes:
+    -   **Visual Grouping**: Used `headerClassName` and `cellClassName` to apply blue (System) and green (Extract) backgrounds, mimicking the previous nested header design.
+    -   **Custom Renderers**: Preserved `EditableCurrencyCell` for extract values and `CurrencyDisplay` for static values.
+    -   **Action Buttons**: Re-implemented the "Ver Detalle", "Guardar", and "Recalcular" buttons within the "Acciones" column accessor.
+
+## Verification Results
+
+### Manual Verification
+> [!NOTE]
+> Per the user's request, I have skipped the automated browser verification. The user will perform the manual review.
+
+**Things to check:**
+1.  **Visual Layout**: Confirm the blue/green color coding correctly groups the System vs. Extract columns.
+2.  **Functionality**:
+    -   Editing the "Extracto" cells should update the state.
+    -   "Guardar" button should persist changes.
+    -   "Ver Detalle" should correctly navigate to the detail view.

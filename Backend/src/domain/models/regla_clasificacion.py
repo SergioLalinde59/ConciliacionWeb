@@ -5,9 +5,10 @@ from typing import Optional
 class ReglaClasificacion:
     """Regla para clasificar automáticamente un movimiento."""
     patron: str
-    tercero_id: Optional[int]
-    grupo_id: Optional[int]
-    concepto_id: Optional[int]
+    patron_descripcion: Optional[str] = None
+    tercero_id: Optional[int] = None
+    centro_costo_id: Optional[int] = None
+    concepto_id: Optional[int] = None
     id: Optional[int] = None
     
     # Tipo de match: 'exacto', 'contiene', 'inicio'

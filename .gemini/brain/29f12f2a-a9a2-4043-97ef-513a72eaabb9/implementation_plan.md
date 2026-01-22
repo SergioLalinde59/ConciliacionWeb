@@ -1,0 +1,23 @@
+# Fix MasterCard Pesos Old Extractor Import Error
+
+The backend is failing to import the `mastercard_pesos_extracto_movimientos_anterior` module because the file is currently named `mastercard_pesos_extracto_anterior_movimientos.py`, creating a mismatch with the database configuration.
+
+## Proposed Changes
+
+### Backend
+
+#### [NEW] [mastercard_pesos_extracto_movimientos_anterior.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_movimientos_anterior.py)
+- Rename `mastercard_pesos_extracto_anterior_movimientos.py` to this new name.
+
+#### [DELETE] [mastercard_pesos_extracto_anterior_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_anterior_movimientos.py)
+- The old file will be removed (renamed).
+
+#### [MODIFY] [procesador_archivos_service.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py)
+- Update the hardcoded fallback configuration in `_obtener_modulos_extractor_movimientos` to reference the new filename `mastercard_pesos_extracto_movimientos_anterior` instead of the old one.
+
+## Verification Plan
+
+### Manual Verification
+1.  **Ask User to Upload Extract**: The user should try uploading the "MasterCard Pesos" extract again.
+2.  **Check Logs**: Verify that the log message `Error importando extractor mastercard_pesos_extracto_movimientos_anterior` disappears and is replaced by a success message like `Extractor ... obtuvo X movimientos`.
+3.  **Check Frontend**: The frontend should now display the correct number of movements instead of "0 movimientos".

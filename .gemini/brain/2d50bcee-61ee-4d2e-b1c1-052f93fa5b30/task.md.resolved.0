@@ -1,0 +1,19 @@
+# Fase 4: Servicio de Matching y Lógica de Vinculación
+
+## Backend - Servicio de Dominio
+- [ ] Agregar dependencia `python-Levenshtein` a `requirements.txt`
+- [ ] Crear `matching_service.py` con estructura base
+- [ ] Implementar método `calcular_score_similitud`
+  - [ ] Score de fecha
+  - [ ] Score de monto
+  - [ ] Score de descripción (Levenshtein)
+- [ ] Implementar método `obtener_candidatos_matching`
+- [ ] Implementar método `vincular_movimientos`
+- [ ] Implementar método `desvincular_movimientos`
+- [ ] Implementar método `marcar_como_ignorado`
+- [ ] Actualizar endpoints en `matching.py` para usar el servicio
+
+## Verificación
+- [ ] Verificar que el servicio se construye sin errores
+- [ ] Probar cálculo de scores con datos de ejemplo
+- [ ] Validar reglas de negocio de vinculación

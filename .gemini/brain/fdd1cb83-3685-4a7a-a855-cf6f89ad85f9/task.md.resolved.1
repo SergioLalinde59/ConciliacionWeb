@@ -1,0 +1,33 @@
+# Implementar Normalización de Referencias - Solución Híbrida
+
+## Objetivo
+Resolver el problema de referencias con ceros a la izquierda que no coinciden con los aliases guardados.
+
+## Plan de Implementación
+
+### Backend
+
+- [ ] **Crear función de normalización**
+  - [ ] Crear `utils.py` con función `normalizar_referencia()`
+  - [ ] Añadir tests unitarios para la función
+
+- [ ] **Modificar repositorio de tercero_descripciones**
+  - [ ] Actualizar [guardar()](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_tercero_descripcion_repository.py#20-60) para normalizar antes de insertar/actualizar
+  - [ ] Actualizar [buscar_por_referencia()](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_tercero_descripcion_repository.py#118-135) para normalizar en búsqueda
+
+- [x] **Script de migración SQL**
+  - [x] ~~Crear script para normalizar referencias existentes en BD~~
+  - [x] **Usuario ejecutó UPDATE manualmente en BD agregando ceros a la izquierda**
+
+### Verificación
+
+- [ ] **Probar el funcionamiento**
+  - [ ] Verificar que la referencia `02100002768` encuentre el alias `02100002768`
+  - [ ] Verificar que la clasificación automática funcione correctamente
+  - [ ] Confirmar que sugiere "PolyMaster Sas" y no "Fuente Clara"
+
+### Documentación
+
+- [ ] **Actualizar walkthrough**
+  - [ ] Documentar los cambios realizados
+  - [ ] Incluir ejemplos de normalización

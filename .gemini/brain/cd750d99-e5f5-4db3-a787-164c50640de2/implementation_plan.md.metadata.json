@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Implementation plan to fix MasterCard USD extraction by adding section filtering and strict date validation.",
+  "updatedAt": "2026-01-17T17:38:25.407557Z"
+}

@@ -1,0 +1,37 @@
+# Debugging PDF Extraction - Implementation Plan
+
+The goal is to identify why the `fondorenta` extractor returns no data for the uploaded PDF. We suspect the regex is failing to match the Monetary values (possibly due to format changes like `0` vs `0,00` or layout changes).
+
+## User Review Required
+
+> [!IMPORTANT]
+> This plan involves adding DEBUG logging and modifying error messages to expose internal data (PDF text snippet) to the frontend. This is temporary for debugging purposes.
+
+## Proposed Changes
+
+### Backend
+
+#### [MODIFY] [fondorenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/fondorenta.py)
+
+1.  **Enhance Logging**: 
+    *   Import `logging` properly.
+    *   Use `logger.error` to log the `full_text` snippet when extraction fails (so it appears in Docker logs).
+    *   Log the result of regex matches (`valores_fila1` found vs expected).
+2.  **Debug File Dump**:
+    *   Attempt to write `debug_extract_dump.txt` to `/app/logs` or a writable path if `/app` root is not writable (though it should be).
+3.  **Return Reason**:
+    *   If `_extraer_resumen_desde_texto_full` returns `None`, log PRECISELY why (e.g., "Found 0 matches for 'SALDO ANTERIOR'").
+
+#### [MODIFY] [procesador_archivos_service.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py)
+
+1.  **Improve Error Message**:
+    *   Change the generic "No se pudo extraer..." error to include details if possible, or at least a unique code to confirm these changes are live.
+    *   Example: "Error 400: Extracción fallida. Consulte los logs para ver el texto extraído."
+
+## Verification Plan
+
+### Manual Verification
+1.  **Upload the PDF again** ("Cargar Extracto").
+2.  **Check the Frontend Error**: See if the message changes (confirming code update).
+3.  **Check Terminal/Docker Logs**: Look for the "DEBUG FondoRenta Content" and regex inspection logs.
+4.  **Analyze Logs**: Use the dumped text to refine the regex in a subsequent step.

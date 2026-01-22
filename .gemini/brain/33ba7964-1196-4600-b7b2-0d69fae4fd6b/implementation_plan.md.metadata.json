@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Refactor `ahorros_extracto_movimientos.py` to fix \"0 movements found\" error.\n- Replace regex-based extraction with a robust line-parsing approach.\n- Support both 2-column (Debit/Credit) and 1-column (Valor) formats implicitly by parsing from the end of the line.\n- Improve `_parsear_valor` to robustly handle signs and formats.",
+  "updatedAt": "2026-01-17T14:52:17.761905900Z"
+}

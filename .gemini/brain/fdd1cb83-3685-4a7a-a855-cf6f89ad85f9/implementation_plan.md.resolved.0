@@ -1,0 +1,165 @@
+# Normalización de Referencias en Aliases de Terceros
+
+Implementar solución híbrida para que las referencias con ceros a la izquierda (ej: `02100002768`) coincidan correctamente con los aliases guardados (ej: `2100002768`).
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Prueba Manual Necesaria**
+> 
+> Después de implementar los cambios, necesitaré tu ayuda para probar manualmente:
+> 
+> 1. Ir a la página de clasificación de un movimiento con referencia `02100002768`
+> 2. Verificar que sugiere correctamente "PolyMaster Sas" (en lugar de "Fuente Clara")
+> 3. Confirmar que el alias se está utilizando correctamente
+> 
+> ¿Hay alguna otra forma que prefieras para validar esta funcionalidad?
+
+## Proposed Changes
+
+### Backend - Utilidades
+
+#### [NEW] [utils.py](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/utils.py)
+
+Crear archivo de utilidades con función para normalizar referencias:
+
+```python
+def normalizar_referencia(referencia: str | None) -> str | None:
+    """
+    Normaliza una referencia eliminando ceros a la izquierda.
+    
+    Ejemplos:
+        - "02100002768" -> "2100002768"
+        - "0000123" -> "123"
+        - "ABC123" -> "ABC123" (no cambia)
+        - None -> None
+    """
+```
+
+---
+
+### Backend - Repositorio
+
+#### [MODIFY] [postgres_tercero_descripcion_repository.py](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_tercero_descripcion_repository.py)
+
+**Cambio 1: Normalizar al guardar (líneas 20-59)**
+
+Modificar método [guardar()](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_tercero_descripcion_repository.py#20-60) para normalizar la referencia antes de insertar/actualizar:
+
+```python
+def guardar(self, descripcion: TerceroDescripcion) -> TerceroDescripcion:
+    # Normalizar referencia antes de guardar
+    from src.utils import normalizar_referencia
+    descripcion.referencia = normalizar_referencia(descripcion.referencia)
+    
+    # ... resto del código existente
+```
+
+**Cambio 2: Normalizar en búsqueda (líneas 118-134)**
+
+Modificar método [buscar_por_referencia()](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_tercero_descripcion_repository.py#118-135) para normalizar tanto la referencia de búsqueda como las de la BD:
+
+```python
+def buscar_por_referencia(self, referencia: str):
+    from src.utils import normalizar_referencia
+    
+    # Normalizar la referencia de búsqueda
+    ref_normalizada = normalizar_referencia(referencia)
+    if not ref_normalizada:
+        return None
+    
+    cursor = self.conn.cursor()
+    # Buscar considerando normalización en BD también
+    query = """
+        SELECT id, terceroid, descripcion, referencia, activa, created_at 
+        FROM tercero_descripciones 
+        WHERE activa = TRUE 
+        AND (
+            referencia = %s 
+            OR referencia = %s
+            OR (referencia ~ '^[0-9]+$' AND LTRIM(referencia, '0') = %s)
+        )
+        LIMIT 1
+    """
+    cursor.execute(query, (ref_normalizada, f"{ref_normalizada}.0", ref_normalizada.lstrip('0') or '0'))
+    # ... resto del código
+```
+
+---
+
+### Backend - Migración de Datos
+
+#### [NEW] [normalizar_referencias.sql](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/migrations/normalizar_referencias.sql)
+
+Script SQL para normalizar referencias existentes en la base de datos:
+
+```sql
+-- Normalizar referencias eliminando ceros a la izquierda
+-- Solo para referencias numéricas
+
+UPDATE tercero_descripciones
+SET referencia = CASE 
+    WHEN referencia ~ '^[0-9]+$' THEN LTRIM(referencia, '0')
+    WHEN referencia ~ '^[0-9]+\.0$' THEN LTRIM(REPLACE(referencia, '.0', ''), '0')
+    ELSE referencia
+END
+WHERE activa = TRUE
+AND (
+    referencia ~ '^0[0-9]+'  -- Tiene ceros a la izquierda
+    OR referencia ~ '^[0-9]+\.0$'  -- Tiene .0 al final
+);
+
+-- Verificación: mostrar cambios realizados
+SELECT 
+    COUNT(*) as registros_actualizados
+FROM tercero_descripciones
+WHERE activa = TRUE
+AND referencia ~ '^[0-9]+$'
+AND LENGTH(referencia) < 15;  -- Referencias normalizadas
+```
+
+## Verification Plan
+
+### Automated Tests
+
+No existen tests unitarios en el proyecto actualmente. Los cambios se verificarán mediante:
+
+1. **Prueba de normalización básica** (Python REPL):
+   ```bash
+   cd Backend
+   python -c "from src.utils import normalizar_referencia; print(normalizar_referencia('02100002768')); print(normalizar_referencia('0000123')); print(normalizar_referencia('ABC123'))"
+   ```
+   
+   Resultado esperado:
+   ```
+   2100002768
+   123
+   ABC123
+   ```
+
+2. **Verificar script de migración SQL**:
+   ```bash
+   # Conectar a la BD y ejecutar el script
+   psql -h localhost -U postgres -d contabilidad -f Backend/migrations/normalizar_referencias.sql
+   ```
+   
+   Verificar que muestra el número de registros actualizados.
+
+### Manual Verification
+
+> [!IMPORTANT]
+> **Requiere participación del usuario**
+
+**Pasos para verificar manualmente:**
+
+1. Ejecutar la aplicación con los cambios implementados
+2. Ir a la página de "Pendientes" de clasificación
+3. Seleccionar el movimiento con referencia `02100002768`
+4. Verificar en el "Editor de Clasificación" que:
+   - ✅ La sugerencia es "PolyMaster Sas" (no "Fuente Clara")
+   - ✅ El campo "Tercero Maestro" muestra "195 - PolyMaster Sas"
+   - ✅ El mensaje de advertencia "Tercero no Existe para la referencia" NO aparece
+
+5. **Prueba adicional**: Crear un nuevo alias con referencia con ceros a la izquierda (ej: `00012345`) y verificar que:
+   - Se guarda normalizado como `12345` en la BD
+   - Se puede encontrar buscando tanto con `00012345` como con `12345`

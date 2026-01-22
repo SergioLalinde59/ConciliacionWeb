@@ -1,0 +1,6 @@
+{
+  "artifactType": "ARTIFACT_TYPE_TASK",
+  "summary": "Agregada lógica para sugerir tercero común cuando todos los movimientos históricos tienen el mismo tercero. Pendiente verificación manual.",
+  "updatedAt": "2026-01-16T05:36:40.557898400Z",
+  "version": "5"
+}

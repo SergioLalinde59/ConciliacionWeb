@@ -85,3 +85,33 @@ from src.domain.ports.cuenta_extractor_repository import CuentaExtractorReposito
 
 def get_cuenta_extractor_repository(conn=Depends(get_db_connection)) -> CuentaExtractorRepository:
     return PostgresCuentaExtractorRepository(conn)
+
+# Matching System Dependencies
+from src.infrastructure.database.postgres_movimiento_vinculacion_repository import PostgresMovimientoVinculacionRepository
+from src.domain.ports.movimiento_vinculacion_repository import MovimientoVinculacionRepository
+
+from src.infrastructure.database.postgres_configuracion_matching_repository import PostgresConfiguracionMatchingRepository
+from src.domain.ports.configuracion_matching_repository import ConfiguracionMatchingRepository
+
+from src.domain.services.matching_service import MatchingService
+
+def get_movimiento_vinculacion_repository(conn=Depends(get_db_connection)) -> MovimientoVinculacionRepository:
+    return PostgresMovimientoVinculacionRepository(conn)
+
+def get_configuracion_matching_repository(conn=Depends(get_db_connection)) -> ConfiguracionMatchingRepository:
+    return PostgresConfiguracionMatchingRepository(conn)
+
+def get_matching_service() -> MatchingService:
+    """
+    Retorna una instancia de MatchingService.
+    
+    MatchingService es un servicio de dominio puro sin estado,
+    no requiere repositorios en su constructor.
+    """
+    return MatchingService()
+
+from src.infrastructure.database.postgres_matching_alias_repository import PostgresMatchingAliasRepository
+from src.domain.ports.matching_alias_repository import MatchingAliasRepository
+
+def get_matching_alias_repository(conn=Depends(get_db_connection)) -> MatchingAliasRepository:
+    return PostgresMatchingAliasRepository(conn)

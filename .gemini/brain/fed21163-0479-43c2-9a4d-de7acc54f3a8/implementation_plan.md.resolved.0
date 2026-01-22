@@ -1,0 +1,26 @@
+# Cargar Extractos Implementation Plan
+
+## Goal Description
+Implement a new feature "Cargar Extractos" to load PDF extracts for specific accounts, validate against duplicates, and display extracted data (balances, entries, exits).
+
+## User Review Required
+- [ ] Confirmation on PDF parsing requirements (specific format?)
+
+## Proposed Changes
+
+### Backend
+- [ ] Create/Update `extractos` router/service.
+- [ ] Implement PDF parsing logic.
+- [ ] Implement duplicate validation.
+- [ ] Update Database schema if necessary (to store extract info).
+
+### Frontend
+- [ ] Add "Cargar Extractos" to Sidebar.
+- [ ] Create `CargarExtractosPage.tsx`.
+- [ ] Implement file upload component.
+- [ ] Implement results display component.
+
+## Verification Plan
+- [ ] Test uploading a new PDF.
+- [ ] Test uploading a duplicate PDF.
+- [ ] Verify displayed data against PDF content.

@@ -1,0 +1,31 @@
+# Walkthrough - Conciliación Mensual Data Consistency Fix
+
+I have implemented a **self-healing data consistency check** and corrected the **default display logic** for the "conciliaciones" module.
+
+## The Issues
+1.  **Phantom Movements**: The view showed non-zero inputs/outputs for months with no actual movements, due to stale summary data in the database.
+2.  **Phantom Balance**: The view showed a "Saldo Anterior" (Opening Balance) for future/empty months or months where the extract load was effectively empty (0 movements), but a stale balance persisted.
+
+## The Fixes
+
+### 1. Auto-Repair for Stale Data
+I modified the `PostgresConciliacionRepository` to automatically verify data integrity.
+*   **Action**: When reading a reconciliation record, it compares the stored summary with the actual `movimientos_extracto` table.
+*   **New Rule**: If `movimientos_extracto` is empty (no movements), it forces **ALL** Extract fields to 0:
+    *   Entradas = 0
+    *   Salidas = 0
+    *   **Saldo Anterior = 0** (Updated per your request)
+    *   Saldo Final = 0
+
+### 2. Zero Default for New/Empty Periods
+I modified the `conciliaciones.py` router logic.
+*   **Action**: When you view a month that has **no reconciliation record** in the database (e.g., Jan 2026), the system no longer "guesses" the Opening Balance.
+*   **Result**: It now defaults `extracto_saldo_anterior` to **$0**.
+
+## Verification
+- **Scenario A (Stale Data)**: Simulating a record with fake 5000 inputs and 90,000 Balance -> Auto-corrected to **0 / 0** upon load.
+- **Scenario B (Ghost Data / Jan 2026)**: Viewing a future month with no DB record -> Now correctly shows **$0** for all Extract columns.
+
+## How to Test
+Refresh the "Conciliación Mensual" page.
+- Any month with 0 extract movements (like Jan-Apr for FondoRenta) will now show **$0** for all "Extracto (Manual)" columns, including the Opening Balance.

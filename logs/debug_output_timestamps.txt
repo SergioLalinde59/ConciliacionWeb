@@ -1,0 +1,11 @@
+
+=== INVESTIGATION REPORT ===
+Current Config Updated At: 2026-01-20 17:39:13.055296
+Current Weights: D=0.10, V=0.30, Desc=0.60
+------------------------------
+Match Found: 'RETIRO CAJERO VIVA LA CEJA' vs 'Transferencia Cta Suc Virtual'
+Match Created At:        2026-01-20 17:30:11.312781
+Match Score Stored:      0.88 (88% = 0.88?)
+
+CONCLUSION: The match is OLDER than the current configuration.
+The 88% score was calculated with PREVIOUS weights.

@@ -31,7 +31,7 @@ class BancolombiaAdapter(ExtractoReader):
                 descripcion=raw['descripcion'],
                 referencia=raw['referencia'],
                 tercero_id=None,
-                grupo_id=None,
+                centro_costo_id=None,
                 concepto_id=None
             )
             domain_movements.append(mov)

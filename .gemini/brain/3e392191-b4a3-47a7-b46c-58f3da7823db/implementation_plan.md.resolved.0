@@ -1,0 +1,30 @@
+# Implementation Plan - Add Discount Stat to Dashboard
+
+## Goal Description
+Add a new statistic card "Total Discounts" to the dashboard, positioned between "Subtotal" and "IVA". This requires backend updates to calculate the total discounts and frontend updates to display the new value.
+
+## Proposed Changes
+
+### Backend
+#### [MODIFY] [postgres_factura_repository.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/backend/src/infrastructure/database/postgres_factura_repository.py)
+- Update `get_stats` method (or equivalent) to query and return `sum(descuentos)`.
+
+#### [MODIFY] [invoice_routes.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/backend/src/interfaces/http/invoice_routes.py) (Assuming file name)
+- Update the response model for the stats endpoint to include `total_descuentos`.
+
+### Frontend
+#### [MODIFY] [App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx)
+- Update [DashboardStats](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx#62-72) interface to include `total_discount`.
+- Update [StatCardGrid](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/organisms/StatCardGrid/StatCardGrid.tsx#13-29) props to include a new card for discount.
+
+## Verification Plan
+
+### Automated Tests
+- Run backend tests if available (check for existing tests).
+- Run the app and verify the dashboard loads.
+
+### Manual Verification
+1.  Navigate to the Dashboard.
+2.  Verify a new card "Total Descuentos" appears.
+3.  Verify the value is greater than or equal to 0 (assuming there are invoice data).
+4.  Check its position is between "Subtotal" and "IVA".

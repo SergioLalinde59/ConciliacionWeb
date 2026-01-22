@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Rename the extractor file `mastercard_pesos_extracto_anterior_movimientos.py` to `mastercard_pesos_extracto_movimientos_anterior.py` to match the database configuration and fix the import error. Correspondingly update the fallback configuration in `procesador_archivos_service.py`.",
+  "updatedAt": "2026-01-17T21:59:43.460785100Z"
+}

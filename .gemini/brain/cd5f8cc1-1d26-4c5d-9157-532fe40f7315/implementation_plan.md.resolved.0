@@ -1,0 +1,27 @@
+# Implementation Plan - Fix MasterCard USD Extractor
+
+The MasterCard USD extractor is correctly extracting movement lines but fails to distinguish between USD transactions (international) and COP transactions (domestic) which appear in the same 'Valor Movimiento' column (or are read as such) but with Peso values. This results in massive Peso amounts being stored as USD.
+
+## Proposed Changes
+
+### Backend
+
+#### [MODIFY] [mastercard_usd_extracto_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto_movimientos.py)
+
+-   Modify the movement extraction logic in [_extraer_movimientos_desde_texto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto_movimientos.py#44-100).
+-   Introduce a currency detection logic for each extracted value:
+    -   **Heuristic 1 (Magnitude)**: If `abs(value) > 50,000`, treat as **COP**. (Assumption: Personal USD transactions > $50k are rare/impossible, while 50k COP is ~$12 USD).
+    -   **Heuristic 2 (Interest Rate)**: If `abs(value) > 1,000` AND the raw text contains `0,0000 %` or `00,0000 %`, treat as **COP**. (Observation: Domestic COP purchases in the logs show 0% interest fields, while USD purchases show calculated interest).
+-   Update the dictionary construction:
+    -   If **COP**: Store `valor = value`, `usd = 0`.
+    -   If **USD**: Store `valor = 0`, `usd = value`.
+
+## Verification Plan
+
+### Manual Verification
+1.  **Analyze Logs**: Since I cannot upload the PDF to test, I will verify the logic against the provided log lines in the user request.
+    -   *Test Case 1*: `APPLE.COM/BILL $ 3,43`. `3.43 < 1000`. -> **USD**. Correct.
+    -   *Test Case 2*: `DROGUERIA PASTEUR` `61.856,00`. `> 50,000`. -> **COP**. Correct.
+    -   *Test Case 3*: `SMART FIT` `19.900,00`. `< 50,000` but `> 1,000`. Check interest. If `0,0000%` present -> **COP**. Correct.
+    -   *Test Case 4*: `TIENDA D1` `1.700,00`. `> 1,000`. Interest check. -> **COP**. Correct.
+2.  **User Review**: Ask the user to re-run the extraction and confirm the values are now correctly categorized (no more "Error al decir que son movimientos de MasterCard USD").

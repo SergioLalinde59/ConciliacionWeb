@@ -1,0 +1,371 @@
+# Refactorización de Extractores - Organización por Institución Financiera
+
+## Contexto
+
+Actualmente los extractores están en archivos mezclados que contienen tanto la lógica de extracción de **movimientos** como de **extractos** (resúmenes mensuales). Esto dificulta el mantenimiento y la escalabilidad.
+
+**Nueva información clave**: FondoRenta pertenece al grupo Bancolombia (Cibest Capital), por lo que todos los productos actuales son del mismo grupo financiero.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Decisión de Estructura**: Propongo dos opciones para organizar los extractores. Por favor indica cuál prefieres:
+
+### Opción A: Estructura Plana (Más Simple)
+```
+infrastructure/extractors/
+├── utils.py
+└── bancolombia/
+    ├── __init__.py
+    ├── ahorros_movimientos.py
+    ├── ahorros_extracto.py
+    ├── fondorenta_movimientos.py
+    ├── fondorenta_extracto.py
+    ├── mastercard_pesos_movimientos.py
+    ├── mastercard_pesos_extracto.py      # Futuro
+    ├── mastercard_usd_movimientos.py
+    └── mastercard_usd_extracto.py        # Futuro
+```
+
+**Ventajas**:
+- Todos los archivos visibles de un vistazo
+- Imports más directos
+- Menos niveles de carpetas
+
+**Desventajas**:
+- 8+ archivos en un solo directorio
+- Si crece mucho puede saturarse
+
+---
+
+### Opción B: Estructura por Producto (Más Organizada)
+```
+infrastructure/extractors/
+├── utils.py
+└── bancolombia/
+    ├── __init__.py
+    ├── ahorros/
+    │   ├── __init__.py
+    │   ├── movimientos.py
+    │   └── extracto.py
+    ├── fondorenta/
+    │   ├── __init__.py
+    │   ├── movimientos.py
+    │   └── extracto.py
+    ├── mastercard_pesos/
+    │   ├── __init__.py
+    │   ├── movimientos.py
+    │   └── extracto.py          # Futuro
+    └── mastercard_usd/
+        ├── __init__.py
+        ├── movimientos.py
+        └── extracto.py            # Futuro
+```
+
+**Ventajas**:
+- Agrupación lógica por producto
+- Escalable si cada producto crece en complejidad
+- Muy claro qué pertenece a qué
+
+**Desventajas**:
+- Imports más largos
+- Más archivos [__init__.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/__init__.py)
+- Puede ser "over-engineering" para extractores simples
+
+---
+
+> [!NOTE]
+> **Mi recomendación**: **Opción A (Estructura Plana)** porque:
+> - Los extractores son relativamente simples (1-2 funciones por archivo)
+> - Facilita ver todos los productos de un banco de un vistazo
+> - Siempre podemos migrar a Opción B si crece la complejidad
+
+---
+
+## Proposed Changes
+
+Asumiré **Opción A** para el plan. Si prefieres Opción B, ajustaré los paths.
+
+### Backend - Estructura de Extractores
+
+#### [NEW] [bancolombia/\_\_init\_\_.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/__init__.py)
+
+Exportar todas las funciones de extracción para imports limpios:
+
+```python
+from .ahorros_movimientos import extraer_movimientos as extraer_movimientos_ahorros
+from .ahorros_extracto import extraer_resumen as extraer_resumen_ahorros
+from .fondorenta_movimientos import extraer_movimientos as extraer_movimientos_fondorenta
+from .fondorenta_extracto import extraer_resumen as extraer_resumen_fondorenta
+from .mastercard_pesos_movimientos import extraer_movimientos as extraer_movimientos_mc_pesos
+from .mastercard_usd_movimientos import extraer_movimientos as extraer_movimientos_mc_usd
+
+__all__ = [
+    'extraer_movimientos_ahorros',
+    'extraer_resumen_ahorros',
+    'extraer_movimientos_fondorenta',
+    'extraer_resumen_fondorenta',
+    'extraer_movimientos_mc_pesos',
+    'extraer_movimientos_mc_usd',
+]
+```
+
+---
+
+#### [NEW] [ahorros_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/ahorros_movimientos.py)
+
+Contiene solo [extraer_movimientos()](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py#67-84) (extraída de [bancolombia.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia.py) líneas 7-76).
+
+---
+
+#### [NEW] [ahorros_extracto.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/ahorros_extracto.py)
+
+Contiene solo [extraer_resumen()](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/fondorenta.py#159-210) (extraída de [bancolombia.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia.py) líneas 78-237).
+
+---
+
+#### [NEW] [fondorenta_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/fondorenta_movimientos.py)
+
+Contiene [extraer_movimientos()](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py#67-84) y funciones auxiliares [_procesar_movimientos()](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/fondorenta.py#28-79) y [_extraer_movimientos_desde_texto()](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia.py#40-77) (extraídas de [fondorenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/verify_fondorenta.py) líneas 7-152).
+
+---
+
+#### [NEW] [fondorenta_extracto.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/fondorenta_extracto.py)
+
+Contiene [extraer_resumen()](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/fondorenta.py#159-210) y [_extraer_resumen_desde_texto_full()](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/fondorenta.py#211-369) (extraídas de [fondorenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/verify_fondorenta.py) líneas 159-368).
+
+---
+
+#### [NEW] [mastercard_pesos_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_movimientos.py)
+
+Contiene [extraer_movimientos()](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py#67-84) adaptado para MasterCard Pesos. Extraído de [creditcard.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/creditcard.py) con filtro por moneda COP.
+
+---
+
+#### [NEW] [mastercard_usd_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/mastercard_usd_movimientos.py)
+
+Contiene [extraer_movimientos()](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py#67-84) adaptado para MasterCard USD. Extraído de [creditcard.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/creditcard.py) con filtro por moneda USD.
+
+---
+
+#### [NEW] [mastercard_pesos_extracto.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto.py)
+
+Archivo placeholder para futuro desarrollo:
+
+```python
+"""
+Extractor de resúmenes mensuales para MasterCard Pesos.
+TODO: Implementar cuando se requiera cargar extractos de TC.
+"""
+
+def extraer_resumen(file_obj):
+    raise NotImplementedError("Extracción de resumen para MasterCard Pesos no implementada aún")
+```
+
+---
+
+#### [NEW] [mastercard_usd_extracto.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto.py)
+
+Similar placeholder para MasterCard USD.
+
+---
+
+#### [MODIFY] [procesador_archivos_service.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py)
+
+**Cambios en imports (líneas 8-18)**:
+```python
+# Antes:
+from src.infrastructure.extractors.bancolombia import extraer_movimientos_bancolombia
+from src.infrastructure.extractors.creditcard import extraer_movimientos_credito
+from src.infrastructure.extractors.fondorenta import extraer_movimientos_fondorenta, extraer_resumen_fondorenta
+from src.infrastructure.extractors.bancolombia import extraer_resumen_bancolombia
+
+# Después:
+from src.infrastructure.extractors import bancolombia
+```
+
+**Cambios en método [_extraer_movimientos](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py#67-84) (líneas 67-76)**:
+```python
+def _extraer_movimientos(self, file_obj: Any, tipo_cuenta: str) -> List[Dict[str, Any]]:
+    raw_movs = []
+    if tipo_cuenta == 'bancolombia_ahorro':
+        raw_movs = bancolombia.extraer_movimientos_ahorros(file_obj)
+    elif tipo_cuenta == 'credit_card':
+        # TODO: Diferenciar entre pesos y USD basado en cuenta_id
+        raw_movs = bancolombia.extraer_movimientos_mc_pesos(file_obj)
+    elif tipo_cuenta == 'fondo_renta':
+        raw_movs = bancolombia.extraer_movimientos_fondorenta(file_obj)
+    else:
+        raise ValueError(f"Tipo de cuenta no soportado: {tipo_cuenta}")
+```
+
+**Cambios en método [analizar_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py#278-311) (líneas 278-305)**:
+```python
+def analizar_extracto(self, file_obj: Any, filename: str, tipo_cuenta: str) -> Dict[str, Any]:
+    datos = {}
+    if tipo_cuenta == 'bancolombia_ahorro':
+        datos = bancolombia.extraer_resumen_ahorros(file_obj)
+    elif tipo_cuenta == 'FondoRenta':
+        import logging
+        logger = logging.getLogger("app_logger")
+        logger.error(f"DEBUG: SERVICE Calling extraer_resumen_fondorenta for {filename}")
+        
+        try:
+            datos = bancolombia.extraer_resumen_fondorenta(file_obj)
+            logger.error(f"DEBUG: SERVICE Returned. Data keys: {list(datos.keys()) if datos else 'None'}")
+        except Exception as e:
+            logger.error(f"DEBUG: Error calling fondorenta: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            raise e
+    else:
+        raise ValueError(f"Extracción de resumen no soportada para: {tipo_cuenta}")
+```
+
+---
+
+#### [DELETE] [bancolombia.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia.py)
+
+Será reemplazado por los nuevos archivos en [bancolombia/](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia.py#78-110).
+
+---
+
+#### [DELETE] [fondorenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/fondorenta.py)
+
+Será reemplazado por archivos en [bancolombia/](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia.py#78-110).
+
+---
+
+#### [DELETE] [creditcard.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/creditcard.py)
+
+Será reemplazado por archivos específicos de MasterCard.
+
+---
+
+#### [MODIFY] [bancolombia_adapter.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia_adapter.py)
+
+**Nota**: Este archivo parece ser legacy/no usado actualmente. Verificar y eliminar o actualizar import en línea 4:
+
+```python
+# Antes:
+from extractores.bancolombia_extractor import extraer_movimientos_bancolombia
+
+# Después:
+from src.infrastructure.extractors.bancolombia import extraer_movimientos_ahorros
+```
+
+---
+
+## Consideraciones Especiales
+
+### 1. MasterCard: ¿Separar por Moneda Ahora?
+
+Actualmente [creditcard.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/creditcard.py) maneja AMBAS monedas en el mismo archivo y diferencia por el campo [moneda](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py#34-52) en el resultado. 
+
+**Opciones**:
+- **A)** Crear dos archivos pero con lógica duplicada (no ideal)
+- **B)** Crear un archivo común `_mastercard_base.py` con la lógica y dos wrappers delgados
+- **C)** Mantener un solo `mastercard_movimientos.py` que maneje ambas monedas
+
+> [!WARNING]
+> **Recomiendo Opción C** por ahora: un solo `mastercard_movimientos.py` que retorne movimientos con el campo [moneda](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py#34-52) identificado. La separación por cuenta (pesos vs USD) se hace a nivel de `cuenta_id` en el servicio, no en el extractor.
+
+Si eliges Opción C, la estructura quedaría:
+```
+bancolombia/
+├── ahorros_movimientos.py
+├── ahorros_extracto.py
+├── fondorenta_movimientos.py
+├── fondorenta_extracto.py
+└── mastercard_movimientos.py          # Maneja COP y USD
+```
+
+### 2. Manejo de `importlib.reload()`
+
+En [procesador_archivos_service.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py) líneas 292-296 hay un `importlib.reload(fondorenta)` para debug. Esto quedará obsoleto con la nueva estructura. Eliminaré esa lógica de reload.
+
+### 3. Exports en [__init__.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/__init__.py)
+
+El [__init__.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/__init__.py) de [bancolombia/](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia.py#78-110) permitirá imports limpios:
+
+```python
+# En el servicio
+from src.infrastructure.extractors import bancolombia
+
+# Uso
+movs = bancolombia.extraer_movimientos_ahorros(file)
+```
+
+---
+
+## Verification Plan
+
+### Automated Tests
+
+```bash
+# 1. Verificar que no hay errores de sintaxis
+cd backend
+python -m py_compile src/infrastructure/extractors/bancolombia/*.py
+
+# 2. Verificar imports
+python -c "from src.infrastructure.extractors import bancolombia; print(bancolombia.__all__)"
+```
+
+### Manual Verification
+
+1. **Cargar movimientos Bancolombia Ahorros**:
+   - IR a `/upload-movimientos`
+   - Seleccionar cuenta "Bancolombia Ahorros"
+   - Cargar PDF de movimientos
+   - Verificar que aparezcan en la previsualización
+
+2. **Cargar extracto Bancolombia Ahorros**:
+   - IR a `/upload-extractos`
+   - Seleccionar cuenta "Bancolombia Ahorros"
+   - Cargar PDF extracto
+   - Verificar resumen extraído
+
+3. **Cargar movimientos FondoRenta**:
+   - Mismo proceso con cuenta FondoRenta
+
+4. **Cargar extracto FondoRenta**:
+   - Mismo proceso con PDF extracto FondoRenta
+
+5. **Cargar MasterCard** (ambas cuentas):
+   - Probar con PDF de MasterCard Pesos
+   - Probar con PDF de MasterCard USD
+   - Verificar que [moneda](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py#34-52) se identifica correctamente
+
+6. **Verificar logs**:
+   - Comprobar que no hay errores en `backend/logs/`
+   - Verificar que los debug logs de FondoRenta funcionan correctamente
+
+---
+
+## Guía para Futuros Bancos
+
+Crear archivo `backend/docs/AGREGAR_NUEVO_BANCO.md`:
+
+```markdown
+# Cómo Agregar un Nuevo Banco
+
+## 1. Crear carpeta del banco
+\`\`\`
+infrastructure/extractors/nuevo_banco/
+\`\`\`
+
+## 2. Crear archivos de extracción
+- `producto_movimientos.py`: Extrae movimientos del PDF
+- `producto_extracto.py`: Extrae resumen mensual del PDF
+
+## 3. Definir función estándar
+Cada archivo debe exportar:
+- `extraer_movimientos(file_obj) -> List[Dict]`
+- `extraer_resumen(file_obj) -> Dict`
+
+## 4. Crear `__init__.py`
+Exportar funciones con nombres únicos.
+
+## 5. Actualizar servicio
+Agregar caso en `procesador_archivos_service.py`.
+\`\`\`

@@ -383,6 +383,53 @@ class PostgresMovimientoRepository(MovimientoRepository):
         cursor.close()
         return exists
 
+    def obtener_exacto(self, cuenta_id: int, fecha: date, valor: Decimal, referencia: Optional[str] = None, descripcion: Optional[str] = None) -> Optional[Movimiento]:
+        cursor = self.conn.cursor()
+        try:
+            # Query base
+            query = """
+                SELECT m.Id, m.Fecha, m.Descripcion, m.Referencia, m.Valor, m.USD, m.TRM, 
+                       m.MonedaID, m.CuentaID, m.TerceroID, m.centro_costo_id, m.ConceptoID, m.created_at, m.Detalle,
+                       c.cuenta AS cuenta_nombre,
+                       mon.moneda AS moneda_nombre,
+                       t.tercero AS tercero_nombre,
+                       g.centro_costo AS centro_costo_nombre,
+                       con.concepto AS concepto_nombre
+                FROM movimientos m
+                LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
+                LEFT JOIN monedas mon ON m.MonedaID = mon.monedaid
+                LEFT JOIN terceros t ON m.TerceroID = t.terceroid
+                LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id
+                LEFT JOIN conceptos con ON m.ConceptoID = con.conceptoid
+                WHERE m.CuentaID = %s 
+                  AND m.Fecha = %s
+                  AND m.Valor = %s
+            """
+            params = [cuenta_id, fecha, valor]
+
+            # Criterio adicional: Referencia O Descripción
+            if referencia and referencia.strip():
+                # Si tenemos referencia, la usamos como criterio fuerte
+                # Normalizamos '000123' vs '123' usando LTRIM de ceros o simplemente string compare exacto si confiamos
+                # El usuario prefiere exactitud, usaremos la referencia tal cual si existe
+                query += " AND (m.Referencia = %s OR (m.Referencia IS NULL AND m.Descripcion = %s))"
+                params.extend([referencia, descripcion or ''])
+            elif descripcion:
+                # Si no hay referencia, confiamos en la descripción exacta
+                query += " AND m.Descripcion = %s"
+                params.append(descripcion)
+            
+            # Limit 1
+            query += " LIMIT 1"
+            
+            cursor.execute(query, tuple(params))
+            row = cursor.fetchone()
+            
+            return self._row_to_movimiento(row) if row else None
+            
+        finally:
+            cursor.close()
+
     def buscar_avanzado(self, 
                        fecha_inicio: Optional[date] = None, 
                        fecha_fin: Optional[date] = None,
@@ -913,6 +960,57 @@ class PostgresMovimientoRepository(MovimientoRepository):
                 "ingresos": float(row[2] or 0),
                 "egresos": float(row[3] or 0),
                 "saldo": float(row[4] or 0)
+            }
+            for row in rows
+        ]
+
+    def obtener_estadisticas_dashboard(self,
+                                      fecha_inicio: Optional[date] = None,
+                                      fecha_fin: Optional[date] = None
+    ) -> List[dict]:
+        cursor = self.conn.cursor()
+        
+        query = """
+            SELECT 
+                TO_CHAR(m.Fecha, 'YYYY-Mon') as periodo,
+                m.CuentaID, c.cuenta as cuenta_nombre,
+                m.centro_costo_id, g.centro_costo as centro_costo_nombre,
+                COUNT(*) as conteo,
+                SUM(CASE WHEN m.Valor > 0 THEN m.Valor ELSE 0 END) as ingresos,
+                SUM(CASE WHEN m.Valor < 0 THEN ABS(m.Valor) ELSE 0 END) as egresos
+            FROM movimientos m
+            LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
+            LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id
+            WHERE 1=1
+        """
+        params = []
+        if fecha_inicio:
+            query += " AND m.Fecha >= %s"
+            params.append(fecha_inicio)
+        if fecha_fin:
+            query += " AND m.Fecha <= %s"
+            params.append(fecha_fin)
+            
+        # Agrupar y Ordenar
+        query += """
+            GROUP BY TO_CHAR(m.Fecha, 'YYYY-Mon'), TO_CHAR(m.Fecha, 'YYYY-MM'), m.CuentaID, c.cuenta, m.centro_costo_id, g.centro_costo
+            ORDER BY TO_CHAR(m.Fecha, 'YYYY-MM') DESC, c.cuenta, g.centro_costo
+        """
+        
+        cursor.execute(query, tuple(params))
+        rows = cursor.fetchall()
+        cursor.close()
+        
+        return [
+            {
+                "periodo": row[0],
+                "cuenta_id": row[1],
+                "cuenta_nombre": row[2] or "Desconocida",
+                "centro_costo_id": row[3],
+                "centro_costo_nombre": row[4] or "Sin Clasificar",
+                "conteo": int(row[5]),
+                "ingresos": float(row[6] or 0),
+                "egresos": float(row[7] or 0)
             }
             for row in rows
         ]

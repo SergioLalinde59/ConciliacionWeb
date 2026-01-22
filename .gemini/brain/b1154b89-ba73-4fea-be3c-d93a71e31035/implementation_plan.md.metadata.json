@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Update `UploadExtractoPage.tsx` to include account information in the success modal header and body.",
+  "updatedAt": "2026-01-18T02:34:08.811527500Z"
+}

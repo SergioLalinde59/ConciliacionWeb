@@ -23,9 +23,7 @@ export interface FiltrosReporteProps {
     onCentrosCostosExcluidosChange?: (ids: number[]) => void
 
     // Pending classification filter
-    soloPendientes?: boolean
-    onSoloPendientesChange?: (value: boolean) => void
-    showSoloPendientes?: boolean
+
 
     // Classification filters
     terceroId?: string
@@ -58,9 +56,7 @@ export const FiltrosReporte = ({
     cuentaId,
     onCuentaChange,
     cuentas,
-    soloPendientes = false,
-    onSoloPendientesChange,
-    showSoloPendientes = false,
+
     terceroId = '',
     onTerceroChange,
     centroCostoId = '',
@@ -134,9 +130,7 @@ export const FiltrosReporte = ({
             <div className="flex flex-col md:flex-row justify-between items-center pt-3 mt-1 border-t border-gray-100 gap-2">
                 <div className="flex-grow">
                     <FilterToggles
-                        soloPendientes={soloPendientes}
-                        onSoloPendientesChange={onSoloPendientesChange}
-                        showSoloPendientes={showSoloPendientes}
+
                         mostrarIngresos={mostrarIngresos}
                         onMostrarIngresosChange={onMostrarIngresosChange}
                         mostrarEgresos={mostrarEgresos}

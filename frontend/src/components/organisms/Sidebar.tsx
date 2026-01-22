@@ -22,7 +22,9 @@ import {
     Filter,
     ClipboardCheck,
     FileText,
-    FileCog
+    FileCog,
+    GitCompare,
+    RefreshCw
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -50,16 +52,18 @@ export const Sidebar = () => {
         { name: 'Conceptos', path: '/maestros/conceptos', icon: Tags },
         { name: 'Config. Filtros', path: '/maestros/config-filtros', icon: Filter },
         { name: 'Reglas Auto', path: '/maestros/reglas', icon: Zap },
+        { name: 'Reglas Normalización', path: '/maestros/alias', icon: RefreshCw },
         { name: 'Extractores', path: '/maestros/extractores', icon: FileCog },
     ];
 
     const menuMovimientos = [
         { name: 'Cargar Movimiento', path: '/movimientos/cargar', icon: UploadCloud },
         { name: 'Cargar Extractos', path: '/conciliacion/cargar-extracto', icon: FileText },
+        { name: 'Matching Inteligente', path: '/conciliacion/matching', icon: GitCompare },
+        { name: 'Conciliación', path: '/conciliacion', icon: ClipboardCheck },
         { name: 'Por Clasificar', path: '/movimientos/clasificar', icon: ListTodo },
         { name: 'Sugerencias Reclasif.', path: '/movimientos/sugerencias', icon: Sparkles },
         { name: 'Movimientos', path: '/movimientos', icon: Receipt },
-        { name: 'Conciliación', path: '/conciliacion', icon: ClipboardCheck },
     ];
 
     const menuReportes = [

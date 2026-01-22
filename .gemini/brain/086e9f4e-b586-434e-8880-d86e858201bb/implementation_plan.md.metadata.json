@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Detailed implementation plan for Mastercard PDF extract parsers, including analysis of PDF structure, fields to extract, and verification steps for both COP and USD currencies",
+  "updatedAt": "2026-01-16T18:55:19.779009600Z"
+}

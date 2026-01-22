@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Fix SQL syntax error in `PostgresMovimientoExtractoRepository`.",
+  "updatedAt": "2026-01-17T18:05:38.685249300Z"
+}

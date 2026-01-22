@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_TASK",
+  "summary": "Comprehensive task breakdown for implementing a dual-table system to track movements extracted from bank statement PDFs. Includes database schema, domain models, extractors for each account type, API endpoints, and frontend components to display statistics and comparisons between system movements and statement movements.",
+  "updatedAt": "2026-01-17T12:59:41.777842200Z"
+}

@@ -1,0 +1,7 @@
+# Bank Statement Upload Results Modal
+
+- [ ] Explore existing implementation of `UploadExtractosPage` and backend processing. <!-- id: 0 -->
+- [/] Design the results modal component. <!-- id: 1 -->
+- [x] Modify backend [procesar_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#312-390) (or equivalent) endpoint to return detailed loading statistics. <!-- id: 2 -->
+- [x] Connect frontend "Cargar" button to trigger the modal with stats upon success. <!-- id: 3 -->
+- [x] Verify the flow with a test upload. <!-- id: 4 -->

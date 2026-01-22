@@ -1,0 +1,4 @@
+- [ ] Locate "CONCEPTO (OPCIONAL)" string in codebase
+- [ ] Verify if `ClassificationFilters` is used in "Gestión de Movimientos"
+- [ ] Modify `ClassificationFilters` to conditionally or permanently remove "(OPCIONAL)" based on context
+- [ ] Verify the change

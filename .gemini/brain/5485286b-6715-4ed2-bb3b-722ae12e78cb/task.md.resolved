@@ -1,0 +1,11 @@
+# Task List
+
+- [x] Modify [cuentas](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/cuentas.py#22-31) table in PostgreSQL to add `permite_conciliar` (boolean)
+    - [x] Analyze current schema and code
+    - [x] Create and run Python script to ALTER TABLE
+- [x] Update backend models to include `permite_conciliar`
+- [x] Update repositories to handle `permite_conciliar`
+- [x] Update API router [cuentas.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/cuentas.py) to expose `permite_conciliar`
+- [x] (Optional) Update frontend to handle the new field
+    - [x] Update TypeScript interface for [Cuenta](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/types.ts#13-19)
+    - [x] Update [CuentasPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/CuentasPage.tsx) and related components to display and edit `permite_conciliar`

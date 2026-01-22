@@ -1,0 +1,55 @@
+# Cargar Extractos Implementation Plan
+
+## Goal Description
+Implement a new feature "Cargar Extractos" to load PDF extracts for specific accounts, validate against duplicates, and display extracted data (balances, entries, exits).
+
+## User Review Required
+- [ ] Confirmation on PDF parsing requirements (specific format?)
+
+## Proposed Changes
+
+## Proposed Changes
+
+### Database
+- [ ] Create table `extractos`:
+    ```sql
+    CREATE TABLE extractos (
+        id SERIAL PRIMARY KEY,
+        cuenta_id INTEGER REFERENCES cuentas(cuentaid),
+        anio INTEGER NOT NULL,
+        mes INTEGER NOT NULL,
+        saldo_anterior DECIMAL(15,2),
+        entradas DECIMAL(15,2),
+        salidas DECIMAL(15,2),
+        saldo_final DECIMAL(15,2),
+        archivo VARCHAR(255),
+        fecha_carga TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(cuenta_id, anio, mes)
+    );
+    ```
+
+### Backend
+- [ ] **Domain**: 
+    - Create `src/domain/models/extracto.py`.
+    - Create `src/domain/ports/extracto_repository.py`.
+- **Infrastructure**:
+    - Create `src/infrastructure/database/postgres_extracto_repository.py`.
+    - Update [src/infrastructure/extractors/bancolombia.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia.py) to add `extraer_resumen` (Saldo Anterior, etc).
+    - Create `src/infrastructure/api/routers/extractos.py`.
+- **Application**:
+    - Create `ProcesadorExtractosService` to orchestrate parsing, validation (check if `anio/mes` exists for account), and saving.
+
+### Frontend
+- [ ] Create components `ExtractoSummary` to display the parsed balances.
+- [ ] Create page `src/pages/UploadExtractosPage.tsx`.
+    - Reuse [UploadMovimientosPage](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/UploadMovimientosPage.tsx#6-287) logic but adapted for Extracts.
+    - Show "Resumen del Extracto" (Saldo Anterior, Entradas, Salidas, Saldo Final) after analysis.
+- [ ] Add sidebar option "Cargar Extractos".
+
+## Verification Plan
+- [ ] **Manual Verification**:
+    - Upload a Bancolombia PDF extract.
+    - Verify that "Saldo Anterior", "Entradas", "Salidas", "Saldo Final" are correctly parsed and displayed.
+    - Verify duplicate check: Upload the same extract again (same account/month/year) and expect an error or warning.
+    - Confirm the load saves data to `extractos` table.
+

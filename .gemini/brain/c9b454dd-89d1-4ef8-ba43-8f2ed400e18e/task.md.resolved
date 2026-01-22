@@ -1,0 +1,8 @@
+# Tasks
+
+- [x] Implementar extractor [mastercard_usd_extracto_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto_movimientos.py) (Nuevo Formato) <!-- id: 0 -->
+- [x] Integrar extractor en [ProcesadorArchivosService](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#19-585) <!-- id: 1 -->
+- [x] Modificar Base de Datos (SQL provisto y ejecutado por usuario) <!-- id: 2 -->
+- [x] Actualizar Modelo y Repositorio [MovimientoExtracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/models/movimiento_extracto.py#5-30) <!-- id: 3 -->
+- [ ] Verificar extracción subiendo el PDF <!-- id: 4 -->
+- [ ] (Opcional) Actualizar Frontend para mostrar columnas USD/TRM <!-- id: 5 -->

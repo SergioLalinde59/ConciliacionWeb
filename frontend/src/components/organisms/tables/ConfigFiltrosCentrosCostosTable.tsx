@@ -1,4 +1,5 @@
-import { Edit2, Trash2 } from 'lucide-react'
+import { useMemo } from 'react'
+import { DataTable, type Column } from '../../molecules/DataTable'
 
 interface ConfigFiltroCentroCosto {
     id: number
@@ -16,90 +17,59 @@ interface ConfigFiltrosCentrosCostosTableProps {
 }
 
 export const ConfigFiltrosCentrosCostosTable = ({ configs, centrosCostos, loading, onEdit, onDelete }: ConfigFiltrosCentrosCostosTableProps) => {
-    const getCentroCostoNombre = (id: number) => {
-        const centro = centrosCostos.find(c => c.id === id)
-        return centro ? centro.nombre : `ID ${id}`
-    }
-
-    if (loading) {
-        return (
-            <div className="p-8 text-center text-gray-500">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-2">Cargando configuraciones...</p>
-            </div>
-        )
-    }
-
-    if (configs.length === 0) {
-        return (
-            <div className="p-8 text-center text-gray-500">
-                <p className="text-lg">No hay configuraciones de filtros</p>
-                <p className="text-sm mt-1">Crea una nueva configuración para comenzar</p>
-            </div>
-        )
-    }
+    const columns = useMemo<Column<ConfigFiltroCentroCosto>[]>(() => [
+        {
+            key: 'id',
+            header: 'ID',
+            width: 'w-24',
+            sortable: true,
+            cellClassName: 'font-medium text-gray-900'
+        },
+        {
+            key: 'centro_costo_id',
+            header: 'CENTRO DE COSTO',
+            sortable: true,
+            accessor: (row) => {
+                const centro = centrosCostos.find(c => c.id === row.centro_costo_id)
+                const nombre = centro ? centro.nombre : 'Desconocido'
+                return <span className="font-medium">{row.centro_costo_id} - {nombre}</span>
+            }
+        },
+        {
+            key: 'etiqueta',
+            header: 'ETIQUETA',
+            sortable: true,
+            cellClassName: 'text-gray-700'
+        },
+        {
+            key: 'activo_por_defecto',
+            header: 'ACTIVO POR DEFECTO',
+            align: 'center',
+            width: 'w-48',
+            sortable: true,
+            accessor: (row) => (
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${row.activo_por_defecto
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-800'
+                    }`}>
+                    {row.activo_por_defecto ? 'Sí' : 'No'}
+                </span>
+            )
+        }
+    ], [centrosCostos])
 
     return (
-        <div className="overflow-x-auto">
-            <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Centro de Costo</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Etiqueta</th>
-                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Activo por Defecto</th>
-                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                    {configs.map((config) => (
-                        <tr key={config.id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                                {config.id}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                {getCentroCostoNombre(config.centro_costo_id)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                                {config.etiqueta}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                                {config.activo_por_defecto ? (
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        Sí
-                                    </span>
-                                ) : (
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                        No
-                                    </span>
-                                )}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                                <div className="flex items-center justify-center gap-2">
-                                    <button
-                                        onClick={() => onEdit(config)}
-                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                        title="Editar"
-                                    >
-                                        <Edit2 size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (window.confirm(`¿Eliminar la configuración "${config.etiqueta}"?`)) {
-                                                onDelete(config.id)
-                                            }
-                                        }}
-                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                        title="Eliminar"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+        <DataTable
+            data={configs}
+            columns={columns}
+            loading={loading}
+            onEdit={onEdit}
+            onDelete={(row) => onDelete(row.id)}
+            getRowKey={(row) => row.id}
+            deleteConfirmMessage={(row) => `¿Eliminar la configuración "${row.etiqueta}"?`}
+            emptyMessage="No hay configuraciones de filtros disponibles"
+            showActions={true}
+            className="border-none shadow-none"
+        />
     )
 }

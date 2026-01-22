@@ -1,0 +1,24 @@
+# Implementation Plan - Add Discount Stat to Dashboard
+
+## Goal Description
+Add a new statistic card "Total Discounts" to the dashboard, positioned between "Subtotal" and "IVA". This requires backend updates to calculate the total discounts and frontend updates to display the new value.
+
+## Proposed Changes
+
+## Proposed Changes
+
+### Frontend
+#### [MODIFY] [App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx)
+- Update [DashboardStats](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx#62-72) interface to include `total_descuentos`.
+- Add a new [StatCard](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/organisms/StatCardGrid/StatCardGrid.tsx#13-29) object to the [stats](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/backend/src/infrastructure/database/postgres_factura_repository.py#116-160) array payload passed to [StatCardGrid](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/organisms/StatCardGrid/StatCardGrid.tsx#13-29).
+    - Label: "Total Descuentos"
+    - Value: [formatCurrency(dashboardStats.total_descuentos)](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx#499-507)
+    - Icon: `Percent` or similar (from lucide-react)
+    - Variant: `warning` or `info` (to contrast with Subtotal/IVA). Ideally maybe a reddish color if it's a deduction, or green if it's "savings". The user asked for it "between subtotal and IVA".
+
+## Verification Plan
+
+### Manual Verification
+1.  Navigate to the Dashboard.
+2.  Verify a new card "Total Descuentos" appears between "Subtotal" and "IVA".
+3.  Check that the value is formatted correctly as currency.

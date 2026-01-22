@@ -1,0 +1,45 @@
+# Refactoring Import UI
+
+The goal is to optimize the vertical space on the "Carga Base Datos" page by aligning the "Directorio de Trabajo" components on a single line and compacting the filters section.
+
+## User Review Required
+
+> [!NOTE]
+> Modifying [DirectoryInput](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/DirectoryInput/DirectoryInput.tsx#22-59) to force a horizontal layout might affect other views if they rely on the vertical stacking. Currently, it seems primarily used in the context of file selection which benefits from horizontal alignment.
+
+## Proposed Changes
+
+### Frontend Components
+
+#### [MODIFY] [DirectoryInput.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/DirectoryInput/DirectoryInput.tsx)
+-   Modify the internal structure to allow the label, input, and button to be on the same row.
+-   We might need to adjust the [Input](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/atoms/Input/Input.tsx#19-86) usage or CSS to prevent the label from forcing a new line if it's part of the [Input](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/atoms/Input/Input.tsx#19-86) component.
+
+#### [MODIFY] [DirectoryInput.css](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/DirectoryInput/DirectoryInput.css)
+-   Update CSS to use `display: flex`, `align-items: center`, and `gap`.
+-   Ensure the input field takes up remaining space.
+
+#### [MODIFY] [FilterBar.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/organisms/FilterBar/FilterBar.tsx)
+-   Refactor the `filter-bar__main-filters` container to use a more compact layout (flex row).
+-   Group Date and Provider filters closer together.
+
+#### [MODIFY] [FilterBar.css](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/organisms/FilterBar/FilterBar.css)
+-   Adjust margins and padding to reduce vertical space.
+-   Make the `filter-bar` more compact overall.
+
+#### [MODIFY] [App.css](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.css)
+-   Reduce top/bottom padding for the main content area or specific sections if needed to satisfy "Disminir un poco los espacios a los boredes superior e inferior".
+
+## Verification Plan
+
+### Automated Tests
+-   None available for UI layout.
+
+### Manual Verification
+1.  **Start App**: Run [.\arranque_app.ps1](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/arranque_app.ps1).
+2.  **Open Browser**: Go to `http://facturas.local`.
+3.  **Navigate**: Go to "Carga Base Datos" (Import view).
+4.  **Verify Layout**:
+    -   Check that "Directorio de Trabajo", the input box, and "Explorar" button are on a single horizontal line.
+    -   Check that the Date filters and Provider filter are closer together vertically (or horizontally aligned if space permits).
+    -   Verify that vertical margins at the top and bottom of the content area are reduced.

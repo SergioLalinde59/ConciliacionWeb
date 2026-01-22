@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "I will add robust logging to `fondorenta.py` to capture the raw PDF text and regex match attempts. I will also modify `procesador_archivos_service.py` to include more details in the error message when extraction fails. This will allow the user to see exactly what the backend sees and why the regex is failing.",
+  "updatedAt": "2026-01-16T03:16:25.830474200Z"
+}

@@ -1,0 +1,143 @@
+# Implementación de Extractores de Resumen para Mastercard
+
+## Objetivo
+
+Implementar la funcionalidad para cargar archivos PDF de extractos mensuales de Mastercard, extrayendo los datos de resumen (saldo anterior, compras, pagos, saldo final) tanto para pesos (COP) como para dólares (USD).
+
+## Análisis del PDF
+
+### Estructura Identificada
+
+#### Resumen en USD (Imagen 1)
+```
+Resumen saldo total
+Categoría         | Transacción              | Valor
+------------------|--------------------------|---------
+Cargos            | + Saldo anterior         | $ 22,94
+$139,16           | + Compras del mes        | $ 116,22
+                  | + Intereses de mora      | $ 0,00
+                  | + Intereses corrientes   | $ 0,00
+                  | + Avances                | $ 0,00
+                  | + Otros cargos           | $ 0,00
+------------------|--------------------------|---------
+Abonos            | (-) Pagos / abonos       | $ 23,00
+$23,00            | (-) Saldo a favor        | $ 0,00
+```
+
+#### Resumen en PESOS (Imagen 3)
+```
+Resumen saldo total
+Categoría         | Transacción              | Valor
+------------------|--------------------------|---------
+Cargos            | + Saldo anterior         | $ 17.103.116,49
+$35.049.053,49    | + Compras del mes        | $ 17.945.937,00
+                  | + Intereses de mora      | $ 0,00
+                  | + Intereses corrientes   | $ 0,00
+                  | + Avances                | $ 0,00
+                  | + Otros cargos           | $ 0,00
+------------------|--------------------------|---------
+Abonos            | (-) Pagos / abonos       | $ 17.103.117,00
+$17.103.117,00    | (-) Saldo a favor        | $ 0,00
+```
+
+#### Periodo
+- **Periodo facturado**: `30 nov - 30 dic. 2025`
+- Ubicado en la sección "Información de pago en dólares/pesos"
+
+### Campos a Extraer
+
+| Campo | Fuente | Descripción |
+|-------|--------|-------------|
+| `saldo_anterior` | "+ Saldo anterior" | Saldo inicial del periodo |
+| `entradas` | "(-) Pagos / abonos" | Total de pagos realizados (reducen deuda) |
+| `salidas` | Suma de cargos | Compras + Intereses + Avances + Otros cargos |
+| `saldo_final` | Calculado | `saldo_anterior + salidas - entradas` |
+| `year`, `month` | "Periodo facturado" | Extraído de "30 nov - 30 dic. 2025" |
+
+## Proposed Changes
+
+### Backend
+
+#### [NEW] [mastercard_pesos_extracto.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto.py)
+
+Implementar función `extraer_resumen()` que:
+1. Extrae texto del PDF usando `pdfplumber`
+2. Busca la sección "Resumen saldo total" con moneda PESOS
+3. Extrae con regex:
+   - Saldo anterior: `r'\+ Saldo anterior\s+\$\s*([\d\.,]+)'`
+   - Compras del mes: `r'\+ Compras del mes\s+\$\s*([\d\.,]+)'`
+   - Intereses de mora: `r'\+ Intereses de mora\s+\$\s*([\d\.,]+)'`
+   - Intereses corrientes: `r'\+ Intereses corrientes\s+\$\s*([\d\.,]+)'`
+   - Avances: `r'\+ Avances\s+\$\s*([\d\.,]+)'`
+   - Otros cargos: `r'\+ Otros cargos\s+\$\s*([\d\.,]+)'`
+   - Pagos/abonos: `r'\(-\) Pagos / abonos\s+\$\s*([\d\.,]+)'`
+4. Extrae periodo: `r'(\d{1,2})\s+(\w{3})\s+-\s+(\d{1,2})\s+(\w{3})\.\s+(\d{4})'`
+5. Calcula `salidas` = compras + intereses_mora + intereses_corrientes + avances + otros_cargos
+6. Calcula `saldo_final` = saldo_anterior + salidas - entradas
+7. Retorna diccionario con estructura estándar
+
+#### [NEW] [mastercard_usd_extracto.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto.py)
+
+Implementar función `extraer_resumen()` similar a la de pesos, pero:
+- Busca la sección con moneda DOLARES
+- Aplica los mismos regex y lógica de cálculo
+
+#### [MODIFY] [__init__.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/infrastructure/extractors/bancolombia/__init__.py)
+
+Agregar exports:
+```python
+from .mastercard_pesos_extracto import extraer_resumen as extraer_resumen_mastercard_pesos
+from .mastercard_usd_extracto import extraer_resumen as extraer_resumen_mastercard_usd
+```
+
+#### [MODIFY] [procesador_archivos_service.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/backend/src/application/services/procesador_archivos_service.py)
+
+Actualizar método `analizar_extracto()`:
+```python
+elif tipo_cuenta == 'MasterCardPesos':
+    datos = bancolombia.extraer_resumen_mastercard_pesos(file_obj)
+elif tipo_cuenta == 'MasterCardUSD':
+    datos = bancolombia.extraer_resumen_mastercard_usd(file_obj)
+```
+
+> [!NOTE]
+> Los tipos de cuenta deben coincidir con los registros en la tabla `cuentas`. Verificar que existan cuentas con `tipo_cuenta = 'MasterCardPesos'` y `tipo_cuenta = 'MasterCardUSD'`.
+
+## Verification Plan
+
+### Automated Tests
+
+Probar con el PDF proporcionado:
+
+1. **Cargar extracto Mastercard Pesos**:
+   ```
+   - Subir PDF desde página "Cargar Extractos"
+   - Seleccionar cuenta tipo "MasterCard Pesos"
+   - Verificar que se extrae:
+     * Saldo anterior: $17.103.116,49
+     * Entradas (pagos): $17.103.117,00
+     * Salidas (compras + cargos): $17.945.937,00
+     * Saldo final calculado correctamente
+     * Periodo: 2025-12 (diciembre 2025)
+   ```
+
+2. **Cargar extracto Mastercard USD**:
+   ```
+   - Subir mismo PDF desde página "Cargar Extractos"
+   - Seleccionar cuenta tipo "MasterCard USD"
+   - Verificar que se extrae:
+     * Saldo anterior: $22,94
+     * Entradas (pagos): $23,00
+     * Salidas (compras + cargos): $116,22
+     * Saldo final calculado correctamente
+     * Periodo: 2025-12 (diciembre 2025)
+   ```
+
+3. **Verificar base de datos**:
+   - Confirmar que los registros se crean en tabla `conciliaciones`
+   - Verificar que los campos `extracto_saldo_anterior`, `extracto_entradas`, `extracto_salidas`, `extracto_saldo_final` se guardan correctamente
+
+### Manual Verification
+
+- Solicitar al usuario que pruebe con otros PDFs de extractos de Mastercard de diferentes meses
+- Verificar que la extracción funciona correctamente con variaciones en el formato

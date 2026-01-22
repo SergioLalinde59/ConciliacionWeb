@@ -1,0 +1,6 @@
+# Task: Fix Import Error for MasterCard Extractors
+
+- [ ] Investigate file structure in `src/infrastructure/extractors/bancolombia` <!-- id: 0 -->
+- [ ] Check `src/infrastructure/extractors/bancolombia/__init__.py` <!-- id: 1 -->
+- [ ] Check `src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_movimientos.py` <!-- id: 2 -->
+- [ ] Fix the import error <!-- id: 3 -->

@@ -1,0 +1,13 @@
+# Task List
+
+- [x] Analyze the new MasterCard Pesos PDF format from the user provided image <!-- id: 0 -->
+- [x] Read current [mastercard_pesos_extracto_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_movimientos.py) <!-- id: 1 -->
+- [x] Implement [extraer_movimientos](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/fondorenta_extracto_movimientos.py#10-36) in [mastercard_pesos_extracto_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_movimientos.py) adapting the logic from [fondorenta_extracto_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/fondorenta_extracto_movimientos.py) <!-- id: 2 -->
+- [x] Add regex to capture `Fecha`, `Movimientos`, and `Valor movimiento` <!-- id: 3 -->
+- [x] Add logging and error handling similar to FondoRenta <!-- id: 4 -->
+- [x] Verify the implementation (by running the user's workflow or asking for verification) <!-- id: 5 -->
+- [ ] Create `cuenta_extractores` table in DB <!-- id: 6 -->
+- [ ] Populate `cuenta_extractores` with initial data (Ahorros, FondoRenta, MC Pesos, MC USD) <!-- id: 7 -->
+- [ ] Create `CuentaExtractorRepository` (Port & Adapter) <!-- id: 8 -->
+- [ ] Refactor [ProcesadorArchivosService](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#17-516) to use `CuentaExtractorRepository` <!-- id: 9 -->
+- [ ] Verify functionality with `MasterCardPesos` upload <!-- id: 10 -->

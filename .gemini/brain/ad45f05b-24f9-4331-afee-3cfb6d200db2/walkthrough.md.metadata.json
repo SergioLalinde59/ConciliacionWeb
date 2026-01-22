@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "Documentation of the fix for the page loading issues in 'Carga a BD' and 'Reporte Facturas'. Includes the new format.ts utility and the fix in App.tsx.",
+  "updatedAt": "2026-01-14T16:23:50.503575700Z"
+}

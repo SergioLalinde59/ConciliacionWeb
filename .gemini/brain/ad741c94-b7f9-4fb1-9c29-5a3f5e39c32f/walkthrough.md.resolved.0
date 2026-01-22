@@ -1,0 +1,24 @@
+# Walkthrough - Fix Concept Management FK Error
+
+## Changes Implemented
+### Backend
+- **[src/infrastructure/api/routers/conceptos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conceptos.py)**:
+    - Added [centro_costo_id](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_concepto_repository.py#73-95) optional query parameter to [listar_conceptos](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conceptos.py#21-35).
+    - Implemented filtering logic: if [centro_costo_id](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_concepto_repository.py#73-95) is passed, the repo filters by it.
+    - Added `try...except` block for `psycopg2.errors.ForeignKeyViolation` in strictly creation and update endpoints, returning a `400 Bad Request` with a user-friendly message.
+
+## Verification
+### Automated Checks
+- **Script**: [inspect_db.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/inspect_db.py) confirmed [conceptos](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conceptos.py#21-35) has an FK to `centro_costos`.
+- **Script**: [test_fk.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/test_fk.py) confirmed that the database enforces this FK.
+
+### User Verification Steps
+1. Navigate to **Gestión de Conceptos**.
+2. Select a **Centro de Costo** from the dropdown.
+3. Verify that the concepts list filters correctly.
+4. Try to create a new concept:
+    - Ensure it is linked to the selected Cost Center.
+5. (Optional) Try to misuse the API to send an invalid [centro_costo_id](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_concepto_repository.py#73-95) and verify it returns a 400 error instead of 500.
+
+## Screenshots
+*(Add screenshots of the working UI here)*

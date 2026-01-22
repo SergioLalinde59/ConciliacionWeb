@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_OTHER",
+  "summary": "Propuesta detallada para implementar un sistema de conciliación inteligente que compara movimientos del extracto bancario vs sistema. Incluye análisis de campos disponibles, algoritmo de matching con 5 estados (EXACTO, PROBABLE, POSIBLE_TRASLADO, SIN_MATCH, IGNORADO), diseño de interfaz de dos paneles, detección de patrones de traslados, y plan de implementación en fases. Propone endpoint de matching, tabla opcional de vinculaciones, y acciones de usuario para resolver diferencias.",
+  "updatedAt": "2026-01-18T15:07:14.635185Z"
+}

@@ -1,0 +1,164 @@
+# Análisis del Error en FondoRenta Extractor
+
+## 📋 Resumen del Error
+
+Al intentar analizar un extracto bancario de FondoRenta, la aplicación muestra **"Error en la petición: 500"** en el frontend y genera un error interno en el backend.
+
+---
+
+## 🔍 Causa Raíz del Error
+
+### Error Principal
+```python
+NameError: name 'snippet' is not defined
+```
+
+### Ubicación del Error
+- **Archivo**: [fondorenta.py](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/fondorenta.py#L142)
+- **Línea**: 142 y 150
+- **Función afectada**: `extraer_resumen_fondorenta()`
+
+### Stack Trace Completo
+
+```
+File "procesador_archivos_service.py", line 303, in analizar_extracto
+    datos = fondorenta.extraer_resumen_fondorenta(file_obj)
+
+File "fondorenta.py", line 150, in extraer_resumen_fondorenta
+    raise Exception(f"Error al leer resumen del PDF Fondo Renta: {e}")
+
+File "fondorenta.py", line 142, in extraer_resumen_fondorenta
+    raise ValueError(f"No se pudieron extraer datos. Verifique logs. Preview: {snippet[:200]}")
+    
+NameError: name 'snippet' is not defined
+```
+
+---
+
+## 📸 Evidencia Visual
+
+![Error en Frontend](file:///C:/Users/Slb/.gemini/antigravity/brain/01456e22-3337-46e1-ab99-e77b17857b99/uploaded_image_0_1768567922696.png)
+
+![Error en Backend - Logs](file:///C:/Users/Slb/.gemini/antigravity/brain/01456e22-3337-46e1-ab99-e77b17857b99/uploaded_image_1_1768567922696.png)
+
+![Error en Backend - Traceback](file:///C:/Users/Slb/.gemini/antigravity/brain/01456e22-3337-46e1-ab99-e77b17857b99/uploaded_image_2_1768567922696.png)
+
+---
+
+## 🔬 Análisis Técnico Detallado
+
+### Código Problemático
+
+En la **línea 142** de [fondorenta.py](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/fondorenta.py#L138-L142):
+
+```python
+# Si falló, loguear POR QUÉ
+search_area = full_text[full_text.find('SALDO'):full_text.find('SALDO')+500] if 'SALDO' in full_text else 'No SALDO found'
+logger.error(f"DEBUG FondoRenta FAILED. Search Area for SALDO: {search_area}")
+
+# Lanzar error con snippet
+raise ValueError(f"No se pudieron extraer datos. Verifique logs. Preview: {snippet[:200]}")
+```
+
+### Problema Identificado
+
+La variable `snippet` **nunca fue definida** en el código. El desarrollador anterior probablemente quiso usar `search_area` o `full_text` en lugar de `snippet`, pero dejó esta referencia sin inicializar.
+
+### Impacto
+
+Cuando la función `_extraer_resumen_desde_texto_full()` retorna `None` (línea 136), el código intenta lanzar un error informativo para debugging, pero **falla antes de poder mostrar el mensaje** porque `snippet` no existe. Esto:
+
+1. Oculta el error real de extracción del PDF
+2. Genera un error secundario (`NameError`) que confunde el diagnóstico
+3. Retorna un error genérico 500 al frontend sin información útil
+4. Dificulta el debugging de problemas legítimos en la extracción del PDF
+
+### Contexto del Flujo de Ejecución
+
+1. Usuario sube PDF de FondoRenta → `analizar_extracto` endpoint
+2. Se llama a `extraer_resumen_fondorenta(file_obj)` (línea 102)
+3. Se extrae el texto completo del PDF (líneas 115-120)
+4. Se registra el texto en los logs (líneas 124, 128-131)
+5. Se llama a `_extraer_resumen_desde_texto_full(full_text)` (línea 133)
+6. **Si la extracción falla** y retorna `None` (línea 136):
+   - Se calcula `search_area` para debugging (línea 138)
+   - Se registra el error en logs (línea 139)
+   - **FALLA AQUÍ**: Se intenta usar `snippet` que no existe (línea 142) ❌
+
+---
+
+## 🎯 Solución Propuesta
+
+### Opción 1: Usar `search_area` (Recomendada)
+
+Reemplazar `snippet` con `search_area`, que ya contiene un fragmento relevante del texto:
+
+```python
+raise ValueError(f"No se pudieron extraer datos. Verifique logs. Preview: {search_area[:200]}")
+```
+
+**Ventajas:**
+- ✅ Muestra el área específica donde se esperaba encontrar "SALDO"
+- ✅ Facilita el debugging al ver qué encontró (o no) el parser
+- ✅ Cambio mínimo y directo
+
+### Opción 2: Usar `full_text`
+
+Usar el texto completo del PDF:
+
+```python
+raise ValueError(f"No se pudieron extraer datos. Verifique logs. Preview: {full_text[:200]}")
+```
+
+**Ventajas:**
+- ✅ Muestra el inicio del documento completo
+- ⚠️ Puede ser menos relevante que `search_area`
+
+### Opción 3: Mensaje sin preview
+
+Simplificar el mensaje de error:
+
+```python
+raise ValueError("No se pudieron extraer datos del extracto FondoRenta. Verifique los logs para más detalles.")
+```
+
+**Ventajas:**
+- ✅ Más simple y directo
+- ⚠️ Menos información para debugging inmediato
+
+---
+
+## ⚠️ Consideraciones Adicionales
+
+### ¿Por qué falló la extracción original?
+
+El `NameError` es un **error secundario** que oculta el problema real. Para entender por qué `_extraer_resumen_desde_texto_full()` retornó `None`, necesitamos:
+
+1. Ver el contenido del archivo `debug_extract_dump.txt` (si se generó)
+2. Revisar los logs que muestran los primeros 3000 caracteres del PDF extraído (línea 124)
+3. Verificar si el formato del PDF cambió respecto a los patrones esperados
+
+Los logs en la imagen 2 muestran que sí se extrajo texto del PDF (se ven movimientos, fechas, valores), por lo que probablemente:
+- El formato del cuadro de resumen cambió
+- Los regex de extracción no coinciden con el formato actual
+- Hay algún problema con los encabezados o estructura de la tabla
+
+### Debug Logs Disponibles
+
+El código ya tiene logging extensivo:
+- Línea 124: Loguea los primeros 3000 caracteres como ERROR
+- Línea 128-131: Intenta escribir el texto completo a `logs/debug_extract_dump.txt`
+- Línea 139: Loguea el área de búsqueda de "SALDO"
+
+Estos logs **deberían estar visibles en la terminal** mostrada en las capturas de pantalla.
+
+---
+
+## 📝 Próximos Pasos
+
+Después de corregir el `NameError`, será necesario:
+
+1. **Ver los logs completos** del texto extraído del PDF
+2. **Comparar** el formato real vs. los patrones regex esperados
+3. **Ajustar** los regex si el formato del PDF ha cambiado
+4. **Probar** nuevamente la carga del extracto

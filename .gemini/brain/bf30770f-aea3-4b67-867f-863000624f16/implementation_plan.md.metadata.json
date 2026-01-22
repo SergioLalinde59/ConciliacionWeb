@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "I will modify the frontend `UploadExtractoPage.tsx` to explicitly display the year and month of the processed extract in the success modal. This involves calculating the period text from the available `year` and `month` fields if the backend-provided `periodo_texto` is missing, and adding a dedicated display element for the period in the modal body.",
+  "updatedAt": "2026-01-18T01:30:34.162916900Z"
+}

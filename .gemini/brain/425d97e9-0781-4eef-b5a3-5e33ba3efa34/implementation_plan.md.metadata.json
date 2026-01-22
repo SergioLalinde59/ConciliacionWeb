@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Detailed implementation plan for creating a dual-table system to track movements from bank statement PDFs. Includes database schema, domain models, extractors for each account type (Ahorros, FondoRenta, MasterCard Pesos/USD), API endpoints, frontend statistics modal on upload page, and comparison view in conciliation page. Plan addresses how cuenta_id is assigned from frontend context, not inferred from PDF. Verification steps and 6-phase implementation timeline included.",
+  "updatedAt": "2026-01-17T13:00:49.167044300Z"
+}

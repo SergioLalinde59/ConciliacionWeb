@@ -1,0 +1,36 @@
+# Plan de Implementación - Corrección de Carga Frontend
+
+## Estado Actual
+La aplicación `facturas.local` carga una página en blanco. El diagnóstico reveló un error crítico de JavaScript en la consola:
+`SyntaxError: The requested module '/src/components/molecules/StatCard/index.ts' does not provide an export named 'StatCardProps'`
+
+Esto ocurre porque se están importando interfaces de TypeScript como valores normales. Al compilarse a JavaScript, las interfaces desaparecen, pero el import permanece incorrecto, causando que el navegador falle al buscar el export.
+
+## Cambios Propuestos
+
+### 1. Corregir Imports de Tipos en Organismos
+Revisar y corregir la sintaxis de importación en los componentes que consumen interfaces. Se debe usar `import type` o separar los imports.
+
+#### [MODIFY] [StatCardGrid.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/organisms/StatCardGrid/StatCardGrid.tsx)
+- Cambiar `import { StatCard, StatCardProps }` por `import { StatCard }` y `import type { StatCardProps }`.
+
+#### [MODIFY] [Sidebar.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/organisms/Sidebar/Sidebar.tsx)
+- Verificar si `SidebarProps` se importa/exporta correctamente. (Aunque en la revisión previa parecía estar definido localmente, se validará si hay dependencias externas).
+
+### 2. Revisar Exportaciones en Moléculas
+Asegurar que los archivos `index.ts` de las moléculas exporten correctamente los tipos si es necesario, o que los componentes consumidores importen directamente del archivo fuente si el `index.ts` no re-exporta tipos.
+
+#### [MODIFY] [StatCard/index.ts](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/molecules/StatCard/index.ts)
+- Verificar que exporta tanto el componente como el tipo (si se usa `export *` suele funcionar, pero explicitaremos si falla).
+
+## Plan de Verificación
+
+### Verificación Manual
+1.  Aplicar los cambios.
+2.  Recargar `http://facturas.local/`.
+3.  Verificar que desaparezca el error de consola `SyntaxError`.
+4.  Confirmar que el `Sidebar` y el `Header` (Título) sean visibles.
+5.  Navegar por el menú para asegurar que los componentes responden.
+
+### Automated Check
+- Usaré el `browser_subagent` para confirmar que el elemento `#root` ya no está vacío y contiene la estructura del Dashboard.

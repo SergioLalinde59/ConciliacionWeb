@@ -1,0 +1,26 @@
+# Formatting Number Display Walkthrough
+
+I have updated the "Conciliación" page to use strict number formatting and coloring conventions.
+
+## Changes
+
+### [CurrencyDisplay.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/components/atoms/CurrencyDisplay.tsx)
+- Refactored to export [getNumberColorClass](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/components/atoms/CurrencyDisplay.tsx#76-84) logic.
+- Ensures strict formatting:
+    - **Positive**: Green (`text-emerald-600`)
+    - **Negative**: Red (`text-rose-600`)
+    - **Zero**: Blue (`text-blue-600`)
+    - **Format**: Thousands separators, 0 decimal places.
+
+### [ConciliacionPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx)
+- Integrated [CurrencyDisplay](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/components/atoms/CurrencyDisplay.tsx#85-129) for all read-only monetary values.
+- Applied [getNumberColorClass](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/components/atoms/CurrencyDisplay.tsx#76-84) to input fields to dynamically color text as you type.
+- Removed legacy [formatMoney](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx#145-148) function.
+
+## Verification Results
+
+### 1. Browser Verification
+I will inspect the page to verify:
+- [ ] System columns display correctly colored values with separators.
+- [ ] Difference column displays correctly colored values with separators.
+- [ ] Inputs change color correctly when typing positive/negative numbers.

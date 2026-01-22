@@ -1,0 +1,364 @@
+# Walkthrough: Fase 3.1 - PostgresMovimientoVinculacionRepository
+
+## Resumen
+
+Se implementó exitosamente el adaptador de infraestructura [PostgresMovimientoVinculacionRepository](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_movimiento_vinculacion_repository.py#11-582) que conecta la capa de dominio con la base de datos PostgreSQL para el sistema de matching de conciliación.
+
+---
+
+## Archivos Creados
+
+### [postgres_movimiento_vinculacion_repository.py](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_movimiento_vinculacion_repository.py)
+
+**Ubicación**: `Backend/src/infrastructure/database/`
+
+**Propósito**: Implementa el puerto `MovimientoVinculacionRepository` definido en la capa de dominio, siguiendo los principios de arquitectura hexagonal.
+
+---
+
+## Métodos Implementados
+
+### 1. `guardar(vinculacion: MovimientoMatch) -> MovimientoMatch`
+
+**Funcionalidad**:
+- Guarda o actualiza una vinculación entre movimiento del extracto y movimiento del sistema
+- Valida que exista el movimiento del extracto
+- Soporta INSERT (nueva vinculación) y UPDATE (actualización)
+- Retorna el objeto con ID asignado
+
+**Campos guardados**:
+- `movimiento_id` - ID del movimiento del sistema (puede ser NULL)
+- `movimiento_extracto_id` - ID del movimiento del extracto (requerido)
+- `estado` - Estado del match (EXACTO, PROBABLE, MANUAL, etc.)
+- `score_similitud`, `score_fecha`, `score_valor`, `score_descripcion` - Scores del algoritmo
+- `es_traslado` - Indica si es un traslado entre cuentas
+- `cuenta_contraparte_id`, `vinculacion_contraparte_id` - Para traslados
+- `confirmado_por_usuario`, `fecha_confirmacion` - Auditoría de confirmación
+- `creado_por`, `notas` - Información adicional
+
+---
+
+### 2. `obtener_por_periodo(cuenta_id, year, month) -> List[MovimientoMatch]`
+
+**Funcionalidad**:
+- Obtiene todas las vinculaciones de un periodo específico
+- Hace JOIN con `movimientos_extracto` para filtrar por cuenta/periodo
+- Ordena por fecha descendente y valor absoluto
+- Reconstruye objetos de dominio completos con movimientos relacionados
+
+---
+
+### 3. `obtener_por_extracto_id(movimiento_extracto_id) -> Optional[MovimientoMatch]`
+
+**Funcionalidad**:
+- Busca una vinculación específica por ID del movimiento del extracto
+- Útil para verificar si un movimiento ya está vinculado
+- Retorna `None` si no existe vinculación
+
+---
+
+### 4. `desvincular(movimiento_extracto_id) -> None`
+
+**Funcionalidad**:
+- Elimina una vinculación existente
+- Valida que la vinculación exista antes de eliminar
+- Lanza `ValueError` si no existe
+
+**Uso**: Cuando el usuario decide desvincular un match manual o automático.
+
+---
+
+### 5. `actualizar_estado(vinculacion_id, nuevo_estado, usuario, notas) -> MovimientoMatch`
+
+**Funcionalidad**:
+- Actualiza el estado de una vinculación existente
+- Marca automáticamente como confirmado por usuario
+- Registra fecha de confirmación y usuario
+- Retorna el objeto actualizado
+
+**Uso**: Cuando el usuario confirma un match probable o cambia el estado.
+
+---
+
+### 6. `obtener_sin_confirmar(cuenta_id, year, month) -> List[MovimientoMatch]`
+
+**Funcionalidad**:
+- Filtra vinculaciones con `confirmado_por_usuario = FALSE`
+- Útil para mostrar matches que requieren revisión del usuario
+- Típicamente matches PROBABLES que necesitan confirmación
+
+---
+
+### 7. `obtener_por_estado(cuenta_id, year, month, estado) -> List[MovimientoMatch]`
+
+**Funcionalidad**:
+- Filtra vinculaciones por estado específico
+- Permite al usuario ver solo matches EXACTOS, PROBABLES, SIN_MATCH, etc.
+- Soporta todos los estados del enum `MatchEstado`
+
+---
+
+### 8. `obtener_traslados(cuenta_id, year, month) -> List[MovimientoMatch]`
+
+**Funcionalidad**:
+- Filtra vinculaciones marcadas como traslados (`es_traslado = TRUE`)
+- Útil para identificar movimientos entre cuentas propias
+- Permite análisis de flujo de dinero entre cuentas
+
+---
+
+## Métodos Helper Privados
+
+### `_row_to_movimiento_match(row, mov_extracto, mov_sistema)`
+
+Convierte una fila de base de datos a objeto `MovimientoMatch` del dominio:
+- Mapea columnas de BD a propiedades del modelo
+- Convierte scores a `Decimal`
+- Maneja valores NULL apropiadamente
+
+### `_obtener_movimiento_extracto(movimiento_extracto_id)`
+
+Obtiene un `MovimientoExtracto` completo por ID:
+- Query a tabla `movimientos_extracto`
+- Construye objeto de dominio `MovimientoExtracto`
+
+### `_obtener_movimiento_sistema(movimiento_id)`
+
+Obtiene un `Movimiento` completo por ID:
+- Query a tabla `movimientos` con JOINs
+- Incluye nombres de cuenta, moneda, tercero, centro costo, concepto
+- Construye objeto de dominio `Movimiento`
+
+---
+
+## Arquitectura Hexagonal
+
+### ✅ Separación de Responsabilidades
+
+- **Dominio**: Define el contrato (`MovimientoVinculacionRepository`)
+- **Infraestructura**: Implementa el contrato con PostgreSQL
+- **Sin dependencias inversas**: El dominio NO conoce PostgreSQL
+
+### ✅ Patrón Repository
+
+- Abstrae el acceso a datos
+- Permite cambiar de PostgreSQL a otra BD sin afectar el dominio
+- Centraliza queries SQL en un solo lugar
+
+### ✅ Mapeo de Datos
+
+- Convierte entre modelos de dominio y tablas de BD
+- Maneja tipos de datos (Decimal, datetime, Enum)
+- Reconstruye objetos completos con relaciones
+
+---
+
+## Validación
+
+### ✅ Compilación Exitosa
+
+```bash
+python -m py_compile postgres_movimiento_vinculacion_repository.py
+```
+
+**Resultado**: Sin errores de sintaxis
+
+### ✅ Cobertura Completa
+
+Todos los métodos del puerto `MovimientoVinculacionRepository` están implementados:
+- ✅ `guardar()`
+- ✅ `obtener_por_periodo()`
+- ✅ `obtener_por_extracto_id()`
+- ✅ `desvincular()`
+- ✅ `actualizar_estado()`
+- ✅ `obtener_sin_confirmar()`
+- ✅ `obtener_por_estado()`
+- ✅ `obtener_traslados()`
+
+---
+
+## Próximos Pasos
+
+### ✅ Fase 3.2: PostgresConfiguracionMatchingRepository - COMPLETADA
+
+Implementar el segundo repositorio para gestionar la configuración del algoritmo de matching.
+
+### Fase 3.3: Endpoints de API
+
+Crear los endpoints REST que utilizarán estos repositorios:
+- `GET /api/matching/{cuenta_id}/{year}/{month}`
+- `POST /api/matching/vincular`
+- `POST /api/matching/desvincular`
+- `POST /api/matching/ignorar`
+
+---
+
+## Fase 3.2: PostgresConfiguracionMatchingRepository
+
+### Archivo Creado
+
+#### [postgres_configuracion_matching_repository.py](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_configuracion_matching_repository.py)
+
+**Ubicación**: `Backend/src/infrastructure/database/`
+
+**Propósito**: Implementa el puerto `ConfiguracionMatchingRepository` para gestionar la configuración del algoritmo de matching.
+
+---
+
+### Métodos Implementados (5 total)
+
+#### 1. `obtener_activa() -> ConfiguracionMatching`
+
+**Funcionalidad**:
+- Obtiene la configuración marcada como `activo = TRUE`
+- Solo puede haber una configuración activa a la vez
+- Lanza `ValueError` si no existe configuración activa
+
+**Query**: 
+```sql
+SELECT * FROM configuracion_matching WHERE activo = TRUE LIMIT 1
+```
+
+---
+
+#### 2. `obtener_por_id(config_id) -> Optional[ConfiguracionMatching]`
+
+**Funcionalidad**:
+- Busca una configuración específica por ID
+- Útil para ver historial de configuraciones
+- Retorna `None` si no existe
+
+---
+
+#### 3. `crear(config: ConfiguracionMatching) -> ConfiguracionMatching`
+
+**Funcionalidad**:
+- Inserta una nueva configuración en la BD
+- El modelo de dominio valida los datos automáticamente
+- Retorna objeto con ID, created_at y updated_at asignados
+
+**Validaciones automáticas del dominio**:
+- ✅ Pesos suman 1.00
+- ✅ Scores entre 0.00 y 1.00
+- ✅ score_exacto >= score_probable
+- ✅ tolerancia_valor positiva
+
+---
+
+#### 4. `actualizar(config: ConfiguracionMatching) -> ConfiguracionMatching`
+
+**Funcionalidad**:
+- Actualiza una configuración existente
+- Valida que exista el ID
+- Actualiza automáticamente `updated_at = CURRENT_TIMESTAMP`
+
+---
+
+#### 5. `activar(config_id) -> ConfiguracionMatching`
+
+**Funcionalidad**:
+- Activa una configuración y desactiva todas las demás
+- Garantiza que solo haya una configuración activa
+- Usa transacción para atomicidad
+
+**Lógica**:
+1. Verificar que existe la configuración
+2. Desactivar todas: `UPDATE configuracion_matching SET activo = FALSE`
+3. Activar la seleccionada: `UPDATE ... SET activo = TRUE WHERE id = %s`
+4. Commit de la transacción
+
+---
+
+### Características Especiales
+
+#### Manejo de Arrays PostgreSQL
+
+**Problema**: PostgreSQL usa tipo `TEXT[]` para arrays, Python usa `List[str]`
+
+**Solución**:
+- **Lectura**: psycopg2 convierte automáticamente `TEXT[]` a `list`
+- **Escritura**: psycopg2 convierte automáticamente `list` a `TEXT[]`
+
+```python
+# En la BD: ARRAY['TRANSFERENCIA', 'TRASLADO', 'CTA']
+# En Python: ['TRANSFERENCIA', 'TRASLADO', 'CTA']
+```
+
+#### Conversión de Decimales
+
+Todos los campos numéricos se convierten a `Decimal` para precisión:
+- `tolerancia_valor`: NUMERIC(16,2) → Decimal
+- `similitud_descripcion_minima`: NUMERIC(3,2) → Decimal
+- Pesos y scores: NUMERIC(3,2) → Decimal
+
+---
+
+### Validación
+
+#### ✅ Compilación Exitosa
+
+```bash
+python -m py_compile postgres_configuracion_matching_repository.py
+```
+
+**Resultado**: Sin errores de sintaxis
+
+#### ✅ Cobertura Completa
+
+Todos los métodos del puerto implementados:
+- ✅ `obtener_activa()`
+- ✅ `obtener_por_id()`
+- ✅ `crear()`
+- ✅ `actualizar()`
+- ✅ `activar()`
+
+---
+
+## Fase 3.3: Endpoints de API para Matching
+
+### Archivos Creados
+
+#### [matching.py](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/matching.py)
+
+Router FastAPI con 6 endpoints REST para el sistema de matching.
+
+### Endpoints Implementados
+
+1. **GET /api/matching/{cuenta_id}/{year}/{month}** - Ejecutar matching
+2. **POST /api/matching/vincular** - Vincular manualmente
+3. **POST /api/matching/desvincular** - Eliminar vinculación
+4. **POST /api/matching/ignorar** - Marcar como ignorado
+5. **GET /api/matching/configuracion** - Obtener configuración
+6. **PUT /api/matching/configuracion** - Actualizar configuración
+
+### Modificaciones
+
+- **dependencies.py**: Agregadas funciones de inyección para repositorios y servicio de matching
+- **main.py**: Registrado router de matching en aplicación
+
+### Validación
+
+✅ Todos los archivos compilan sin errores  
+✅ Router registrado correctamente  
+✅ Endpoints disponibles en `/docs`
+
+---
+
+## Notas Técnicas
+
+### Manejo de Transacciones
+
+- Todos los métodos que modifican datos usan `commit()` y `rollback()`
+- Garantiza integridad de datos en caso de error
+
+### Performance
+
+- Queries optimizados con índices en `movimiento_extracto_id`
+- JOINs eficientes para obtener datos relacionados
+- Ordenamiento por fecha y valor para mejor UX
+
+### Manejo de Errores
+
+- Validaciones antes de operaciones destructivas
+- Mensajes de error descriptivos
+- Excepciones apropiadas (`ValueError`)

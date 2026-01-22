@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_OTHER",
+  "summary": "Detailed analysis of the NameError in the FondoRenta PDF extractor. Documents the root cause (undefined variable 'snippet'), error location, stack trace, visual evidence from user screenshots, technical analysis of the code flow, proposed solutions with trade-offs, and considerations for debugging the underlying extraction failure.",
+  "updatedAt": "2026-01-16T12:55:14.093747100Z"
+}

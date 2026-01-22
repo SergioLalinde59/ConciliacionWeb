@@ -1,0 +1,8 @@
+# Task List
+
+- [ ] Locate "Previsualizar" button and its logic <!-- id: 0 -->
+- [ ] Create Implementation Plan <!-- id: 1 -->
+- [ ] Remove "Previsualizar" button <!-- id: 2 -->
+- [ ] Move logic to Date/Provider filters (auto-trigger on change) <!-- id: 3 -->
+- [ ] Fix "All providers" update issue <!-- id: 4 -->
+- [ ] Verify changes <!-- id: 5 -->

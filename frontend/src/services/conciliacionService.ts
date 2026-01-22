@@ -64,8 +64,20 @@ export const conciliacionService = {
         return handleResponse(response);
     },
 
+    async obtenerMovimientosSistema(cuentaId: number, year: number, month: number) {
+        const response = await fetch(`${API_BASE_URL}/api/conciliaciones/${cuentaId}/${year}/${month}/movimientos-sistema`);
+        return handleResponse(response);
+    },
+
+
     async compararMovimientos(cuentaId: number, year: number, month: number) {
         const response = await fetch(`${API_BASE_URL}/api/conciliaciones/${cuentaId}/${year}/${month}/comparacion`);
         return handleResponse(response);
+    },
+
+    async obtenerMatches(cuentaId: number, year: number, month: number) {
+        const response = await fetch(`${API_BASE_URL}/api/matching/${cuentaId}/${year}/${month}`);
+        return handleResponse(response);
     }
+
 };

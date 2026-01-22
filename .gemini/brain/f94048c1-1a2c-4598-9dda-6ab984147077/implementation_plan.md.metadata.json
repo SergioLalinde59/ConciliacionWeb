@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Plan to disable the 'Confirmar y Cargar' button when there are no movements to load.",
+  "updatedAt": "2026-01-18T01:48:51.662858900Z"
+}

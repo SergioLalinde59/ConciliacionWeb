@@ -1,0 +1,51 @@
+# Implementation Plan - Replace Table with Atomic DataTable
+
+The goal is to replace the hardcoded `<table>` in [ConciliacionPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/ConciliacionPage.tsx) with the reusable [DataTable](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/DataTable.tsx#65-276) component from the atomic design system ([frontend/src/components/molecules/DataTable.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/DataTable.tsx)), while preserving all existing functionality (editable cells, actions, calculations) and visual cues (color coding).
+
+## User Review Required
+
+> [!NOTE]
+> The [DataTable](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/DataTable.tsx#65-276) component currently does not support **nested headers** (e.g., spanning "Sistema (Calculado)" over 3 columns).
+> **Mitigation**: I will use clear column headers (e.g., "Sistema - Entradas") and distinct background colors (Blue for System, Green for Extract) using `headerClassName` and `cellClassName` to maintain the visual grouping and distinction found in the original table.
+
+## Proposed Changes
+
+### Frontend Components
+
+#### [MODIFY] [ConciliacionPage.tsx](file:///f:/1. Cloud/4. AI/1. Antigravity/ConciliacionWeb/frontend/src/pages/ConciliacionPage.tsx)
+
+1.  **Data Preparation**:
+    -   Create a flattened list of items (`conciliacionRows`) from the nested `visibleCuentas` -> `selectedMonths` loops.
+    -   Each item will contain all necessary context: `cuenta`, `year`, `month`, and the `conciliacion` data object.
+
+2.  **Column Definition**:
+    -   Define a `columns` array for [DataTable](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/DataTable.tsx#65-276).
+    -   **Cuenta / Periodo**: Custom accessor showing Account Name and Month/Year.
+    -   **Sistema Columns** (Entradas, Salidas, Saldo Final):
+        -   Use `cellClassName` to apply gray text or bold styles (Saldo Final).
+        -   Use `headerClassName` to apply Blue background/text styles similar to the original.
+    -   **Extracto Columns** (Saldo Ant, Entradas, Salidas, Saldo Final):
+        -   Use [accessor](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/organisms/ConciliacionMovimientosTab.tsx#231-236) to render `EditableCurrencyCell` components.
+        -   Pass [handleUpdate](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/ConciliacionPage.tsx#93-104) to these cells.
+        -   Use `headerClassName` for Green styles.
+    -   **Diferencia**: Calculated column (Extracto - Sistema).
+    -   **Acciones**: Custom accessor rendering the row of action buttons (Detail, Save, Recalculate).
+
+3.  **Render**:
+    -   Replace the manual `<table>...</table>` block with `<DataTable data={conciliacionRows} columns={columns} ... />`.
+    -   Pass `loading` state to [DataTable](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/DataTable.tsx#65-276).
+
+## Verification Plan
+
+### Manual Verification
+1.  **Visual Check**:
+    -   Verify the table appears with all columns.
+    -   Check that System columns have formatting (Blue-ish headers/theme).
+    -   Check that Extract columns have formatting (Green-ish headers/theme).
+2.  **Data Integrity**:
+    -   Compare the values shown against the current screenshot/state to ensure data is mapping correctly.
+3.  **Interactivity**:
+    -   **Edit**: Change a value in an "Extracto" cell (e.g., Entradas). Ensure the state updates and "Guardar" button works (if applicable workflow).
+    -   **Buttons**: Click "Ver Detalle" (File icon) -> Should navigate to Detail view.
+    -   Click "Guardar" (Save icon) -> Should trigger save mutation.
+    -   Click "Recalcular" (Refresh icon) -> Should trigger recalculation.

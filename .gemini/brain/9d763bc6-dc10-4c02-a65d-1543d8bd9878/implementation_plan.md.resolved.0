@@ -1,0 +1,24 @@
+# Implementation Plan - Fix FondoRenta Extraction Configuration
+
+The investigation revealed that the "FondoRenta" account (ID 3) is missing a specific configuration for extracting movements. It currently falls back to a default extractor (`fondorenta_movimientos`) which expects an older or different specific format ("Traslado..."). The codebase contains a more suitable extractor `fondorenta_extracto_movimientos` which appears to handle the standard extract format (`YYYYMMDD` dates).
+
+## User Review Required
+> [!IMPORTANT]
+> This change requires the user to **RE-UPLOAD** the extracts for January, February, and April 2025 after the fix is applied. The system cannot re-process the files automatically as they are not stored permanently.
+
+## Proposed Changes
+
+### Database Configuration
+#### [INSERT] `cuenta_extractores`
+- Insert a new row for `cuenta_id = 3` (FondoRenta), `tipo = 'MOVIMIENTOS'`, `modulo = 'fondorenta_extracto_movimientos'`.
+- Ensure `activo = TRUE`.
+
+## Verification Plan
+
+### Automated Tests
+- Run [debug_fondo_renta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/debug_fondo_renta.py) again to confirm the new configuration is present in `cuenta_extractores`.
+- (Optional) If the user provides a sample file path, I could try to run the extractor script directly, but I cannot upload files myself.
+
+### Manual Verification
+- User should upload the PDF for April 2025 again.
+- Verify in the "Conciliación Mensual" screen that "Movimientos Extracto" now show data and the "Diferencia" decreases or matches the system.

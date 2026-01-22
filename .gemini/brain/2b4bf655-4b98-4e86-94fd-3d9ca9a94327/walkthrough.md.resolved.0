@@ -1,0 +1,31 @@
+# Walkthrough - Statistics in Upload Success Modal
+
+I have implemented the statistics display in the success modal after uploading a bank extract, reusing the Atomic Design component [ExtractoResumenCinta](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/ExtractoResumenCinta.tsx#9-49).
+
+## Changes
+
+### 1. [ExtractoResumenCinta.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/ExtractoResumenCinta.tsx)
+- Modified to accept an optional `labelNuevos` prop.
+- Defaults to "A CARGAR" if not provided.
+- Allows flexibility for different contexts (e.g., "CARGADOS", "PENDIENTES").
+
+### 2. [UploadExtractoPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/UploadExtractoPage.tsx)
+- Integrated [ExtractoResumenCinta](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/components/molecules/ExtractoResumenCinta.tsx#9-49) into the success modal.
+- Configured to show:
+    - **REGISTROS LEÍDOS**: Total rows in the PDF.
+    - **DUPLICADOS**: Rows already in the system.
+    - **CARGADOS**: New rows successfully inserted (using the custom label).
+
+## Verification Results
+
+### Manual Verification Steps
+1. Navigate to the "Cargar Extracto" page.
+2. Select an account and upload a valid PDF extract.
+3. Click "Analizar Extracto".
+    - *Check*: The "Resumen del Periodo" should show the tape with "A CARGAR".
+4. Click "Confirmar y Cargar".
+5. Wait for the success modal.
+    - *Check*: The modal should now display the statistics tape at the top, showing:
+        - "REGISTROS LEÍDOS"
+        - "DUPLICADOS"
+        - "CARGADOS" (instead of "A CARGAR")

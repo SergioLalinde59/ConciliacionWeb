@@ -1,0 +1,31 @@
+# Support Multi-Month Reconciliation
+
+The goal is to update the "Conciliación Mensual" page to display one reconciliation record per month per account within the selected date range.
+
+## Proposed Changes
+
+### Frontend
+
+#### [MODIFY] [dateUtils.ts](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/utils/dateUtils.ts)
+
+- Add `getMonthsBetween(startDate: string, endDate: string)` which returns an array of objects `{ year: number, month: number }`.
+
+#### [MODIFY] [ConciliacionPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx)
+
+- Remove single `selectedYear` and `selectedMonth` derived state.
+- Create `selectedMonths` using `getMonthsBetween(desde, hasta)`.
+- Update `conciliaciones` state to use a compound key: `Record<string, Conciliacion>`. Key will be `${cuenta_id}-${year}-${month}`.
+- Update `fetchAll` to loop through `visibleCuentas` AND `selectedMonths`.
+- Update rendering:
+    - Iterate `visibleCuentas`.
+    - Inside, iterate `selectedMonths`.
+    - Render row for each month.
+- Update handlers (`handleUpdate`, `handleSave`, `handleRecalculate`) to accept `year` and `month` as arguments.
+
+## Verification Plan
+
+### Manual Verification
+1.  Select a date range from (e.g., "Noviembre 2025" to "Enero 2026").
+2.  Verify that for each account (e.g., "Ahorros"), three rows appear (one for Nov, Dec, Jan).
+3.  Verify that editing one month's "Extracto" does not affect the others.
+4.  Verify that distinct "Sistema" values are shown if they differ by month.

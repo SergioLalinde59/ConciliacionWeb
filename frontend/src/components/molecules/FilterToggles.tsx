@@ -2,9 +2,7 @@
 import { Checkbox } from '../atoms/Checkbox'
 
 interface FilterTogglesProps {
-    soloPendientes?: boolean
-    onSoloPendientesChange?: (checked: boolean) => void
-    showSoloPendientes?: boolean
+
 
     mostrarIngresos?: boolean
     onMostrarIngresosChange?: (checked: boolean) => void
@@ -19,9 +17,7 @@ interface FilterTogglesProps {
 }
 
 export const FilterToggles = ({
-    soloPendientes = false,
-    onSoloPendientesChange,
-    showSoloPendientes = false,
+
 
     mostrarIngresos = true,
     onMostrarIngresosChange,
@@ -37,14 +33,7 @@ export const FilterToggles = ({
     return (
         <div className="flex flex-wrap items-center gap-6">
             {/* Por Clasificar (Solo Pendientes) */}
-            {showSoloPendientes && onSoloPendientesChange && (
-                <Checkbox
-                    label="Por Clasificar"
-                    checked={!!soloPendientes}
-                    onChange={(e) => onSoloPendientesChange(e.target.checked)}
-                    className="text-amber-600 focus:ring-amber-500"
-                />
-            )}
+
 
             {/* Dynamic Exclusion Filters - All from config_filtros_grupos */}
             {configuracionExclusion

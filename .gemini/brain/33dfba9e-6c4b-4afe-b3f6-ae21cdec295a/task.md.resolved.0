@@ -1,0 +1,16 @@
+# Task: Adding Upload Statistics Modal
+
+## Planning
+- [ ] Review current extract upload page implementation
+- [ ] Review movements upload page for reference (already has modal)
+- [ ] Check backend API response structure
+
+## Implementation
+- [ ] Update `UploadExtractosPage.tsx` to add modal state management
+- [ ] Add Modal component import and usage
+- [ ] Display statistics after successful upload
+- [ ] Handle modal close action
+
+## Verification
+- [ ] Test uploading an extract and verify modal appears
+- [ ] Verify statistics are correctly displayed

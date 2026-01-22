@@ -1,0 +1,36 @@
+# Add `permite_conciliar` column to `cuentas` table
+
+The goal is to add a boolean column `permite_conciliar` to the `cuentas` table to control which accounts can be reconciled.
+
+## User Review Required
+> [!IMPORTANT]
+> The database schema will be modified. A new column `permite_conciliar` (BOOLEAN, default FALSE) will be added to the `cuentas` table.
+
+## Proposed Changes
+
+### Database Schema
+An `ALTER TABLE` script will be executed.
+
+#### [NEW] [add_permite_conciliar_column.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/add_permite_conciliar_column.py)
+A Python script to execute the SQL command:
+```sql
+ALTER TABLE cuentas ADD COLUMN IF NOT EXISTS permite_conciliar BOOLEAN DEFAULT FALSE;
+```
+
+### Backend
+
+#### [MODIFY] [cuenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/models/cuenta.py)
+- Add `permite_conciliar: bool = False` to the [Cuenta](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/models/cuenta.py#4-15) dataclass.
+
+#### [MODIFY] [postgres_cuenta_repository.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_cuenta_repository.py)
+- Update [guardar](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_cuenta_repository.py#10-31) method to include `permite_conciliar` in INSERT and UPDATE statements.
+- Update [obtener_por_id](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_cuenta_repository.py#32-38), [obtener_todos](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_cuenta_repository.py#39-45), [buscar_por_nombre](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_cuenta_repository.py#46-52) methods to select and map the new column.
+
+## Verification Plan
+
+### Automated Tests
+1.  **Run DB Update Script**: Execute `python add_permite_conciliar_column.py` and check for "Success".
+2.  **Verify Model Update**: Run a Python snippet to create a [Cuenta](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/models/cuenta.py#4-15) with `permite_conciliar=True` and save it using the repository, then retrieve it to verify the field is persisted.
+
+### Manual Verification
+- Check the `cuentas` table structure if possible (but we are relying on the script status).

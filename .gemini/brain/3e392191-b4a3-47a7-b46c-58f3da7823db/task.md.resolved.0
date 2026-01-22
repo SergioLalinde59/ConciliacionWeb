@@ -1,0 +1,6 @@
+# Add Discount Stat to Dashboard
+
+- [ ] Locate backend stats endpoint code
+- [ ] Update backend to calculate and return `total_descuentos`
+- [ ] Update frontend [DashboardStats](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx#62-72) interface
+- [ ] Add "Total Descuentos" card to [StatCardGrid](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/organisms/StatCardGrid/StatCardGrid.tsx#13-29) in [App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx)

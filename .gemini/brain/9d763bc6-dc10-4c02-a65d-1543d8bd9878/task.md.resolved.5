@@ -1,0 +1,21 @@
+# Task: Debug Missing FondoRenta Extract Data
+
+- [x] Investigate data source for "Conciliación Mensual" table <!-- id: 0 -->
+    - [x] Analyze [conciliaciones.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py) router to see which table feeds the main view <!-- id: 1 -->
+    - [x] Check if "Extracto (Manual)" columns come from `conciliaciones` summary table or [movimientos_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#205-231) <!-- id: 2 -->
+- [x] Verify database state <!-- id: 3 -->
+    - [x] Run [debug_fondo_renta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/debug_fondo_renta.py) to check [movimientos_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#205-231) and `conciliaciones` <!-- id: 15 -->
+    - [x] Check `cuentas` table to get FondoRenta ID <!-- id: 13 -->
+- [x] Analyze Extraction Process <!-- id: 6 -->
+    - [x] Locate [fondorenta_extracto_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/fondorenta_extracto_movimientos.py) <!-- id: 7 -->
+    - [x] Review [fondorenta_extracto.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/fondorenta_extracto.py) (summary extractor) <!-- id: 11 -->
+    - [x] Review [ProcesadorArchivosService](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#19-675) orchestration <!-- id: 12 -->
+    - [x] Review [fondorenta_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/fondorenta_movimientos.py) (referenced in service fallback) <!-- id: 14 -->
+- [/] Implement Database Configuration (All Accounts) <!-- id: 16 -->
+    - [/] Create SQL/Python script to insert/update `cuenta_extractores` for: <!-- id: 17 -->
+        - [/] FondoRenta (ID 3) -> `fondorenta_extracto_movimientos` <!-- id: 18 -->
+        - [/] Ahorros (ID 1) -> `ahorros_extracto_movimientos` <!-- id: 19 -->
+        - [/] MasterCard Pesos (ID 6) -> `mastercard_pesos_extracto_movimientos` <!-- id: 20 -->
+        - [/] MasterCard USD (ID 7) -> `mastercard_usd_extracto_movimientos` <!-- id: 21 -->
+- [ ] Answer user question regarding cache <!-- id: 9 -->
+- [ ] Fix the issue (Run SQL and verify) <!-- id: 10 -->

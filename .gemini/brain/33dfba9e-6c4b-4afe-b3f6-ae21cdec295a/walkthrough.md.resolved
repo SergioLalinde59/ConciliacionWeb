@@ -1,0 +1,112 @@
+# Upload Statistics Modal - Implementation Walkthrough
+
+Successfully implemented a statistics modal window for the **Cargar Extracto Bancario** page that displays upload results after processing an extract PDF.
+
+## Changes Made
+
+### 1. Updated [UploadExtractoPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/UploadExtractoPage.tsx)
+
+**Imports Added:**
+```tsx
+import { Modal } from '../components/molecules/Modal'
+import { Button } from '../components/atoms/Button'
+```
+
+**State Management:**
+- Added `showSuccessModal` state to control modal visibility
+- Updated [handleFileChange](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/UploadMovimientosPage.tsx#29-37) to reset modal state when selecting a new file
+- Modified [handleCargarDefinitivo](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/UploadMovimientosPage.tsx#65-81) to show modal on successful upload (`setShowSuccessModal(true)`)
+- Added [handleCloseSuccessModal](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/UploadExtractoPage.tsx#117-121) function to manage modal closure
+
+**UI Changes:**
+- Replaced inline success message (green box) with Modal component
+- Modal displays:
+  - ✅ Success icon and "¡Carga Completada!" title
+  - 📊 **4 statistics cards** showing extracted values:
+    - Saldo Anterior
+    - Entradas (in green)
+    - Salidas (in red)
+    - Saldo Final (in blue)
+  - 💼 Sistema actualizado section showing final system balance
+  - 🔘 "Entendido" button to close modal
+
+## Testing Results
+
+### Browser Testing
+✅ **Modal Appearance**: The modal successfully appears after confirming the upload  
+✅ **Statistics Display**: All four extracted values are displayed correctly with proper formatting and color coding  
+✅ **Modal Closure**: Clicking "Entendido" closes the modal and resets the form  
+✅ **Form Reset**: After closing modal, the page returns to initial state ready for new uploads
+
+### Sample Test Data
+During testing with MasterCard USD extract:
+- **Total Procesados**: 3
+- **Nuevos Movimientos**: 3
+- **Duplicados Omitidos**: 0
+- **Errores**: 0
+
+## Implementation Details
+
+### Modal Configuration
+```tsx
+<Modal
+    isOpen={showSuccessModal}
+    onClose={handleCloseSuccessModal}
+    title={result?.conciliacion ? `Extracto Cargado - ${result.conciliacion.periodo_texto || ''}` : "Resumen de Carga"}
+    size="md"
+    footer={
+        <Button onClick={handleCloseSuccessModal} className="w-full">
+            Entendido
+        </Button>
+    }
+>
+```
+
+### Statistics Grid
+```tsx
+<div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-left bg-gray-50 p-4 rounded-xl">
+    <div className="space-y-1">
+        <p className="text-xs text-gray-500 uppercase font-semibold">Saldo Anterior</p>
+        <p className="text-lg font-bold text-gray-900">{formatCurrency(...)}</p>
+    </div>
+    <!-- Entradas, Salidas, Saldo Final cards -->
+</div>
+```
+
+## User Experience
+
+### Before
+- Success message displayed inline as a green box
+- Less prominent and could be missed
+- No clear visual feedback
+
+### After
+- **Modal window** captures user attention
+- **Centered display** with clear statistics
+- **Professional presentation** with icon and structured layout
+- **Easy to dismiss** with dedicated "Entendido" button
+
+## Verification
+
+✅ Tested with MasterCard USD account  
+✅ Modal appears immediately after upload confirmation  
+✅ All statistics display correctly with proper formatting  
+✅ Modal closes cleanly and form resets  
+✅ Ready for production use
+
+## Demonstration
+
+![Demo Recording](file:///C:/Users/Slb/.gemini/antigravity/brain/33dfba9e-6c4b-4afe-b3f6-ae21cdec295a/extract_upload_modal_1768607480280.webp)
+
+The recording above shows the complete flow:
+1. Navigating to "Cargar Extracto Bancario"
+2. Selecting MasterCardUSD account
+3. Uploading and analyzing the extract
+4. Confirming the upload
+5. **Modal appearing** with statistics
+6. Closing the modal with "Entendido" button
+7. Form resetting for next upload
+
+---
+
+**Pattern Consistency**: This implementation follows the same modal pattern used in [UploadMovimientosPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/frontend/src/pages/UploadMovimientosPage.tsx), ensuring UI consistency across the application.

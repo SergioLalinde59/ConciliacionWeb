@@ -1,0 +1,14 @@
+# Tasks
+
+- [x] Check backend [conciliaciones.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py) to see how accounts are fetched. <!-- id: 0 -->
+- [x] Check frontend [types.ts](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/types.ts) to see if `permite_conciliar` is defined. <!-- id: 1 -->
+- [x] Check frontend component rendering the list (likely [ConciliacionPage.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx) or a sub-component) to see where to apply the filter. <!-- id: 2 -->
+- [x] Apply the filter to show only accounts with `permite_conciliar === true`. <!-- id: 3 -->
+- [x] Verify the changes. <!-- id: 4 -->
+
+## Multi-Month View
+- [x] Create helper [getMonthsBetween(startDate, endDate)](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/utils/dateUtils.ts#94-114) in [dateUtils.ts](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/utils/dateUtils.ts). <!-- id: 5 -->
+- [x] Refactor [ConciliacionPage](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx#13-320) state to store data by key `"${cuentaId}-${year}-${month}"`. <!-- id: 6 -->
+- [x] Update fetching logic in [ConciliacionPage](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx#13-320) to iterate over all months in range. <!-- id: 7 -->
+- [x] Update rendering logic to show multiple rows per account (one per month). <!-- id: 8 -->
+- [x] Update [handleUpdate](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx#90-101), [handleSave](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx#113-131), [handleRecalculate](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/pages/ConciliacionPage.tsx#132-144) to work with compound keys / specific months. <!-- id: 9 -->

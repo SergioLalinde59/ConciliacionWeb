@@ -1,0 +1,23 @@
+# Filtered Reconcilable Accounts
+
+I have updated the "Conciliación Mensual" page to filter the accounts displayed in both the main view and the account selection dropdown.
+
+## Changes Verified
+
+### Account filtering
+- [x] The application now filters the [cuentas](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/cuentas.py#22-31) list on the client side using the `permite_conciliar` property.
+- [x] Accounts with `permite_conciliar: false` are excluded from the `reconcilableCuentas` list.
+- [x] The main table (`visibleCuentas`) now derives from this filtered list.
+- [x] The `FiltrosReporte` component, which renders the dropdown, now receives the filtered `reconcilableCuentas` list, preventing users from selecting non-reconcilable accounts.
+
+## Code Changes
+
+```typescript
+    // Filter accounts to display
+    const reconcilableCuentas = useMemo(() => {
+        if (!cuentas) return [];
+        return cuentas.filter((c: Cuenta) => c.permite_conciliar);
+    }, [cuentas]);
+```
+
+This ensures that only relevant accounts are shown in the interface.

@@ -1,0 +1,15 @@
+# Task: Add USD and TRM Columns to Reconciliation Detail
+
+- [ ] Explore codebase
+    - [ ] Locate frontend component for reconciliation detail view <!-- id: 0 -->
+    - [ ] Locate backend models and API for reconciliation data <!-- id: 1 -->
+    - [ ] Verify database schema (if possible/needed) <!-- id: 2 -->
+- [ ] Backend Changes
+    - [ ] Ensure `usd` and `trm` are in `Movimiento` and `MovimientoExtracto` models <!-- id: 3 -->
+    - [ ] Update API response to include these fields <!-- id: 4 -->
+- [ ] Frontend Changes
+    - [ ] Update `Movimiento` interface <!-- id: 5 -->
+    - [ ] Add columns to System Movements table <!-- id: 6 -->
+    - [ ] Add columns to Extract Movements table <!-- id: 7 -->
+- [ ] Verification
+    - [ ] Verify changes with user <!-- id: 8 -->

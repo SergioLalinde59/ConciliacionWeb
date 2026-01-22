@@ -1,0 +1,27 @@
+# Task List: Rename "Grupo" to "Centro Costos"
+
+- [x] Explore codebase and database schema to identify all instances of "grupo"/"grupos" <!-- id: 0 -->
+    - [x] Check SQL schema files <!-- id: 1 -->
+    - [x] Check Backend models and repositories (Python) <!-- id: 2 -->
+    - [x] Check Frontend components and interfaces (React/TypeScript) <!-- id: 3 -->
+- [x] Create Implementation Plan <!-- id: 4 -->
+- [x] **User Approval** <!-- id: 5 -->
+- [x] Execute Database Changes <!-- id: 6 -->
+    - [x] Rename table `grupos` to `centro_costos` <!-- id: 7 -->
+    - [x] Update Foreign Keys in `conceptos` and `movimientos` <!-- id: 8 -->
+- [x] Execute Backend Changes <!-- id: 9 -->
+    - [x] Rename models/classes <!-- id: 10 -->
+    - [x] Update queries and repositories <!-- id: 11 -->
+    - [x] Rename API endpoints if necessary <!-- id: 12 -->
+- [/] Execute Frontend Changes <!-- id: 13 -->
+    - [x] Rename interfaces/types <!-- id: 14 -->
+    - [/] [UI] Replace all "Grupo" with "Centro de Costo" (Global Text Replacement)
+    - [x] Fix duplicate identifier 'terceros' in `ClassificationModal.tsx`
+    - [x] Fix `DashboardPage.tsx` hook destructuring
+- [/] [Tests] Verify Changes
+    - [x] Fix backend syntax error in `movimientos.py` (duplicate argument)
+    - [x] Fix backend import error in `main.py` ('grupos' not found)
+    - [ ] Run application (`arranque_app.ps1`)
+    - [ ] Global find/replace "Grupo" in UI text
+    - [ ] Verify Dashboard, Movement Classification, Reports
+    - [ ] Check filtering functionality <!-- id: 17 -->

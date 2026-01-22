@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Fix the conditional logic for showing USD/TRM columns in the reconciliation table. The current logic only checks for USD income, but should also check for USD expenses.",
+  "updatedAt": "2026-01-17T22:53:43.761144300Z"
+}

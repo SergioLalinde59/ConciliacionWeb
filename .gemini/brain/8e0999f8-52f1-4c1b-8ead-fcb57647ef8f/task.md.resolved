@@ -1,0 +1,10 @@
+# Task List
+
+- [x] Analyze [conciliaciones.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py) to find the data source for 'Extracto (Manual)' <!-- id: 0 -->
+- [x] Verify the Account ID for 'FondoRenta' <!-- id: 1 -->
+- [x] Determine why non-zero inputs/outputs appear when [movimientos_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#205-231) is empty <!-- id: 2 -->
+- [x] Implement a fix to ensure zero values when no extract data exists <!-- id: 3 -->
+- [x] Verify the fix applies to all accounts <!-- id: 4 -->
+- [x] Investigate if 'Saldo Anterior' is coming from DB or Router auto-fill <!-- id: 5 -->
+- [x] Modify logic to ensure 'Saldo Anterior' is 0 if no extract exists <!-- id: 6 -->
+- [x] Enforce 'Saldo Anterior = 0' in Repository when [movimientos_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#205-231) is empty <!-- id: 7 -->

@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Análisis de la lógica de asignación de terceros en movimientos pendientes de clasificar. Identifica un problema crítico con referencias que tienen ceros a la izquierda, donde una referencia '02100002768' no coincide con el alias '2100002768'. Propone tres opciones de solución: normalizar al guardar, normalizar en búsqueda, o una solución híbrida (recomendada) que combina ambas con migración de datos existentes.",
+  "updatedAt": "2026-01-16T04:57:51.884008600Z"
+}

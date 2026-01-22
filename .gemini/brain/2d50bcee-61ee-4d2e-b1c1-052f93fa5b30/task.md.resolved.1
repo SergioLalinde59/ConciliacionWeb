@@ -1,0 +1,23 @@
+# Fase 4: Servicio de Matching y Lógica de Vinculación
+
+## Backend - Servicio de Dominio
+- [x] ~~Agregar dependencia `python-Levenshtein` a [requirements.txt](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/requirements.txt)~~ (Se usa SequenceMatcher de difflib)
+- [x] Crear [matching_service.py](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/services/matching_service.py) con estructura base
+- [x] Implementar método `calcular_score_similitud`
+  - [x] Score de fecha
+  - [x] Score de monto
+  - [x] Score de descripción (SequenceMatcher)
+- [x] Implementar método [ejecutar_matching](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/domain/services/matching_service.py#21-155) (obtener candidatos)
+- [x] Implementar vinculación en endpoints API
+- [x] Implementar desvinculación en endpoints API
+- [x] Implementar marcar como ignorado en endpoints API
+- [x] Endpoints en [matching.py](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/matching.py) completamente funcionales
+
+## Repositorio
+- [x] [PostgresMovimientoVinculacionRepository](file:///F:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/database/postgres_movimiento_vinculacion_repository.py#11-582) implementado
+- [x] Todos los métodos del puerto implementados
+
+## Verificación
+- [x] Código existente revisado y validado
+- [x] Arquitectura hexagonal correctamente aplicada
+- [x] Todas las operaciones CRUD implementadas

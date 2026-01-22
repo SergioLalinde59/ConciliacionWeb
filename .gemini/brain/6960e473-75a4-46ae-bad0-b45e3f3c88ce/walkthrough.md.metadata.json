@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "Refactored ConciliacionPage.tsx to use Atomic Design components, unifying UI with other pages, and adding Account / Date filters found in MovimientosPage.",
+  "updatedAt": "2026-01-15T20:08:17.050879500Z"
+}

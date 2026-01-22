@@ -1,0 +1,24 @@
+# Walkthrough - Add Discount Stat to Dashboard
+
+I have successfully added the "Total Descuentos" statistic to the Dashboard.
+
+## Changes
+### Frontend
+- **[App.tsx](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx)**:
+    - Updated [DashboardStats](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx#63-74) interface to include `total_descuentos`.
+    - Added a new [StatCard](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/components/organisms/StatCardGrid/StatCardGrid.tsx#13-29) for "Total Descuentos" in the [Dashboard](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/Facturas/frontend/src/App.tsx#63-74) view.
+    - Positioned the new card between "Subtotal Acumulado" and "Total IVA".
+    - Added a "Ahorro" trend indicator to the card.
+
+## Verification Results
+
+### Manual Verification
+I navigated to the dashboard and confirmed that the new card appears correctly.
+
+**Screenshot of the updated Dashboard:**
+![Dashboard with Total Discounts](/brain/3e392191-b4a3-47a7-b46c-58f3da7823db/dashboard_total_descuentos_1768401989287.png)
+
+**Observations:**
+- The "Total Descuentos" card is clearly visible.
+- It is positioned correctly between Subtotal and IVA.
+- The value is formatted as currency.

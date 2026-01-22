@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Plan to remove 'Previsualizar' button, bind logic to filters, and fix provider filter reset.",
+  "updatedAt": "2026-01-14T15:08:25.956990600Z"
+}

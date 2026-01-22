@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Implement logic to distinguish positive and negative movements in FondoRenta. 'ADICION' descriptions are positive, all others are negative.",
+  "updatedAt": "2026-01-17T21:20:04.943596800Z"
+}

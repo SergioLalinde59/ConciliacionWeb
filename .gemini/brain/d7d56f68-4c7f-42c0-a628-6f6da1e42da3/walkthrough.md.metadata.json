@@ -1,0 +1,6 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "Updated the `DataTable` to support grouped headers and reordered the columns in `ConciliacionPage` to place \"Extracto\" before \"Sistema\". Added grouped headers for better visual organization.",
+  "updatedAt": "2026-01-18T00:29:54.220954400Z",
+  "version": "1"
+}

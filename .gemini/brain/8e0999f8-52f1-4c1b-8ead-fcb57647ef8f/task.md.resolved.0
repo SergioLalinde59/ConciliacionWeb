@@ -1,0 +1,7 @@
+# Task List
+
+- [ ] Analyze `conciliaciones.py` to find the data source for 'Extracto (Manual)' <!-- id: 0 -->
+- [ ] Verify the Account ID for 'FondoRenta' <!-- id: 1 -->
+- [ ] Determine why non-zero inputs/outputs appear when `movimientos_extracto` is empty <!-- id: 2 -->
+- [ ] Implement a fix to ensure zero values when no extract data exists <!-- id: 3 -->
+- [ ] Verify the fix applies to all accounts <!-- id: 4 -->

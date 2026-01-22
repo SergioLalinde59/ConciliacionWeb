@@ -1,0 +1,35 @@
+# Implementation Plan - MasterCard Pesos USD Extraction (Previous Format)
+
+We need to implement the extractor for the "MasterCard Pesos" account, specifically targeting the "ESTADO DE CUENTA EN: DOLARES" section of the "Previous Format" statement.
+This extractor will capture USD transactions, mapping the original value to the `usd` field and setting [valor](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto_movimientos.py#109-126) (COP) to 0.
+
+## User Review Required
+> [!IMPORTANT]
+> This implementation overwrites [mastercard_pesos_extracto_anterior_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_anterior_movimientos.py) to focus *exclusively* on the USD section ("DOLARES"). If this file was previously intended for the Pesos section, that logic will be replaced.
+> The logic forces `valor = 0` and maps the extracted amount to `usd`, multiplied by `-1`.
+
+## Proposed Changes
+
+### Backend - Extractors
+
+#### [MODIFY] [mastercard_pesos_extracto_anterior_movimientos.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_pesos_extracto_anterior_movimientos.py)
+- **Validation**: Update page validation to look for `ESTADO DE CUENTA EN: DOLARES` (ignoring whitespace).
+- **Regex**: Update regex to capture:
+    - Authorization (Optional)
+    - Date (Fecha Transacción)
+    - Description
+    - Original Value (USD)
+- **Mapping**:
+    - `fecha` -> Extracted Date
+    - `descripcion` -> Extracted Description
+    - `usd` -> Extracted Original Value * -1
+    - [valor](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/bancolombia/mastercard_usd_extracto_movimientos.py#109-126) -> 0
+    - `trm` -> 0
+- **Logging**: Maintain existing logging structure.
+
+## Verification Plan
+
+### Manual Verification
+- User mentioned "SIempre las verificaciones las hago yo personalmente".
+- I will verify the file content after writing.
+- The user will trigger the process (presumably via the app or a script) to test the extraction with the provided images/PDFs.

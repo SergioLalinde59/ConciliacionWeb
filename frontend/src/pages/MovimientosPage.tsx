@@ -21,9 +21,7 @@ export const MovimientosPage = () => {
     const [terceroId, setTerceroId] = useSessionStorage('filtro_terceroId', '')
     const [centroCostoId, setCentroCostoId] = useSessionStorage('filtro_centroCostoId', '')
     const [conceptoId, setConceptoId] = useSessionStorage('filtro_conceptoId', '')
-    const [soloPendientes, setSoloPendientes] = useSessionStorage('filtro_soloPendientes', false)
     const [mostrarIngresos, setMostrarIngresos] = useSessionStorage('filtro_mostrarIngresos', true)
-
     const [mostrarEgresos, setMostrarEgresos] = useSessionStorage('filtro_mostrarEgresos', true)
 
     // Dynamic Exclusion Logic
@@ -131,7 +129,7 @@ export const MovimientosPage = () => {
             centro_costo_id: parsedCentroCostoId,
             concepto_id: parsedConceptoId,
             centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined,
-            solo_pendientes: soloPendientes || undefined,
+
             tipo_movimiento: tipoMovimiento
             // Sin parámetros de paginación - cargar todos
         }
@@ -150,7 +148,7 @@ export const MovimientosPage = () => {
                 setLoading(false)
             })
 
-    }, [desde, hasta, cuentaId, terceroId, centroCostoId, conceptoId, soloPendientes, mostrarIngresos, mostrarEgresos, actualCentrosCostosExcluidos])
+    }, [desde, hasta, cuentaId, terceroId, centroCostoId, conceptoId, mostrarIngresos, mostrarEgresos, actualCentrosCostosExcluidos])
 
 
     // Load on mount and whenever filters change
@@ -195,7 +193,7 @@ export const MovimientosPage = () => {
         } else {
             setCentrosCostosExcluidos([])
         }
-        setSoloPendientes(false)
+
         setMostrarIngresos(true)
         setMostrarEgresos(true)
     }
@@ -237,9 +235,7 @@ export const MovimientosPage = () => {
                 centrosCostos={centrosCostos}
                 conceptos={conceptos}
                 showClasificacionFilters={true}
-                soloPendientes={soloPendientes}
-                onSoloPendientesChange={setSoloPendientes}
-                showSoloPendientes={true}
+
                 mostrarIngresos={mostrarIngresos}
                 onMostrarIngresosChange={setMostrarIngresos}
                 mostrarEgresos={mostrarEgresos}

@@ -1,0 +1,8 @@
+# Task List
+
+- [ ] Investigate why 'Carga a BD' and 'Reporte Facturas' pages are not loading <!-- id: 0 -->
+    - [ ] Explore codebase structure and key files (`App.tsx`, page components) <!-- id: 1 -->
+    - [ ] Identify recent changes related to `FilterBar` integration <!-- id: 2 -->
+    - [ ] Check for console errors or missing props/imports <!-- id: 3 -->
+- [ ] Fix the loading issues <!-- id: 4 -->
+- [ ] Verify the fix <!-- id: 5 -->

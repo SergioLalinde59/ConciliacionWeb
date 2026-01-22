@@ -1,0 +1,42 @@
+# Implementation Plan - Fondo Renta Extract Support
+
+The goal is to enable the "Cargar Extracto" feature for "Fondo Renta" (Cibest Capital / Bancolombia Renta Fija Plazo) extracts. The current implementation is missing a summary extractor for this type and has incorrect movement parsing logic.
+
+## User Review Required
+> [!IMPORTANT]
+> I will be updating [fondorenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/fondorenta.py) to specifically handle "Renta Fija Plazo" format shown in the user images. This assumes `tipo_cuenta` sent from frontend is "FondoRenta" or similar (checking [ProcesadorArchivosService](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py#20-371)).
+
+## Proposed Changes
+
+### Backend
+
+#### [MODIFY] [fondorenta.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/fondorenta.py)
+- Implement `extraer_resumen_fondorenta(file_obj) -> Dict`.
+    - Parse "Desde: YYYYMMDD Hasta: YYYYMMDD" for period.
+    - Parse Summary Table:
+        - "SALDO ANTERIOR" -> `saldo_anterior`
+        - "ADICIONES" -> `entradas` (partially)
+        - "RETIROS" -> `salidas` (partially)
+        - "REND. NETOS" -> Add to inputs if positive, outputs if negative.
+        - "RETENCIÓN" -> Add to outputs.
+        - "NUEVO SALDO" -> `saldo_final`
+- Rewrite [extraer_movimientos_fondorenta(file_obj) -> List](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/extractors/fondorenta.py#6-38).
+    - Regex for lines: `^(\d{8})\s+(.+?)\s+([\d,.]+)\s+([\d,.]+)\s+([\d,.]+)$`.
+    - Parse Date `YYYYMMDD`.
+    - Determine sign based on Description (RETIRO, RETEFTE -> negative).
+
+#### [MODIFY] [procesador_archivos_service.py](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/application/services/procesador_archivos_service.py)
+- Import `extraer_resumen_fondorenta`.
+- In [analizar_extracto](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Backend/src/infrastructure/api/routers/conciliaciones.py#135-157), add case for `tipo_cuenta` (likely "FondoRenta" - I will verify current value mapping or just support the string sent by frontend).
+    - Note: Frontend dropdown sends the value. I'll search for where `options` are defined in frontend if needed, but likely I can match the key.
+
+## Verification Plan
+
+### Automated Tests
+- I cannot easily run existing unit tests without the PDF file.
+- I will create a small temporary test script `test_extract_text.py` if I can mock `pdfplumber` output, but likely relying on manual verification via the "Analizar" button in Frontend is best since user has the file.
+
+### Manual Verification
+1. User uploads the "2025-12 4144.pdf" again using "FondoRenta" option.
+2. "Analizar Extracto" should now succeed and show the comparison table.
+3. Verify "Saldo Anterior", "Entradas", "Salidas", "Saldo Final" match the PDF summary.

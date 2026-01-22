@@ -1,0 +1,7 @@
+# Task: Debug and Fix MasterCard Pesos Old Extractor Import
+
+- [ ] Check existing files in `src/infrastructure/extractors/bancolombia` <!-- id: 0 -->
+- [ ] Identify the naming convention mismatch (expected `..._movimientos_anterior` vs actual) <!-- id: 1 -->
+- [ ] Rename or create the correct file `mastercard_pesos_extracto_movimientos_anterior.py` <!-- id: 2 -->
+- [ ] Implement the movement extraction logic if missing <!-- id: 3 -->
+- [ ] Verify the import works and movements are detected <!-- id: 4 -->

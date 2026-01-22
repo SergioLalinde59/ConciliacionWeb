@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "Documentación de mejoras implementadas en la lógica de sugerencias de clasificación. Se mejoró el filtrado de historial para movimientos sin referencia y se agregó columna de cuenta en el historial relacionado.",
+  "updatedAt": "2026-01-16T05:29:31.692663100Z"
+}

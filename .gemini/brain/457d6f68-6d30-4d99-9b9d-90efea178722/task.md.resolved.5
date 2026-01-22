@@ -1,0 +1,16 @@
+# Task: Add USD and TRM to Reconciliation View
+
+- [x] Investigate Frontend Implementation <!-- id: 0 -->
+    - [x] Locate [ConciliacionMovimientosTab](file:///f:/1.%20Cloud/4.%20AI/1.%20Antigravity/ConciliacionWeb/Frontend/src/components/organisms/ConciliacionMovimientosTab.tsx#44-264) or equivalent <!-- id: 1 -->
+    - [x] Check how summary boxes are rendered <!-- id: 2 -->
+    - [x] Check how the movements table is rendered <!-- id: 3 -->
+- [x] Investigate Backend Implementation <!-- id: 4 -->
+    - [x] Check `/api/conciliaciones/{id}/{year}/{month}/comparacion` response structure <!-- id: 5 -->
+    - [x] Check `/api/conciliaciones/{id}/{year}/{month}/movimientos-extracto` response structure <!-- id: 6 -->
+- [x] Create Implementation Plan <!-- id: 7 -->
+- [x] Implement Changes <!-- id: 8 -->
+    - [x] Update Backend to return USD/TRM stats if needed (Already doing it) <!-- id: 9 -->
+    - [x] Update Frontend to display USD/TRM in summary boxes (Removed >0 check) <!-- id: 10 -->
+    - [x] Update Frontend to display USD/TRM in movements table (Auto-enabled by `showUsd`) <!-- id: 11 -->
+- [ ] Verify Changes <!-- id: 12 -->
+    - [ ] Auto-verification via Task Boundary status <!-- id: 13 -->

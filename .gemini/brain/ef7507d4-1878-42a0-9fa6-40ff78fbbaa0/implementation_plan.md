@@ -1,0 +1,69 @@
+# Implementation Plan - Atomic Design Refactoring
+
+## Goal
+Restructure the `conciliacion.app` frontend to strictly follow Atomic Design principles. This will ensure components are unique, centralized, and scalable, improving both developer experience and user consistency.
+
+## Current State Analysis
+- **Atoms**: Partial existence (`Button`, `Input`, `CurrencyDisplay`).
+- **Molecules**: Partial existence (`DataTable`, `Modal`, `Filtering`).
+- **Uncategorized**: Many feature-specific components (`*Table.tsx`, `*Modal.tsx`) sit in the root of `components`.
+- **Missing**: No clear `Templates` layer; Pages often construct layout manually.
+
+## Proposed Structure
+We will adopt the following directory structure within `src/components`:
+
+```text
+src/
+  components/
+    atoms/        # Basic logic-less elements (Button, Input, IconWrapper, Badge)
+    molecules/    # Small groups of atoms (FormField, SearchInput, PaginationControls)
+    organisms/    # Complex sections (Sidebar, DataGrid, FilterPanel, specific Forms like AccountForm)
+    templates/    # Page layouts (MainLayout, DashboardLayout, AuthLayout)
+  pages/          # Application views connected to state/routes (Dashboard, Configuration)
+```
+
+## detailed Migration Plan
+
+### 1. Atoms (The Basics)
+Ensure these are generic and styleable.
+- `Button`: Standardize variants (primary, secondary, danger, ghost).
+- `Input` / `Select` / `Checkbox`: Ensure consistent styling tokens.
+- `Typography`: (New) specific components for Headings/Text to enforce font scales.
+- `Card`: (New) Base container for panels.
+
+### 2. Molecules (The Building Blocks)
+Combinations of atoms that form functional units.
+- `FormField`: Label + Input + Error Message.
+- `ModalHeader` / `ModalFooter`: Standardize modal parts.
+- `FilterGroup`: A grouping of filter selectors.
+- `StatCard`: The single summary card used in Dashboard (currently `EstadisticasTotales` might need breaking down).
+
+### 3. Organisms (The Features)
+Complex, distinct parts of an interface.
+- **Tables**: `CuentasTable`, `MovimientosTable`, etc., should use a generic `DataTable` molecule but live here as specific instances if they have complex logic, or generic `DataGrid` if just props.
+    - *Decision*: Refactor all specific tables to be wrappers around a smart `DataTable` molecule/organism.
+- **Modals**: `CuentaModal`, `TerceroModal`.
+- **Navigation**: `Sidebar`.
+- **Global**: `FilterBar` (already in progress/planned).
+
+### 4. Templates (The Layouts)
+Abstract structures of pages.
+- `MainLayout`: Sidebar + Header + Content Area.
+- `TableLayout`: Title + Actions Bar + Filter Area + Table + Pagination.
+
+### 5. Pages (The Instances)
+- Refactor logic in `App.tsx` and `src/pages/*` to simply plug data into Templates.
+
+## User Review Required
+> [!IMPORTANT]
+> **Component Movement**: Moving files will require updating imports across the application. I will handle this, but please note that the file history in git for renamed files is usually preserved if done correctly.
+
+> [!NOTE]
+> **Design Polish**: As we refactor, I will ensure the "Premium" aesthetic is enforced via the Atoms' CSS.
+
+## Execution Steps
+1.  **Approvals**: Confirm this plan.
+2.  **Atoms/Molecules Refresh**: Move and polish existing atoms/molecules.
+3.  **Organisms Refactor**: Move the big `Table` and `Modal` components into `organisms/`.
+4.  **Template Creation**: Create `MainLayout` and `ContentLayout`.
+5.  **Page Cleanup**: Update pages to use the new structure.

@@ -1,0 +1,36 @@
+# Task: Sistema de Conciliación Inteligente con Matching
+
+## Fase 1: Base de Datos y Configuración
+- [ ] Crear tabla `configuracion_matching` para parámetros configurables
+- [ ] Crear tabla `movimiento_vinculaciones` para auditoría de matches
+- [ ] Crear índices para optimización de búsqueda
+
+## Fase 2: Backend - Dominio (Hexagonal)
+- [ ] Crear modelo de dominio `MovimientoMatch`
+- [ ] Crear modelo de dominio `ConfiguracionMatching`
+- [ ] Definir puertos (interfaces) para repositorios
+- [ ] Crear servicio de dominio `MatchingService` con algoritmos
+
+## Fase 3: Backend - Infraestructura
+- [ ] Implementar `PostgresMovimientoVinculacionRepository`
+- [ ] Implementar `PostgresConfiguracionMatchingRepository`
+- [ ] Crear endpoint `/api/conciliaciones/{cuenta_id}/{year}/{month}/matching`
+- [ ] Crear endpoint `/api/configuracion/matching` (GET/PUT)
+
+## Fase 4: Frontend - Atomic Design
+- [ ] Crear átomo `MatchStatusBadge` para estados visuales
+- [ ] Crear molécula `MovimientoMatchCard` para cada registro
+- [ ] Crear organismo `DualPanelComparison` (dos paneles)
+- [ ] Crear página `ConciliacionMatchingPage`
+
+## Fase 5: Funcionalidades de Usuario
+- [ ] Implementar acciones: Vincular, Desvincular, Ignorar
+- [ ] Implementar creación de movimiento desde extracto
+- [ ] Implementar detección de traslados entre cuentas
+- [ ] Agregar filtros por estado de matching
+
+## Fase 6: Testing y Refinamiento
+- [ ] Probar con datos reales de Diciembre 2025
+- [ ] Ajustar algoritmo según resultados
+- [ ] Optimizar performance
+- [ ] Documentar uso

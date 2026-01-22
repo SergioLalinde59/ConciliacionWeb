@@ -134,7 +134,13 @@ export const clasificacionService = {
     obtenerSugerencia: (id: number): Promise<unknown> =>
         fetch(`${API_BASE_URL}/api/clasificacion/sugerencia/${id}`).then(handleResponse),
 
-    clasificarLote: (dto: { patron: string; tercero_id: number; centro_costo_id: number; concepto_id: number }): Promise<{ mensaje: string; clasificados: number }> =>
+    clasificarLote: (dto: {
+        patron?: string
+        movimiento_ids?: number[]
+        tercero_id: number
+        centro_costo_id: number
+        concepto_id: number
+    }): Promise<{ mensaje: string; filas_afectadas: number }> =>
         fetch(`${API_BASE_URL}/api/clasificacion/clasificar-lote`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -146,5 +152,11 @@ export const clasificacionService = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ patron })
-        }).then(handleResponse)
+        }).then(handleResponse),
+
+    previewSimilares: (movimientoId: number): Promise<{
+        total: number
+        movimientos: Array<Movimiento & { similitud: number }>
+    }> =>
+        fetch(`${API_BASE_URL}/api/clasificacion/preview-similares/${movimientoId}`).then(handleResponse)
 }

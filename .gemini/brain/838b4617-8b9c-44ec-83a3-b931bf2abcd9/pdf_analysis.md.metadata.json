@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_OTHER",
+  "summary": "Detailed analysis of the MasterCard PDF extraction issue, showing that the PDF is in PESOS format and the text contains tripled characters which prevents regex matching",
+  "updatedAt": "2026-01-16T19:50:35.060993Z"
+}

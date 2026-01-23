@@ -274,7 +274,7 @@ export const ConciliacionPage = () => {
                 <EditableCurrencyCell
                     value={row.extracto_saldo_final}
                     onChange={(val) => handleUpdate(row.cuenta.id, row.year, row.month, 'extracto_saldo_final', val)}
-                    className="font-bold border-b border-emerald-300 text-emerald-700"
+                    className="font-bold border-b border-emerald-300"
                 />
             ),
             align: 'right',
@@ -304,7 +304,7 @@ export const ConciliacionPage = () => {
         {
             key: 'sistema_saldo_final',
             header: 'Saldo Final',
-            accessor: (row) => <CurrencyDisplay value={row.sistema_saldo_final} className="font-bold text-blue-700" />,
+            accessor: (row) => <CurrencyDisplay value={row.sistema_saldo_final} className="font-bold" />,
             align: 'right',
             headerClassName: 'bg-blue-50 text-blue-800 font-bold border-b-2 border-blue-200',
             cellClassName: 'bg-blue-50/30',
@@ -314,10 +314,7 @@ export const ConciliacionPage = () => {
         {
             key: 'diferencia',
             header: 'Diferencia',
-            accessor: (row) => {
-                const diff = row.diferencia;
-                return <CurrencyDisplay value={diff} className={`font-bold ${diff === 0 ? 'text-gray-400' : 'text-red-600'}`} />;
-            },
+            accessor: (row) => <CurrencyDisplay value={row.diferencia} className="font-bold" colorize={true} />,
             align: 'right',
             headerClassName: 'border-l border-gray-200',
             cellClassName: 'border-l border-gray-100',
@@ -391,7 +388,18 @@ export const ConciliacionPage = () => {
                     </div>
                 </div>
 
-                <ConciliacionMovimientosTab cuentaId={cuentaId} year={year} month={month} />
+                <ConciliacionMovimientosTab
+                    cuentaId={cuentaId}
+                    year={year}
+                    month={month}
+                    onConciliacionUpdate={(updated) => {
+                        const key = getConcKey(updated.cuenta_id, updated.year, updated.month);
+                        setConciliaciones(prev => ({
+                            ...prev,
+                            [key]: updated
+                        }));
+                    }}
+                />
             </div>
         );
     }

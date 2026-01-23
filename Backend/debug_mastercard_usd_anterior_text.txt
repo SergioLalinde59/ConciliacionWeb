@@ -15,32 +15,34 @@ para evitar cobro de intereses por mora, débitos a
 tus cuentas y el bloqueo de tu tarjeta.
 Recuerda estar al día en el pago de tu tarjeta para evitar cobro de intereses por mora, débitos a tus cuentas y el bloqueo de tu tarjeta.
 Cupo Total Cupo de Avances Período Facturado
-$ 150,000,000.00 $ 150,000,000.00 Desde: 30/12/2024 Hasta: 30/01/2025
+$ 150,000,000.00 $ 150,000,000.00 Desde: 30/01/2025 Hasta: 28/02/2025
 Disponible Total Disponible Avances Pague antes de Valor Pagado
-$ 134,699,778.62 $ 134,699,778.62 17/02/2025
+$ 131,435,689.09 $ 131,435,689.09 17/03/2025
 Tasas de interés vigente Resumen Saldo Total Resumen Pago Mínimo
-Saldo anterior 27.18 Saldo en mora 0.00
-M.V. E.A. + Compras del mes 32.57 + Cuota compras del mes 0.91
+Saldo anterior 31.75 Saldo en mora 0.00
+M.V. E.A. + Compras del mes 167.60 + Cuota compras del mes 4.66
 + Intereses de mora 0.00 + Intereses de mora 0.00
-Compra Internacional 1,8646 % 24,8186 % + Intereses corrientes 0.00 + Intereses corrientes 0.00
-Avance Internacional 1,8646 % 24,8186 % + Avances 0.00 + Cuota avances 0.00
-Mora 1,8646 % 24,8186 % + Otros cargos 0.00 + Otros cargos 0.00
-- Pagos / abonos 28.00 + Cuota compras anteriores 0.00
+Compra Internacional 1,9598 % 26,2256 % + Intereses corrientes 0.00 + Intereses corrientes 0.00
+Avance Internacional 1,9598 % 26,2256 % + Avances 0.00 + Cuota avances 0.00
+Mora 1,9598 % 26,2256 % + Otros cargos 0.00 + Otros cargos 0.00
+- Pagos / abonos 32.11 + Cuota compras anteriores 0.00
 Saldo a favor 0.00 - Saldo a favor 0.00
-= Pagos total 32.00 = Pago mínimo 1.00
+= Pagos total 168.00 = Pago mínimo 5.00
 * Otros cargos: Este valor incluye los siguientes conceptos: Comisión avance, cuota de manejo, IVA por reexpedición, GMF y cobro por reexpedición
 Con Bancolombia Acumulas + Más Puntos Colombia. Consulta tu saldo de puntos, su fecha de vencimiento, redime y entérate de todos los aliados para ti
 en www.puntoscolombia.com
 Número de Fecha de Tasa Tasa EA
 Descripción Valor Original Cargos y Abonos Saldo a Diferir Cuotas
 Autorización Transacción Pactada Facturada
-T01978 27/01/2025 APPLE.COM/BILL 3.04 1,8646 24,8186 0.08 2.96 1/36
+T09265 27/02/2025 APPLE.COM/BILL 3.14 1,9598 26,2256 0.09 3.05 1/36
 VR MONEDA ORIG 12900.0 USA
-R05460 20/01/2025 OPENAI *CHATGPT SUBSCR 20.00 1,8646 24,8186 0.56 19.44 1/36
-C02470 16/01/2025 ABONO SUCURSAL VIRTUAL 28.00- 28.00- 0.00
-T01558 13/01/2025 Adobe 4.53 1,8646 24,8186 0.13 4.40 1/36
+R02307 20/02/2025 OPENAI *CHATGPT SUBSCR 20.00 1,9598 26,2256 0.56 19.44 1/36
+T00461 13/02/2025 Adobe 4.70 1,9598 26,2256 0.13 4.57 1/36
 VR MONEDA ORIG 19583.0 IRL
-R03815 10/01/2025 OPENAI 5.00 1,8646 24,8186 0.14 4.04 1/36
+C05468 12/02/2025 ABONO SUCURSAL VIRTUAL 32.00- 32.00- 0.00
+000000 05/02/2025 SUPPORTPDFFILLER.COM 0.11- 0.11- 0.00
+T08224 03/02/2025 SUPPORTPDFFILLER.COM 0.11 1,9598 26,2256 0.00 0.11 1/36
+R03837 02/02/2025 COURSERA.ORG 139.65 1,8646 24,8186 3.88 135.41 1/36
 DCF:defensor@bancolombia.com.co;www.bancolombia.com/personas/defensor-financiero; Cr48#18A-14 P11 Medellín;Tel6043561225-018000522622
 Pag. 1 / 1
 

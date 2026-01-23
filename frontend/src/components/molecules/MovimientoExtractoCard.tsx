@@ -59,6 +59,7 @@ export const MovimientoExtractoCard = ({
                     <span className="text-sm text-gray-600">Valor COP:</span>
                     <CurrencyDisplay
                         value={valorAbsoluto}
+                        colorize={false}
                         className={`font-bold ${isNegative ? 'text-red-600' : 'text-green-600'}`}
                     />
                 </div>

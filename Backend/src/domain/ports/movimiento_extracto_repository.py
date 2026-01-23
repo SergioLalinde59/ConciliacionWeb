@@ -44,6 +44,6 @@ class MovimientoExtractoRepository(ABC):
         pass
 
     @abstractmethod
-    def existe_movimiento(self, fecha, valor, referencia, descripcion=None, usd=None) -> bool:
+    def existe_movimiento(self, fecha, valor, referencia, cuenta_id: int, descripcion=None, usd=None) -> bool:
         """Verifica si existe un movimiento en el extracto"""
         pass

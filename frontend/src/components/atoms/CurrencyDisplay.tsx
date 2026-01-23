@@ -79,7 +79,7 @@ export const formatNumber = (value: number, decimals: number = 0): string => {
  */
 export const getNumberColorClass = (value: number): string => {
     if (value > 0) return 'text-emerald-600'
-    if (value < 0) return 'text-rose-600'
+    if (value < 0) return 'text-red-600'
     return 'text-blue-600'
 }
 

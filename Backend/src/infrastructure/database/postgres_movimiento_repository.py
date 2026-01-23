@@ -350,38 +350,82 @@ class PostgresMovimientoRepository(MovimientoRepository):
         cursor.close()
         return [self._row_to_movimiento(row) for row in rows]
 
-    def existe_movimiento(self, fecha: date, valor: Decimal, referencia: str, descripcion: str = None, usd: Decimal = None) -> bool:
+    def existe_movimiento(self, fecha: date, valor: Decimal, referencia: str, cuenta_id: int, descripcion: str = None, usd: Decimal = None) -> bool:
         cursor = self.conn.cursor()
+        
+        # Base requirements: Account and Date must always match
+        # AND check for uniqueness based on Reference OR (Value + Description)
+        
+        # 1. Scope query by Account AND Date
+        query_base = "SELECT 1 FROM movimientos WHERE CuentaID=%s AND Fecha=%s"
+        params = [cuenta_id, fecha]
+        
         if referencia and referencia.strip():
-            # Si hay referencia unívoca, confiamos en ella (y valor/fecha por seguridad)
-            # Nota: Si es USD, igual el valor podría ser 0 en BD, así que tendríamos cuidado.
-            # Pero normalmente la referencia mata todo.
-            query = "SELECT 1 FROM movimientos WHERE Referencia=%s AND Fecha=%s"
-            # Si hay USD, validamos por USD, sino por Valor
+            # CAUTION: Even with reference, we must ensure it's not a different transaction
+            # But the user trusts reference. We'll stick to Reference + Account + Date
+            query = query_base + " AND Referencia=%s"
+            params.append(referencia)
+            
+            # If USD is involved, we might want to check it too, but reference is usually strong enough.
+            # Kept logic: If USD provided, check it.
             if usd is not None:
                 query += " AND USD=%s"
-                cursor.execute(query, (referencia, fecha, usd))
-            else:
-                 query += " AND Valor=%s"
-                 cursor.execute(query, (referencia, fecha, valor))
+                params.append(usd)
         else:
-            # Si no hay referencia, debemos ser más estrictos: validar también Descripción
+            # If NO reference, we MUST use Description to distinguish similar transactions
+            # e.g. Two transfers of 500.000 on same day but different descriptions
+            
             target_val = usd if usd is not None else valor
             col_val = "USD" if usd is not None else "Valor"
             
-            if descripcion:
-                # Usamos LOWER o ILIKE para que la comparación sea insensible a mayúsculas
-                query = f"SELECT 1 FROM movimientos WHERE {col_val}=%s AND Fecha=%s AND LOWER(Descripcion) = LOWER(%s)"
-                cursor.execute(query, (target_val, fecha, descripcion))
-            else:
-                # Fallback peligroso, pero necesario si no hay nada más
-                # NOTA: Si usd es None (es COP) y pasamos valor, y en BD guardamos valor, todo bien.
-                query = f"SELECT 1 FROM movimientos WHERE {col_val}=%s AND Fecha=%s"
-                cursor.execute(query, (target_val, fecha))
+            # Add Value check
+            query = query_base + f" AND {col_val}=%s"
+            params.append(target_val)
             
+            if descripcion:
+                # CRITICAL FIX: Always check Description if Reference is missing
+                # Use ILIKE for case-insensitive comparison
+                query += " AND Descripcion ILIKE %s"
+                params.append(descripcion)
+            else:
+                # If no description provided either, we are forced to check just by Value/Date
+                # This is risky but standard fallback
+                pass
+            
+        cursor.execute(query, tuple(params))
         exists = cursor.fetchone() is not None
         cursor.close()
         return exists
+
+    def contar_movimientos_similares(self, fecha: date, valor: Decimal, referencia: str, cuenta_id: int, descripcion: str = None, usd: Decimal = None) -> int:
+        cursor = self.conn.cursor()
+        
+        # 1. Scope query by Account AND Date
+        query_base = "SELECT COUNT(*) FROM movimientos WHERE CuentaID=%s AND Fecha=%s"
+        params = [cuenta_id, fecha]
+        
+        if referencia and referencia.strip():
+            query = query_base + " AND Referencia=%s"
+            params.append(referencia)
+            
+            if usd is not None:
+                query += " AND USD=%s"
+                params.append(usd)
+        else:
+            target_val = usd if usd is not None else valor
+            col_val = "USD" if usd is not None else "Valor"
+            
+            query = query_base + f" AND {col_val}=%s"
+            params.append(target_val)
+            
+            if descripcion:
+                query += " AND Descripcion ILIKE %s"
+                params.append(descripcion)
+            
+        cursor.execute(query, tuple(params))
+        count = cursor.fetchone()[0]
+        cursor.close()
+        return count
 
     def obtener_exacto(self, cuenta_id: int, fecha: date, valor: Decimal, referencia: Optional[str] = None, descripcion: Optional[str] = None) -> Optional[Movimiento]:
         cursor = self.conn.cursor()
@@ -771,8 +815,6 @@ class PostgresMovimientoRepository(MovimientoRepository):
             {
                 "tercero_id": row[0],
                 "tercero_nombre": row[1],
-                "tercero_id": row[0],
-                "tercero_nombre": row[1],
                 "centro_costo_id": None, # Ya no agrupamos por esto
                 "centro_costo_nombre": "Varios",
                 "concepto_id": None, # Ya no agrupamos por esto
@@ -784,6 +826,40 @@ class PostgresMovimientoRepository(MovimientoRepository):
             }
             for row in rows
         ]
+
+    def eliminar(self, id: int) -> None:
+        """
+        Elimina físicamente un movimiento y recalcula la conciliación afectada.
+        """
+        cursor = self.conn.cursor()
+        try:
+            # 1. Obtener datos para recalculo antes de borrar
+            query_get = "SELECT CuentaID, Fecha FROM movimientos WHERE Id = %s"
+            cursor.execute(query_get, (id,))
+            row = cursor.fetchone()
+            
+            cuenta_id = row[0] if row else None
+            fecha = row[1] if row else None
+
+            # 2. Eliminar
+            query = "DELETE FROM movimientos WHERE Id = %s"
+            cursor.execute(query, (id,))
+            self.conn.commit()
+            
+            # 3. Recalcular Conciliación (Hook)
+            if cuenta_id and fecha:
+                try:
+                    # Asumimos que fecha es date o datetime
+                    self.conciliacion_repo.recalcular_sistema(cuenta_id, fecha.year, fecha.month)
+                except Exception as e:
+                    print(f"WARNING: Error al recalcular conciliacion tras eliminación: {e}")
+                    
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+        finally:
+            cursor.close()
+
 
     def obtener_movimientos_centro_costo(self, tercero_id: int, centro_costo_id: Optional[int] = None, concepto_id: Optional[int] = None, fecha_inicio: Optional[date] = None, fecha_fin: Optional[date] = None) -> List[Movimiento]:
         """

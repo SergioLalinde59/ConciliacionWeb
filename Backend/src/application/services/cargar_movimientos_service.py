@@ -36,26 +36,65 @@ class CargarMovimientosService:
             movimientos = lector.leer_archivo(ruta_archivo)
             resultado['total_leidos'] = len(movimientos)
             
+            # --- Pre-Cálculo de Duplicados ---
+            from collections import defaultdict
+            
+            # Key: (fecha, valor, referencia, descripcion)
+            signatures = []
+            file_counts = defaultdict(int)
+            
             for mov in movimientos:
+                # Normalizar para firma
+                ref = mov.referencia if mov.referencia else ""
+                desc = mov.descripcion if mov.descripcion else ""
+                sig = (mov.fecha, mov.valor, ref, desc)
+                signatures.append(sig)
+                file_counts[sig] += 1
+                
+            # Consultar BD (Estado Inicial)
+            db_initial_counts = {}
+            for sig in file_counts:
+                fecha, valor, ref, desc = sig
                 try:
-                    # 2. Completar datos faltantes que el extractor no conoce
+                    c = self.repositorio.contar_movimientos_similares(
+                        fecha=fecha,
+                        valor=valor,
+                        referencia=ref,
+                        cuenta_id=cuenta_id, # Importante: Usar cuenta del contexto
+                        descripcion=desc
+                    )
+                    db_initial_counts[sig] = c
+                except Exception as e:
+                    resultado['errores'].append(f"Error verificando duplicados para {desc}: {e}")
+                    db_initial_counts[sig] = 999 # Bloquear inserción si falla chequeo
+            
+            inserted_counts_in_batch = defaultdict(int)
+            
+            for i, mov in enumerate(movimientos):
+                try:
+                    # 2. Completar datos faltantes
                     mov.cuenta_id = cuenta_id
                     mov.moneda_id = moneda_id
                     
-                    # 3. Verificar duplicados (Regla de negocio)
-                    # Usamos el repo para chequear si ya existe
-                    ya_existe = self.repositorio.existe_movimiento(
-                        fecha=mov.fecha,
-                        valor=mov.valor,
-                        referencia=mov.referencia
-                    )
+                    # 3. Verificar si debemos insertar este
+                    sig = signatures[i]
                     
-                    if ya_existe:
-                        resultado['duplicados'] += 1
-                    else:
+                    # Queremos que Total = Max(FileCount, DBCount)
+                    # Insertamos si no hemos completado el "Delta" necesario
+                    # Delta = Max(0, FileCount - DBCount)
+                    # Si DB ya tiene 2 y File trae 2 -> Delta 0. Insertamos 0.
+                    # Si DB tiene 1 y File trae 2 -> Delta 1. Insertamos 1.
+                    # Si DB tiene 0 y File trae 2 -> Delta 2. Insertamos 2.
+                    
+                    needed = max(0, file_counts[sig] - db_initial_counts.get(sig, 0))
+                    
+                    if inserted_counts_in_batch[sig] < needed:
                         # 4. Guardar
                         self.repositorio.guardar(mov)
                         resultado['nuevos'] += 1
+                        inserted_counts_in_batch[sig] += 1
+                    else:
+                        resultado['duplicados'] += 1
                         
                 except Exception as e:
                     resultado['errores'].append(f"Error procesando movimiento {mov.descripcion}: {str(e)}")

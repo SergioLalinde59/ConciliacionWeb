@@ -35,14 +35,14 @@ export const DashboardStatsTable = ({ stats, loading }: Props) => {
         createColumn({
             key: 'ingresos',
             header: 'Ingresos',
-            accessor: (row) => <CurrencyDisplay value={row.ingresos} className="text-green-600 font-medium" />,
+            accessor: (row) => <CurrencyDisplay value={row.ingresos} className="font-medium" />,
             sortable: true,
             align: 'right'
         }),
         createColumn({
             key: 'egresos',
             header: 'Egresos',
-            accessor: (row) => <CurrencyDisplay value={row.egresos} className="text-red-600 font-medium" />,
+            accessor: (row) => <CurrencyDisplay value={row.egresos} className="font-medium" />,
             sortable: true,
             align: 'right'
         }),
@@ -54,7 +54,7 @@ export const DashboardStatsTable = ({ stats, loading }: Props) => {
                 return (
                     <CurrencyDisplay
                         value={balance}
-                        className={`font-bold ${balance >= 0 ? 'text-blue-600' : 'text-orange-600'}`}
+                        className="font-bold"
                     />
                 )
             },

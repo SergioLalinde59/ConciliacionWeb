@@ -393,3 +393,30 @@ class PostgresMovimientoVinculacionRepository(MovimientoVinculacionRepository):
             raise e
         finally:
             cursor.close()
+
+    def desvincular_por_sistema_id(self, sistema_id: int) -> None:
+        """
+        Desvincula cualquier match asociado a un movimiento del sistema.
+        """
+        cursor = self.conn.cursor()
+        try:
+            query = """
+                UPDATE movimiento_vinculaciones 
+                SET movimiento_sistema_id = NULL,
+                    estado = 'SIN_MATCH',
+                    score_similitud = 0,
+                    score_fecha = 0,
+                    score_valor = 0,
+                    score_descripcion = 0,
+                    confirmado_por_usuario = TRUE,
+                    fecha_confirmacion = NOW(),
+                    notas = 'Desvinculado por eliminación de movimiento sistema'
+                WHERE movimiento_sistema_id = %s
+            """
+            cursor.execute(query, (sistema_id,))
+            self.conn.commit()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+        finally:
+            cursor.close()

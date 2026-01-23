@@ -481,3 +481,38 @@ def obtener_configuracion_filtros_exclusion(
     except Exception as e:
         logger.error(f"Error obteniendo configuracion filtros: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error obteniendo configuracion")
+
+
+class DeleteBatchRequest(BaseModel):
+    ids: List[int]
+
+# Import at top level would be circular or requires refactoring, so we rely on dependency injection
+from src.domain.ports.movimiento_vinculacion_repository import MovimientoVinculacionRepository
+from src.infrastructure.api.dependencies import get_movimiento_vinculacion_repository
+
+@router.delete("/lote")
+def eliminar_movimientos_lote(
+    request: DeleteBatchRequest,
+    repo: MovimientoRepository = Depends(get_movimiento_repository),
+    repo_vinculacion: MovimientoVinculacionRepository = Depends(get_movimiento_vinculacion_repository)
+):
+    """
+    Elimina físicamente un lote de movimientos del sistema.
+    Antes de eliminar, desvincula cualquier conciliación existente.
+    """
+    logger.info(f"Solicitud de eliminación de lote: {len(request.ids)} registros")
+    try:
+        count = 0
+        for id in request.ids:
+            # 1. Desvincular de cualquier match (Extracto -> Sistema)
+            # Esto pone el movimiento del extracto en SIN_MATCH
+            repo_vinculacion.desvincular_por_sistema_id(id)
+            
+            # 2. Eliminar movimiento del sistema
+            repo.eliminar(id)
+            count += 1
+            
+        return {"mensaje": "Eliminación exitosa", "registros_eliminados": count}
+    except Exception as e:
+        logger.error(f"Error eliminando lote: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error eliminando movimientos: {str(e)}")

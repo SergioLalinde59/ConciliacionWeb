@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 from datetime import date
+from decimal import Decimal
 from src.domain.models.movimiento import Movimiento
 
 class MovimientoRepository(ABC):
@@ -42,7 +43,11 @@ class MovimientoRepository(ABC):
         pass
     
     @abstractmethod
-    def existe_movimiento(self, fecha: date, valor: float, referencia: str, descripcion: str = None, usd: float = None) -> bool:
+    def existe_movimiento(self, fecha: date, valor: Decimal, referencia: str, cuenta_id: int, descripcion: str = None, usd: Decimal = None) -> bool:
+        pass
+
+    @abstractmethod
+    def contar_movimientos_similares(self, fecha: date, valor: Decimal, referencia: str, cuenta_id: int, descripcion: str = None, usd: Decimal = None) -> int:
         """
         Verifica si existe un movimiento duplicado (misma fecha, valor, referencia - y descripción si no hay Ref).
         Útil para evitar cargas duplicadas de extractos.
@@ -145,5 +150,10 @@ class MovimientoRepository(ABC):
         Obtiene estadísticas agrupadas por yyyy-mmm, cuenta y centro de costos.
         Separa ingresos y egresos.
         """
+        pass
+
+    @abstractmethod
+    def eliminar(self, id: int) -> None:
+        """Elimina físicamente un movimiento y sus dependencias si es necesario"""
         pass
 

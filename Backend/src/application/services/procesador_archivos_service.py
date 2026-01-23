@@ -88,6 +88,13 @@ class ProcesadorArchivosService:
                         for m in raw_movs:
                             if m.get('descripcion'):
                                 m['descripcion'] = m['descripcion'].strip().title()
+                        
+                        # Filtrado por tipo de cuenta (Modular)
+                        if tipo_cuenta == 'MasterCardUSD':
+                            raw_movs = [m for m in raw_movs if m.get('moneda') == 'USD']
+                        elif tipo_cuenta == 'MasterCardPesos':
+                            raw_movs = [m for m in raw_movs if m.get('moneda') == 'COP']
+                            
                         return raw_movs
                 except Exception as e:
                     # Log instruction but continue with next extractor
@@ -117,6 +124,12 @@ class ProcesadorArchivosService:
              for m in raw_movs:
                  if m.get('descripcion'):
                      m['descripcion'] = m['descripcion'].strip().title()
+             
+             # Filtrado por tipo de cuenta (Legacy/Hardcoded)
+             if tipo_cuenta == 'MasterCardUSD':
+                 raw_movs = [m for m in raw_movs if m.get('moneda') == 'USD']
+             elif tipo_cuenta == 'MasterCardPesos':
+                 raw_movs = [m for m in raw_movs if m.get('moneda') == 'COP']
              
              return raw_movs
         
@@ -153,13 +166,41 @@ class ProcesadorArchivosService:
                 # Verificar duplicados
                 # Para USD: buscamos por fecha + usd
                 # Para COP: buscamos por fecha + valor + descripcion
+                # CRITICAL: Include CuentaID and Description always
                 es_duplicado = self.movimiento_repo.existe_movimiento(
                     fecha=raw['fecha'],
                     valor=valor_para_check,
                     referencia=raw.get('referencia', ''),
+                    cuenta_id=cuenta_id,
                     descripcion=raw['descripcion'],
                     usd=usd_val
                 )
+
+                es_actualizable = False
+                descripcion_actual = None
+
+                # Si NO es duplicado exacto, verificar si es "Soft Duplicate" (Misma Fecha + Valor + Cuenta)
+                # Esto sugiere un cambio de descripción
+                if not es_duplicado and cuenta_id:
+                    # Buscamos un movimiento exacto en Fecha y Valor, ignorando Descripción y Referencia
+                    soft_match = self.movimiento_repo.obtener_exacto(
+                        cuenta_id=cuenta_id,
+                        fecha=raw['fecha'],
+                        valor=valor_para_check,
+                        referencia=None, # Ignorar referencia
+                        descripcion=None # Ignorar descripción
+                    )
+                    
+                    if soft_match:
+                        print(f"DEBUG: Soft match FOUND for {raw['fecha']} Val={valor_para_check} ID={cuenta_id}. Existing Desc: {soft_match.descripcion}")
+                        # Existe un movimiento con misma fecha y valor, pero diferente descripción/referencia
+                        es_actualizable = True
+                        descripcion_actual = soft_match.descripcion
+                    else:
+                        print(f"DEBUG: No soft match for {raw['fecha']} Val={valor_para_check} ID={cuenta_id}")
+                else:
+                    if not cuenta_id:
+                        print(f"DEBUG: cuenta_id is Missing in analizar_archivo processing! raw={raw.get('fecha')}")
 
                 # LÓGICA ESPECIAL PARA TARJETA DE CRÉDITO (aplica a COP y USD):
                 # Las descripciones pueden variar entre extractos, 
@@ -170,6 +211,7 @@ class ProcesadorArchivosService:
                         fecha=raw['fecha'],
                         valor=valor_para_check,
                         referencia=raw.get('referencia', ''),
+                        cuenta_id=cuenta_id,
                         descripcion='',  # Ignorar descripción
                         usd=usd_val
                     )
@@ -184,6 +226,8 @@ class ProcesadorArchivosService:
                 
                 if es_duplicado:
                     stats["duplicados"] += 1
+                elif es_actualizable:
+                    stats["actualizables"] = stats.get("actualizables", 0) + 1
                 else:
                     stats["nuevos"] += 1
                 
@@ -195,7 +239,9 @@ class ProcesadorArchivosService:
                     "referencia": raw.get('referencia', ''),
                     "valor": raw['valor'],  # Mostrar valor original en preview
                     "moneda": raw.get('moneda', 'COP'),  # Mostrar moneda original en preview
-                    "es_duplicado": es_duplicado
+                    "es_duplicado": es_duplicado,
+                    "es_actualizable": es_actualizable,
+                    "descripcion_actual": descripcion_actual
                 })
                 
             except Exception as e:
@@ -227,9 +273,10 @@ class ProcesadorArchivosService:
             "movimientos": resultado_detalle
         }
 
-    def procesar_archivo(self, file_obj: Any, filename: str, tipo_cuenta: str, cuenta_id: int) -> Dict[str, Any]:
+    def procesar_archivo(self, file_obj: Any, filename: str, tipo_cuenta: str, cuenta_id: int, actualizar_descripciones: bool = False) -> Dict[str, Any]:
         """
         Procesa un archivo subido y GUARDA los movimientos NO duplicados.
+        Si actualizar_descripciones=True, actualiza movimientos existentes que coincidan en fecha+valor.
         """
         # Reutilizamos la extracción, pero necesitamos iterar para guardar
         # Podríamos llamar a analizar_archivo primero, pero implica doble lectura si el stream se consume.
@@ -240,6 +287,7 @@ class ProcesadorArchivosService:
 
         total = len(raw_movs)
         insertados = 0
+        actualizados = 0
         duplicados = 0
         errores = 0
         
@@ -268,6 +316,7 @@ class ProcesadorArchivosService:
                     fecha=raw['fecha'],
                     valor=valor_para_check,
                     referencia=raw.get('referencia', ''),
+                    cuenta_id=cuenta_id,
                     descripcion=raw['descripcion'],
                     usd=usd_val
                 )
@@ -278,6 +327,7 @@ class ProcesadorArchivosService:
                         fecha=raw['fecha'],
                         valor=valor_para_check,
                         referencia=raw.get('referencia', ''),
+                        cuenta_id=cuenta_id,
                         descripcion='',
                         usd=usd_val
                     )
@@ -286,6 +336,26 @@ class ProcesadorArchivosService:
                     duplicados += 1
                     continue
                 
+                # Check soft match for UPDATE logic
+                if actualizar_descripciones:
+                     soft_match = self.movimiento_repo.obtener_exacto(
+                        cuenta_id=cuenta_id,
+                        fecha=raw['fecha'],
+                        valor=valor_para_check,
+                        referencia=None,
+                        descripcion=None
+                    )
+                     if soft_match:
+                         # ACTUALIZAR DESCRIPCIÓN
+                         soft_match.descripcion = raw['descripcion']
+                         # Opcional: actualizar referencia también si viene en el archivo
+                         if raw.get('referencia'):
+                             soft_match.referencia = raw['referencia']
+                         
+                         self.movimiento_repo.guardar(soft_match)
+                         actualizados += 1 
+                         continue
+
                 # Crear Entidad con valores correctos para USD
                 nuevo_mov = Movimiento(
                     fecha=raw['fecha'],
@@ -330,6 +400,7 @@ class ProcesadorArchivosService:
             "archivo": filename,
             "total_extraidos": total,
             "nuevos_insertados": insertados,
+            "actualizados": actualizados,
             "duplicados": duplicados,
             "errores": errores,
             "periodo": periodo_str
@@ -476,7 +547,8 @@ class ProcesadorArchivosService:
                                 fecha=raw['fecha'],
                                 valor=valor_para_check,
                                 referencia=raw.get('referencia', ''),
-                                descripcion=raw['descripcion'],
+                                cuenta_id=cuenta_id,
+                                descripcion=raw['descripcion'], # Include description check for safety
                                 usd=usd_val
                             )
                         else:
@@ -485,11 +557,14 @@ class ProcesadorArchivosService:
                             
                         # Lógica especial para TC (copiada de procesar_archivo)
                         # Nota: Si ya se cargó, la lógica de TC aplica igual.
+                        # Lógica especial para TC: buscar solo por fecha y valor/usd
+                        # Nota: Si ya se cargó, la lógica de TC aplica igual.
                         if not existe and tipo_cuenta in ['MasterCardPesos', 'MasterCardUSD'] and self.movimiento_extracto_repo:
                             existe = self.movimiento_extracto_repo.existe_movimiento(
                                 fecha=raw['fecha'],
                                 valor=valor_para_check,
                                 referencia=raw.get('referencia', ''),
+                                cuenta_id=cuenta_id,
                                 descripcion='',
                                 usd=usd_val
                             )

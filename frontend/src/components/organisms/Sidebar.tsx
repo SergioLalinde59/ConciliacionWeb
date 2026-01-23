@@ -60,10 +60,10 @@ export const Sidebar = () => {
         { name: 'Cargar Movimiento', path: '/movimientos/cargar', icon: UploadCloud },
         { name: 'Cargar Extractos', path: '/conciliacion/cargar-extracto', icon: FileText },
         { name: 'Matching Inteligente', path: '/conciliacion/matching', icon: GitCompare },
-        { name: 'Conciliación', path: '/conciliacion', icon: ClipboardCheck },
         { name: 'Por Clasificar', path: '/movimientos/clasificar', icon: ListTodo },
-        { name: 'Sugerencias Reclasif.', path: '/movimientos/sugerencias', icon: Sparkles },
+        { name: 'Conciliación', path: '/conciliacion', icon: ClipboardCheck },
         { name: 'Movimientos', path: '/movimientos', icon: Receipt },
+        { name: 'Sugerencias Reclasif.', path: '/movimientos/sugerencias', icon: Sparkles },
     ];
 
     const menuReportes = [

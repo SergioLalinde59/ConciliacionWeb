@@ -125,6 +125,13 @@ export const movimientosService = {
 
     obtenerConfiguracionFiltrosExclusion: (): Promise<ConfigFiltroExclusion[]> =>
         fetch(`${API_BASE_URL}/api/movimientos/configuracion/filtros-exclusion`).then(handleResponse),
+
+    eliminarLote: (ids: number[]): Promise<{ mensaje: string; registros_eliminados: number }> =>
+        fetch(`${API_BASE_URL}/api/movimientos/lote`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids })
+        }).then(handleResponse),
 }
 
 /**

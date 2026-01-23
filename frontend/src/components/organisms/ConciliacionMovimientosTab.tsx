@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { DataTable } from '../molecules/DataTable';
 import { conciliacionService } from '../../services/conciliacionService';
+import { movimientosService } from '../../services/movements.service';
 import { CurrencyDisplay } from '../atoms/CurrencyDisplay';
 
-import type { MovimientoExtracto } from '../../types/Conciliacion';
+import type { MovimientoExtracto, Conciliacion } from '../../types/Conciliacion';
 import type { Movimiento } from '../../types';
 
 interface Props {
     cuentaId: number;
     year: number;
     month: number;
+    onConciliacionUpdate?: (conciliacion: Conciliacion) => void;
 }
 
 interface ComparacionData {
@@ -42,12 +44,14 @@ interface ComparacionData {
     };
 }
 
-export const ConciliacionMovimientosTab: React.FC<Props> = ({ cuentaId, year, month }) => {
+export const ConciliacionMovimientosTab: React.FC<Props> = ({ cuentaId, year, month, onConciliacionUpdate }) => {
     const [loading, setLoading] = useState(false);
     const [stats, setStats] = useState<ComparacionData | null>(null);
     const [movimientosExtracto, setMovimientosExtracto] = useState<MovimientoExtracto[]>([]);
     const [movimientosSistema, setMovimientosSistema] = useState<Movimiento[]>([]);
     const [matches, setMatches] = useState<any[]>([]); // Using any for simplicity as matching types are extensive
+    const [selectedSystemIds, setSelectedSystemIds] = useState<Set<number>>(new Set());
+    const [deleting, setDeleting] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -55,6 +59,7 @@ export const ConciliacionMovimientosTab: React.FC<Props> = ({ cuentaId, year, mo
 
     const loadData = async () => {
         setLoading(true);
+        setSelectedSystemIds(new Set()); // Reset selections on reload
         try {
             const [statsData, movsExtracto, movsSistema, matchResult] = await Promise.all([
                 conciliacionService.compararMovimientos(cuentaId, year, month),
@@ -72,6 +77,59 @@ export const ConciliacionMovimientosTab: React.FC<Props> = ({ cuentaId, year, mo
             setLoading(false);
         }
     };
+
+    const handleSelectSystemMovement = (id: number) => {
+        const newSelected = new Set(selectedSystemIds);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedSystemIds(newSelected);
+    };
+
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            // Select all pending system movements
+            const allIds = pendingSistema.map(m => m.id);
+            setSelectedSystemIds(new Set(allIds));
+        } else {
+            // Deselect all
+            setSelectedSystemIds(new Set());
+        }
+    };
+
+    const handleDeleteSelected = async () => {
+        if (selectedSystemIds.size === 0) return;
+
+        if (!confirm(`¿Estás seguro que deseas eliminar ${selectedSystemIds.size} movimientos del sistema? Esta acción no se puede deshacer.`)) {
+            return;
+        }
+
+        setDeleting(true);
+        try {
+            await movimientosService.eliminarLote(Array.from(selectedSystemIds));
+
+            // Recalcular la conciliación mensual para actualizar saldos
+            try {
+                const updatedConciliacion = await conciliacionService.recalculate(cuentaId, year, month);
+                if (onConciliacionUpdate) {
+                    onConciliacionUpdate(updatedConciliacion);
+                }
+            } catch (recError) {
+                console.error("Error recalculating after delete:", recError);
+            }
+
+            await loadData(); // Reload data to refresh stats and lists
+        } catch (error) {
+            console.error("Error deleting movements:", error);
+            alert("Error al eliminar los movimientos. Por favor intenta de nuevo.");
+        } finally {
+            setDeleting(false);
+        }
+    };
+
 
     if (loading) {
         return (
@@ -284,22 +342,61 @@ export const ConciliacionMovimientosTab: React.FC<Props> = ({ cuentaId, year, mo
 
                 {/* Pendientes Sistema */}
                 <div className="bg-white rounded-xl shadow-sm border border-blue-100 overflow-hidden flex flex-col">
-                    <div className="p-4 bg-blue-50 border-b border-blue-100 flex justify-between items-center">
+                    <div className="p-4 bg-blue-50 border-b border-blue-100 flex justify-between items-center bg-blue-50 h-[69px]">
                         <div>
                             <h3 className="font-bold text-blue-800">Faltantes en Extracto</h3>
                             <p className="text-xs text-blue-600">Movimientos del sistema no cruzados</p>
                         </div>
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-bold">{pendingSistema.length}</span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleDeleteSelected}
+                                disabled={deleting || selectedSystemIds.size === 0}
+                                className={`
+                                    px-3 py-1 rounded-md text-xs font-bold flex items-center transition-colors
+                                    ${selectedSystemIds.size > 0
+                                        ? 'bg-red-100 hover:bg-red-200 text-red-700'
+                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'}
+                                `}
+                            >
+                                {deleting ? '...' : `Borrar (${selectedSystemIds.size})`}
+                            </button>
+                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-bold">{pendingSistema.length}</span>
+                        </div>
                     </div>
                     <div className="flex-1 overflow-auto max-h-[500px]">
                         <DataTable
                             data={pendingSistema}
                             columns={[
+                                {
+                                    key: 'select',
+                                    header: (
+                                        <div className="flex items-center justify-center">
+                                            <input
+                                                type="checkbox"
+                                                checked={pendingSistema.length > 0 && selectedSystemIds.size === pendingSistema.length}
+                                                onChange={handleSelectAll}
+                                                className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                                title="Seleccionar todos"
+                                            />
+                                        </div>
+                                    ),
+                                    width: 'w-10 min-w-[40px]',
+                                    accessor: (m: Movimiento) => (
+                                        <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedSystemIds.has(m.id)}
+                                                onChange={() => handleSelectSystemMovement(m.id)}
+                                                className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                            />
+                                        </div>
+                                    )
+                                },
                                 { key: 'fecha', header: 'Fecha', accessor: (m) => <span className="text-xs">{m.fecha}</span>, sortable: true },
                                 { key: 'descripcion', header: 'Descripción', accessor: (m) => <span className="text-sm line-clamp-2" title={m.descripcion}>{m.descripcion}</span>, sortable: true },
                                 { key: 'valor', header: 'Valor', accessor: (m) => <span className={`text-sm font-medium ${m.valor > 0 ? 'text-green-600' : m.valor < 0 ? 'text-red-600' : 'text-blue-600'}`}><CurrencyDisplay value={m.valor} /></span>, align: 'right', sortable: true }
                             ]}
-                            getRowKey={(m) => m.id as number}
+                            getRowKey={(m) => m.id}
                             showActions={false}
                             className="border-none"
                             rounded={false}

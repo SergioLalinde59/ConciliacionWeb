@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { apiService } from '../services/api'
 import type { Cuenta } from '../types'
-import { UploadCloud, FileText, CheckCircle, AlertCircle, BarChart3 } from 'lucide-react'
+import { UploadCloud, FileText, CheckCircle, AlertCircle, BarChart3, FolderOpen } from 'lucide-react'
 import { Modal } from '../components/molecules/Modal'
 import { Button } from '../components/atoms/Button'
 import { ExtractoResumenCinta } from '../components/molecules/ExtractoResumenCinta'
@@ -36,6 +36,12 @@ export const UploadExtractoPage: React.FC = () => {
     const [analyzed, setAnalyzed] = useState(false)
     const [resumen, setResumen] = useState<ResumenExtracto | null>(null)
 
+    // Local Files State
+    const [localFilename, setLocalFilename] = useState<string | null>(null)
+    const [showLocalModal, setShowLocalModal] = useState(false)
+    const [localFiles, setLocalFiles] = useState<string[]>([])
+    const [loadingFiles, setLoadingFiles] = useState(false)
+
     // Modal Success State
     const [showSuccessModal, setShowSuccessModal] = useState(false)
 
@@ -49,12 +55,36 @@ export const UploadExtractoPage: React.FC = () => {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setFile(e.target.files[0])
+            setLocalFilename(null)
             setResult(null)
             setError(null)
             setAnalyzed(false)
             setResumen(null)
             setShowSuccessModal(false)
         }
+    }
+
+    const handleOpenLocalPicker = async () => {
+        setLoadingFiles(true)
+        setShowLocalModal(true)
+        try {
+            const files = await apiService.archivos.listarDirectorios('extractos')
+            setLocalFiles(files)
+        } catch (err: any) {
+            console.error(err)
+            setError("Error al listar archivos del servidor")
+        } finally {
+            setLoadingFiles(false)
+        }
+    }
+
+    const handleLocalFileSelect = async (filename: string) => {
+        setShowLocalModal(false)
+        setLocalFilename(filename)
+        setFile(null)
+
+        // Trigger analysis immediately
+        await handleAnalizarLocal(filename)
     }
 
     const handleAnalizar = async (e: React.FormEvent) => {
@@ -78,8 +108,34 @@ export const UploadExtractoPage: React.FC = () => {
         }
     }
 
+    const handleAnalizarLocal = async (filename: string) => {
+        setLoading(true)
+        setError(null)
+        setResult(null)
+        setResumen(null)
+
+        try {
+            const data = await apiService.archivos.procesarLocal(
+                filename,
+                'extractos',
+                tipoCuenta,
+                cuentaId || undefined,
+                false,
+                undefined, undefined,
+                'analizar'
+            )
+            console.log("DEBUG: Datos recibidos de analizarExtracto LOCAL (resumen):", data)
+            setResumen(data)
+            setAnalyzed(true)
+        } catch (err: any) {
+            setError(err.message || "Error al analizar archivo local")
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const handleCargarDefinitivo = async () => {
-        if (!file || !cuentaId || !resumen) return
+        if ((!file && !localFilename) || !cuentaId || !resumen) return
 
         // Validación simple de que tenemos periodo
         if (!resumen.year || !resumen.month) {
@@ -89,15 +145,28 @@ export const UploadExtractoPage: React.FC = () => {
 
         setLoading(true)
         try {
-            // Enviamos year/month extraídos explícitamente por seguridad, 
-            // aunque el backend podría re-extraerlos, es mejor pasar lo que el usuario confirmó visualmente.
-            const data = await apiService.conciliacion.cargarExtracto(
-                file,
-                tipoCuenta,
-                cuentaId,
-                resumen.year,
-                resumen.month
-            )
+            let data;
+            if (localFilename) {
+                data = await apiService.archivos.procesarLocal(
+                    localFilename,
+                    'extractos',
+                    tipoCuenta,
+                    cuentaId,
+                    false,
+                    resumen.year,
+                    resumen.month,
+                    'cargar'
+                )
+            } else if (file) {
+                data = await apiService.conciliacion.cargarExtracto(
+                    file,
+                    tipoCuenta,
+                    cuentaId,
+                    resumen.year,
+                    resumen.month
+                )
+            }
+
             setResult(data)
             setShowSuccessModal(true) // Show modal on success
         } catch (err: any) {
@@ -123,6 +192,7 @@ export const UploadExtractoPage: React.FC = () => {
         setResult(null)
         setAnalyzed(false)
         setFile(null)
+        setLocalFilename(null)
         setResumen(null)
     }
 
@@ -147,6 +217,7 @@ export const UploadExtractoPage: React.FC = () => {
                                     setCuentaId(id)
                                     // Reset basics
                                     setFile(null)
+                                    setLocalFilename(null)
                                     setAnalyzed(false)
                                     setResumen(null)
                                     setResult(null)
@@ -178,7 +249,7 @@ export const UploadExtractoPage: React.FC = () => {
                         <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center">
                             <FileText className={`h-12 w-12 mb-2 ${file ? 'text-blue-500' : 'text-gray-400'}`} />
                             <span className="text-lg font-medium text-gray-700">
-                                {file ? file.name : "Seleccionar extracto PDF"}
+                                {file ? file.name : localFilename ? `(Servidor) ${localFilename}` : "Seleccionar extracto PDF"}
                             </span>
                             <span className="text-sm text-gray-500 mt-1">
                                 {file ? `${(file.size / 1024).toFixed(1)} KB` : "Haz clic para buscar"}
@@ -186,12 +257,24 @@ export const UploadExtractoPage: React.FC = () => {
                         </label>
                     </div>
 
+                    <div className="text-center">
+                        <span className="text-sm text-gray-500">¿El archivo está en el servidor?</span>
+                        <button
+                            type="button"
+                            onClick={handleOpenLocalPicker}
+                            className="ml-2 text-sm text-blue-600 hover:text-blue-800 font-medium underline inline-flex items-center gap-1"
+                        >
+                            <FolderOpen size={14} />
+                            Explorar Carpeta Predeterminada
+                        </button>
+                    </div>
+
                     {!analyzed && !result && (
                         <button
                             type="submit"
-                            disabled={loading || !file}
+                            disabled={loading || (!file && !localFilename)}
                             className={`w-full py-3 px-4 rounded-lg font-medium text-white shadow-sm transition-colors
-                                ${loading || !file
+                                ${loading || (!file && !localFilename)
                                     ? 'bg-gray-400 cursor-not-allowed'
                                     : 'bg-blue-600 hover:bg-blue-700'
                                 }`}
@@ -261,6 +344,7 @@ export const UploadExtractoPage: React.FC = () => {
                                     setAnalyzed(false)
                                     setResumen(null)
                                     setFile(null)
+                                    setLocalFilename(null)
                                 }}
                                 className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
                             >
@@ -281,6 +365,43 @@ export const UploadExtractoPage: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Modal de Selección de Archivo Local */}
+                <Modal
+                    isOpen={showLocalModal}
+                    onClose={() => setShowLocalModal(false)}
+                    title="Seleccionar Extracto del Servidor"
+                    size="md"
+                    footer={
+                        <Button variant="secondary" onClick={() => setShowLocalModal(false)}>
+                            Cancelar
+                        </Button>
+                    }
+                >
+                    <div className="space-y-4 max-h-96 overflow-y-auto p-2">
+                        {loadingFiles ? (
+                            <div className="text-center py-4 text-gray-500">Cargando archivos...</div>
+                        ) : localFiles.length === 0 ? (
+                            <div className="text-center py-4 text-gray-500">No se encontraron archivos PDF en el directorio configurado.</div>
+                        ) : (
+                            <div className="grid gap-2">
+                                {localFiles.map(f => (
+                                    <button
+                                        key={f}
+                                        onClick={() => handleLocalFileSelect(f)}
+                                        className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors text-left group"
+                                    >
+                                        <FileText className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
+                                        <span className="text-gray-700 font-medium group-hover:text-blue-700">{f}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <p className="text-xs text-gray-400 text-center mt-4">
+                            Directorio: {`Extractos`}
+                        </p>
+                    </div>
+                </Modal>
 
                 {/* Modal de Resultados Finales */}
                 <Modal

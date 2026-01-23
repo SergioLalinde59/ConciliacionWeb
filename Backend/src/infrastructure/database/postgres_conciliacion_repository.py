@@ -206,7 +206,7 @@ class PostgresConciliacionRepository(ConciliacionRepository):
                 SET 
                     sistema_entradas = %s,
                     sistema_salidas = %s,
-                    sistema_saldo_final = (extracto_saldo_anterior + %s - %s),
+                    sistema_saldo_final = (COALESCE(extracto_saldo_anterior, 0) + %s - %s),
                     updated_at = CURRENT_TIMESTAMP
                 WHERE cuenta_id = %s AND year = %s AND month = %s
                 RETURNING id

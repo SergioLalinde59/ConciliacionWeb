@@ -99,6 +99,16 @@ class MatchingService:
                     score_valor,
                     score_descripcion
                 )
+
+                # ELEGANT MATCHING RULE: Strong Identity Match
+                # If Date and Value are identical (score 1.0), but description differs,
+                # we treat it as a strong PROBABLE match.
+                if score_fecha == Decimal('1.00') and score_valor == Decimal('1.00'):
+                    # Force score to be high enough to be PROBABLE (e.g. 0.85 or based on config)
+                    # Using 0.85 as a safe default for "High Probability"
+                    min_probable = Decimal('0.85')
+                    if score_total < min_probable:
+                        score_total = min_probable
                 
                 # Guardar si es el mejor hasta ahora
                 if score_total > mejor_score:

@@ -9,7 +9,7 @@ export interface Column<T> {
     /** Clave única de la columna */
     key: string
     /** Título que se muestra en el header */
-    header: string
+    header: React.ReactNode
     /** Función para extraer el valor a mostrar */
     accessor?: (row: T) => React.ReactNode
     /** Campo del objeto para ordenar (si es diferente de key) */

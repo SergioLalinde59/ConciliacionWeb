@@ -160,31 +160,31 @@ class PostgresMovimientoExtractoRepository(MovimientoExtractoRepository):
         cursor.close()
         return count
 
-    def existe_movimiento(self, fecha, valor, referencia, descripcion=None, usd=None) -> bool:
+    def existe_movimiento(self, fecha, valor, referencia, cuenta_id: int, descripcion=None, usd=None) -> bool:
         cursor = self.conn.cursor()
         
         # Lógica casi espejo de MovimientoRepository, pero contra movimientos_extracto
         # OJO: movimientos_extracto tiene (fecha, referencia, valor, usd)
         
         if referencia and referencia.strip():
-             query = "SELECT 1 FROM movimientos_extracto WHERE referencia=%s AND fecha=%s"
+             query = "SELECT 1 FROM movimientos_extracto WHERE referencia=%s AND fecha=%s AND cuenta_id=%s"
              if usd is not None:
                 query += " AND usd=%s"
-                cursor.execute(query, (referencia, fecha, usd))
+                cursor.execute(query, (referencia, fecha, cuenta_id, usd))
              else:
                 query += " AND valor=%s"
-                cursor.execute(query, (referencia, fecha, valor))
+                cursor.execute(query, (referencia, fecha, cuenta_id, valor))
         else:
              # Validación por valor/usd y fecha (y descripción si hay)
              target_val = usd if usd is not None else valor
              col_val = "usd" if usd is not None else "valor"
              
              if descripcion:
-                 query = f"SELECT 1 FROM movimientos_extracto WHERE {col_val}=%s AND fecha=%s AND LOWER(descripcion) = LOWER(%s)"
-                 cursor.execute(query, (target_val, fecha, descripcion))
+                 query = f"SELECT 1 FROM movimientos_extracto WHERE {col_val}=%s AND fecha=%s AND cuenta_id=%s AND LOWER(descripcion) = LOWER(%s)"
+                 cursor.execute(query, (target_val, fecha, cuenta_id, descripcion))
              else:
-                 query = f"SELECT 1 FROM movimientos_extracto WHERE {col_val}=%s AND fecha=%s"
-                 cursor.execute(query, (target_val, fecha))
+                 query = f"SELECT 1 FROM movimientos_extracto WHERE {col_val}=%s AND fecha=%s AND cuenta_id=%s"
+                 cursor.execute(query, (target_val, fecha, cuenta_id))
                  
         exists = cursor.fetchone() is not None
         cursor.close()

@@ -19,21 +19,37 @@ def extraer_movimientos(file_obj: Any) -> List[Dict[str, Any]]:
     movimientos = []
     
     try:
-        # Intentar determinar el año del extracto leyendo la primera página
-        year_extracto = datetime.now().year # Default actual
+        # Intentar determinar el rango de fechas del extracto leyendo la primera página
+        year_inicio = datetime.now().year
+        year_fin = year_inicio
         
         with pdfplumber.open(file_obj) as pdf:
-            # 1. Buscar AÑO en la primera página
+            # 1. Buscar RANGO DE FECHAS en la primera página
             if len(pdf.pages) > 0:
                 first_page_text = pdf.pages[0].extract_text() or ""
-                # Buscar patrón "DESDE: AAAA/MM/DD" o "DESDE: AAAA-MM-DD"
-                # En la imagen se ve: "DESDE: 2025/11/30"
-                match_periodo = re.search(r'DESDE:\s*(\d{4})[./-]', first_page_text)
+                # Buscar patrón "DESDE: AAAA/MM/DD ... HASTA: AAAA/MM/DD"
+                # Ejemplo imagen: "DESDE: 2024/12/31 HASTA: 2025/01/31"
+                match_periodo = re.search(r'DESDE[:\s]+(\d{4})[./-](\d{1,2})[./-](\d{1,2})\s+HASTA[:\s]+(\d{4})[./-](\d{1,2})[./-](\d{1,2})', first_page_text, re.IGNORECASE)
+                
                 if match_periodo:
-                    year_extracto = int(match_periodo.group(1))
-                    logger.info(f"Año detectado en extracto: {year_extracto}")
+                    year_inicio = int(match_periodo.group(1))
+                    # mes_inicio = int(match_periodo.group(2))
+                    # dia_inicio = int(match_periodo.group(3))
+                    
+                    year_fin = int(match_periodo.group(4))
+                    # mes_fin = int(match_periodo.group(5))
+                    # dia_fin = int(match_periodo.group(6))
+                    
+                    logger.info(f"Rango fechas detectado: {year_inicio} - {year_fin}")
                 else:
-                    logger.warning("No se detectó año en el encabezado. Se usará el año actual.")
+                    # Fallback simple a solo el año de inicio si no encuentra el rango completo
+                    match_simple = re.search(r'DESDE:\s*(\d{4})[./-]', first_page_text)
+                    if match_simple:
+                        year_inicio = int(match_simple.group(1))
+                        year_fin = year_inicio
+                        logger.info(f"Año único detectado: {year_inicio}")
+                    else:
+                        logger.warning("No se detectó año en el encabezado. Se usará el año actual.")
 
             numero_linea = 0
             
@@ -45,7 +61,7 @@ def extraer_movimientos(file_obj: Any) -> List[Dict[str, Any]]:
                 logger.debug(f"Procesando página {page_num+1}...")
                 
                 # Extraer movimientos de esta página
-                movs_pagina = _extraer_movimientos_desde_texto(texto, year_extracto, numero_linea)
+                movs_pagina = _extraer_movimientos_desde_texto(texto, year_inicio, year_fin, numero_linea)
                 movimientos.extend(movs_pagina)
                 numero_linea += len(movs_pagina)
                 
@@ -57,7 +73,7 @@ def extraer_movimientos(file_obj: Any) -> List[Dict[str, Any]]:
     
     return movimientos
 
-def _extraer_movimientos_desde_texto(texto: str, year: int, offset_linea: int) -> List[Dict[str, Any]]:
+def _extraer_movimientos_desde_texto(texto: str, year_inicio: int, year_fin: int, offset_linea: int) -> List[Dict[str, Any]]:
     """
     Extrae movimientos soportando fechas dd/mm y manejo flexible de columnas.
     """
@@ -78,9 +94,21 @@ def _extraer_movimientos_desde_texto(texto: str, year: int, offset_linea: int) -
             fecha_part = match_fecha.group(1) # dd/mm
             
             try:
-                # Construir objeto fecha con el año detectado
+                # Construir objeto fecha con lógica de cambio de año
                 day, month = map(int, fecha_part.split('/'))
-                fecha = datetime(year, month, day).date()
+                
+                # Determinar año correcto
+                year_asignado = year_fin # Default al año final (el más probable en la mayoría de extractos salvo dic)
+                
+                if year_inicio != year_fin:
+                    # Si hay cambio de año (Ej: Dic 2024 - Ene 2025)
+                    # Si el mes es 12, pertenece al año inicio
+                    if month == 12:
+                        year_asignado = year_inicio
+                    # Si el mes es 1 (u otro), y estamos asumiendo cronología hacia adelante, es año fin.
+                    # Nota: Esto cubre bien el caso típico de extracto mensual Dic-Ene.
+                    
+                fecha = datetime(year_asignado, month, day).date()
             except Exception as e:
                 logger.warning(f"Error parseando fecha '{fecha_part}' en línea: {linea} - Error: {e}")
                 continue

@@ -151,11 +151,21 @@ def crear_movimientos_lote(
             )
 
             if mov_sistema_existente:
-                # Si existe, lo usamos
-                mov_creado = mov_sistema_existente
-                logger.info(f"Movimiento existente encontrado ID {mov_creado.id}, reutilizando.")
-            else:
-                # Si no existe, lo creamos
+                # Verificar si ya está vinculado (para no violar constraint UNIQUE)
+                is_linked = vinculacion_repo.obtener_por_sistema_id(mov_sistema_existente.id)
+                
+                if is_linked:
+                    # Ya está ocupado, NO podemos reutilizarlo.
+                    # Debemos crear uno nuevo.
+                    logger.info(f"Movimiento existente ID {mov_sistema_existente.id} ya está vinculado. Creando uno nuevo.")
+                    mov_sistema_existente = None
+                else:
+                    # Si existe y está libre, lo usamos
+                    mov_creado = mov_sistema_existente
+                    logger.info(f"Movimiento existente encontrado ID {mov_creado.id} (libre), reutilizando.")
+            
+            if not mov_sistema_existente:
+                # Si no existe o estaba ocupado, lo creamos
                 nuevo_mov = Movimiento(
                     id=None,
                     fecha=item.fecha or mov_extracto.fecha,
@@ -730,3 +740,52 @@ def eliminar_alias(
     except Exception as e:
         logger.error(f"Error eliminando alias: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Endpoints Validación 1-a-Muchos ---
+
+class DetectarMatchesRequest(BaseModel):
+    cuenta_id: int
+    year: int
+    month: int
+
+
+@router.post("/detectar-1-a-muchos")
+def api_detectar_matches_1_a_muchos(request: DetectarMatchesRequest):
+    """
+    Detecta movimientos del sistema vinculados incorrectamente a múltiples extractos.
+    """
+    try:
+        from src.application.services.matching_validation_service import detectar_matches_1_a_muchos
+        
+        resultado = detectar_matches_1_a_muchos(
+            request.cuenta_id,
+            request.year,
+            request.month
+        )
+        return resultado
+    except Exception as e:
+        logger.error(f"Error detectando matches 1-a-muchos: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/invalidar-1-a-muchos")
+def api_invalidar_matches_1_a_muchos(request: DetectarMatchesRequest):
+    """
+    Elimina vinculaciones incorrectas donde 1 sistema → múltiples extractos.
+    """
+    try:
+        from src.application.services.matching_validation_service import invalidar_matches_1_a_muchos
+        
+        resultado = invalidar_matches_1_a_muchos(
+            request.cuenta_id,
+            request.year,
+            request.month
+        )
+        return resultado
+    except Exception as e:
+        logger.error(f"Error invalidando matches 1-a-muchos: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+

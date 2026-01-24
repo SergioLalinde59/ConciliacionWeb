@@ -5,7 +5,7 @@ import { MatchingTable } from '../components/organisms/MatchingTable'
 import { MatchingStatsCard } from '../components/organisms/MatchingStatsCard'
 import { MatchingFilters } from '../components/organisms/MatchingFilters'
 import { ConfiguracionMatchingForm } from '../components/organisms/ConfiguracionMatchingForm'
-import { CreateMovementsModal } from '../components/organisms/CreateMovementsModal'
+import { MatchesIncorrectosModal } from '../components/organisms/MatchesIncorrectosModal'
 import { matchingService } from '../services/matching.service'
 import { cuentasService } from '../services/api'
 import type { ConfiguracionMatchingUpdate } from '../types/Matching'
@@ -25,7 +25,7 @@ export const ConciliacionMatchingPage = () => {
 
     // State para UI
     const [showConfigModal, setShowConfigModal] = useState(false)
-    const [showCreateModal, setShowCreateModal] = useState(false)
+    const [showMatchesIncorrectosModal, setShowMatchesIncorrectosModal] = useState(false)
 
     const queryClient = useQueryClient()
 
@@ -68,6 +68,13 @@ export const ConciliacionMatchingPage = () => {
 
 
 
+
+    // Detectar matches 1-a-muchos
+    const { data: matches1aMuchosData } = useQuery({
+        queryKey: ['matches-1-a-muchos', cuentaId, year, month],
+        queryFn: () => matchingService.detectarMatches1aMuchos(cuentaId!, year, month),
+        enabled: cuentaId !== null
+    })
 
     // Cargar configuración
     const { data: configuracion } = useQuery({
@@ -113,13 +120,26 @@ export const ConciliacionMatchingPage = () => {
             matchingService.crearMovimientosLote(items),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['matching', cuentaId, year, month] })
-            setShowCreateModal(false)
         },
         onError: (error) => {
             console.error(error)
             alert('Error al crear movimientos')
         }
     })
+
+    const invalidarMatches1aMuchosMutation = useMutation({
+        mutationFn: () => matchingService.invalidarMatches1aMuchos(cuentaId!, year, month),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['matching', cuentaId, year, month] })
+            queryClient.invalidateQueries({ queryKey: ['matches-1-a-muchos', cuentaId, year, month] })
+            setShowMatchesIncorrectosModal(false)
+        },
+        onError: (error) => {
+            console.error(error)
+            alert('Error al invalidar matches incorrectos')
+        }
+    })
+
 
     // Filtrar matches
     const matchesFiltrados = useMemo(() => {
@@ -169,19 +189,15 @@ export const ConciliacionMatchingPage = () => {
                     </p>
                 </div>
                 <div className="flex gap-3">
-                    <button
-                        onClick={() => setShowCreateModal(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm"
-                    >
-                        Gestionar Faltantes
-                    </button>
-                    <button
-                        onClick={() => setShowConfigModal(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-                    >
-                        <Settings size={18} />
-                        Configuración
-                    </button>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setShowConfigModal(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                        >
+                            <Settings size={18} />
+                            Configuración
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -251,6 +267,33 @@ export const ConciliacionMatchingPage = () => {
                     >
                         Intentar nuevamente
                     </button>
+                </div>
+            )}
+
+            {/* Alerta de Matches Incorrectos */}
+            {matches1aMuchosData && matches1aMuchosData.total_movimientos_sistema_afectados > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
+                    <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <AlertCircle className="w-6 h-6 text-yellow-600" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-yellow-900 mb-1">
+                                ⚠️ Matches Incorrectos Detectados
+                            </h3>
+                            <p className="text-sm text-yellow-800 mb-3">
+                                Se detectaron {matches1aMuchosData.total_movimientos_sistema_afectados} movimiento{matches1aMuchosData.total_movimientos_sistema_afectados !== 1 ? 's' : ''} del
+                                sistema vinculado{matches1aMuchosData.total_movimientos_sistema_afectados !== 1 ? 's' : ''} a múltiples extractos ({matches1aMuchosData.total_extractos_afectados} extractos afectados).
+                                Esto es incorrecto (debe ser 1-a-1).
+                            </p>
+                            <button
+                                onClick={() => setShowMatchesIncorrectosModal(true)}
+                                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-sm font-medium transition-colors"
+                            >
+                                Ver Detalles y Corregir
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -381,13 +424,16 @@ export const ConciliacionMatchingPage = () => {
                 )
             }
 
-            {/* Modal de Crear Movimientos */}
+            {/* Modal de Matches Incorrectos */}
             {
-                showCreateModal && matchingResult && (
-                    <CreateMovementsModal
-                        sinMatchItems={matchingResult.matches.filter(m => m.estado === MatchEstado.SIN_MATCH && m.mov_sistema === null)}
-                        onClose={() => setShowCreateModal(false)}
-                        onConfirm={async (items) => { await createMovementsMutation.mutateAsync(items) }}
+                showMatchesIncorrectosModal && matches1aMuchosData && matches1aMuchosData.casos_problematicos.length > 0 && (
+                    <MatchesIncorrectosModal
+                        casos={matches1aMuchosData.casos_problematicos}
+                        totalMovimientosSistema={matches1aMuchosData.total_movimientos_sistema_afectados}
+                        totalExtractos={matches1aMuchosData.total_extractos_afectados}
+                        onClose={() => setShowMatchesIncorrectosModal(false)}
+                        onCorregir={async () => { await invalidarMatches1aMuchosMutation.mutateAsync() }}
+                        isLoading={invalidarMatches1aMuchosMutation.isPending}
                     />
                 )
             }

@@ -62,3 +62,10 @@
 [2026-01-21 21:37:02] INFO     [app_logger:setup_logger:77] Logger initialized for environment: development, level: INFO
 [2026-01-21 21:37:02] INFO     [app_logger:get_connection_pool:49] Inicializando connection pool: min=1, max=10
 [2026-01-21 21:37:02] INFO     [app_logger:get_connection_pool:60] Connection pool inicializado correctamente
+[2026-01-22 22:09:13] INFO     [app_logger:setup_logger:77] Logger initialized for environment: development, level: INFO
+[2026-01-22 22:09:13] INFO     [app_logger:get_connection_pool:49] Inicializando connection pool: min=1, max=10
+[2026-01-22 22:09:13] INFO     [app_logger:get_connection_pool:60] Connection pool inicializado correctamente
+[2026-01-23 20:30:03] INFO     [app_logger:setup_logger:77] Logger initialized for environment: development, level: INFO
+[2026-01-23 20:31:33] INFO     [app_logger:setup_logger:77] Logger initialized for environment: development, level: INFO
+[2026-01-23 20:31:33] INFO     [app_logger:get_connection_pool:49] Inicializando connection pool: min=1, max=10
+[2026-01-23 20:31:33] INFO     [app_logger:get_connection_pool:60] Connection pool inicializado correctamente

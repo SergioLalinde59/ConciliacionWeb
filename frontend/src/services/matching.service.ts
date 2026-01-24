@@ -206,5 +206,75 @@ export const matchingService = {
             }
         )
         return handleResponse(response)
+    },
+
+    // --- Validación 1-a-Muchos ---
+
+    /**
+     * Detecta movimientos del sistema vinculados a múltiples extractos
+     * 
+     * @param cuentaId - ID de la cuenta
+     * @param year - Año
+     * @param month - Mes
+     * @returns Detalle de casos problemáticos
+     */
+    async detectarMatches1aMuchos(
+        cuentaId: number,
+        year: number,
+        month: number
+    ): Promise<{
+        casos_problematicos: Array<{
+            sistema_id: number
+            sistema_descripcion: string
+            sistema_valor: number
+            sistema_fecha: string
+            num_vinculaciones: number
+            extracto_ids: number[]
+            extracto_descripciones: string[]
+            extracto_valores: number[]
+            extracto_fechas: string[]
+        }>
+        total_movimientos_sistema_afectados: number
+        total_extractos_afectados: number
+    }> {
+        const response = await fetch(
+            `${API_BASE_URL}${BASE_URL}/detectar-1-a-muchos`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cuenta_id: cuentaId, year, month })
+            }
+        )
+        return handleResponse(response)
+    },
+
+    /**
+     * Elimina vinculaciones incorrectas donde 1 sistema → múltiples extractos
+     * 
+     * @param cuentaId - ID de la cuenta
+     * @param year - Año
+     * @param month - Mes
+     * @returns Resumen de cambios realizados
+     */
+    async invalidarMatches1aMuchos(
+        cuentaId: number,
+        year: number,
+        month: number
+    ): Promise<{
+        vinculaciones_eliminadas: number
+        movimientos_sistema_afectados: number
+        extractos_ahora_sin_match: number
+        mensaje: string
+        casos_corregidos: any[]
+    }> {
+        const response = await fetch(
+            `${API_BASE_URL}${BASE_URL}/invalidar-1-a-muchos`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cuenta_id: cuentaId, year, month })
+            }
+        )
+        return handleResponse(response)
     }
 }

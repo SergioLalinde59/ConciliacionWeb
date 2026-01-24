@@ -165,6 +165,16 @@ class MovimientoVinculacionRepository(ABC):
         Args:
             sistema_id: ID del movimiento del sistema
         """
+    @abstractmethod
+    def obtener_por_sistema_id(self, sistema_id: int) -> Optional[MovimientoMatch]:
+        """
+        Busca una vinculación por ID del movimiento del sistema.
+        
+        Args:
+            sistema_id: ID del movimiento del sistema
+        
+        Returns:
+            MovimientoMatch si existe, None si no
+        """
         pass
-    
 

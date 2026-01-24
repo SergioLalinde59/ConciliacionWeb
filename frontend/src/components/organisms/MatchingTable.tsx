@@ -16,7 +16,7 @@ interface MatchingTableProps {
 }
 
 type SortColumn = 'extracto_fecha' | 'extracto_descripcion' | 'extracto_valor' | 'extracto_usd' | 'extracto_trm' |
-    'sistema_fecha' | 'sistema_descripcion' | 'sistema_valor' | 'sistema_usd' | 'sistema_trm' | null
+    'sistema_fecha' | 'sistema_descripcion' | 'sistema_valor' | 'sistema_usd' | 'sistema_trm' | 'diferencia' | null
 type SortDirection = 'asc' | 'desc'
 
 /**
@@ -110,6 +110,10 @@ export const MatchingTable = ({
                     aVal = a.mov_sistema?.trm || 0
                     bVal = b.mov_sistema?.trm || 0
                     break
+                case 'diferencia':
+                    aVal = a.mov_extracto.valor - (a.mov_sistema?.valor || 0)
+                    bVal = b.mov_extracto.valor - (b.mov_sistema?.valor || 0)
+                    break
                 default:
                     return 0
             }
@@ -144,6 +148,15 @@ export const MatchingTable = ({
         }).format(value)
     }
 
+    const formatDifference = (value: number) => {
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(value)
+    }
+
     const formatUSD = (value: number | null | undefined) => {
         if (value === null || value === undefined) return '-'
         return new Intl.NumberFormat('en-US', {
@@ -152,6 +165,7 @@ export const MatchingTable = ({
             minimumFractionDigits: 2
         }).format(value)
     }
+    // ...
 
     const formatTRM = (value: number | null | undefined) => {
         if (value === null || value === undefined) return '-'
@@ -210,6 +224,9 @@ export const MatchingTable = ({
                             </th>
                             <th colSpan={5} className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-l border-gray-200 bg-blue-50">
                                 Sistema
+                            </th>
+                            <th className="px-4 py-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-l border-gray-200 bg-purple-50">
+                                Diferencia
                             </th>
                             <th className="px-4 py-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-l border-gray-200 w-32">
                                 <div className="flex items-center justify-center gap-2">
@@ -329,6 +346,15 @@ export const MatchingTable = ({
                                     <SortIcon column="sistema_trm" />
                                 </div>
                             </th>
+                            <th
+                                className="px-2 py-2 text-right text-xs font-medium text-gray-600 border-l border-gray-200 bg-purple-50 cursor-pointer hover:bg-purple-100"
+                                onClick={() => handleSort('diferencia')}
+                            >
+                                <div className="flex items-center justify-end gap-1">
+                                    Dif
+                                    <SortIcon column="diferencia" />
+                                </div>
+                            </th>
                             <th className="px-4 py-2 border-l border-gray-200"></th>
                         </tr>
                     </thead>
@@ -404,6 +430,11 @@ export const MatchingTable = ({
                                             {hasSystemMovement ? formatTRM(match.mov_sistema!.trm) : '-'}
                                         </td>
 
+                                        {/* Diferencia */}
+                                        <td className={`px-2 py-2 text-sm text-right font-medium border-l border-gray-100 ${hasSystemMovement ? getValueColor(match.mov_extracto.valor - match.mov_sistema!.valor) : 'text-gray-400'}`}>
+                                            {hasSystemMovement ? formatDifference(match.mov_extracto.valor - match.mov_sistema!.valor) : '-'}
+                                        </td>
+
                                         {/* Acciones */}
                                         <td className="px-4 py-2 border-l border-gray-100">
                                             <div className="flex items-center justify-center gap-1">
@@ -457,7 +488,7 @@ export const MatchingTable = ({
                                     {/* Expanded row - Score breakdown */}
                                     {isExpanded && hasSystemMovement && (
                                         <tr className="bg-gray-50">
-                                            <td colSpan={12} className="px-4 py-3">
+                                            <td colSpan={13} className="px-4 py-3">
                                                 <div className="flex items-center gap-6 text-sm">
                                                     <div className="font-semibold text-gray-700">Scores de Similitud:</div>
                                                     <div className="flex items-center gap-1">

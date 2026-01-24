@@ -205,10 +205,15 @@ class MatchingService:
         """
         Calcula score de similitud de descripción usando algoritmo de texto.
         
+        Lógica de Normalización (Traducción):
+        1. Se toma la descripción del EXTRACTO (desc1).
+        2. Si coincide con un patrón de Regla, se transforma a la "Descripción Esperada del Sistema".
+        3. Se compara esta "Descripción Esperada" contra la DESCRIPCIÓN REAL DEL SISTEMA (desc2).
+        
         Args:
-            desc1: Primera descripción (Extracto)
-            desc2: Segunda descripción (Sistema)
-            aliases: Lista de alias para normalización
+            desc1: Descripción del Extracto (Fuente)
+            desc2: Descripción del Sistema (Destino a comparar)
+            aliases: Lista de reglas de normalización
         
         Returns:
             Score de 0.0 a 1.0 basado en similitud de texto
@@ -216,23 +221,23 @@ class MatchingService:
         if not desc1 or not desc2:
             return Decimal('0.00')
         
-        # Normalizar textos
-        desc1_norm = desc1.upper().strip()
-        desc2_norm = desc2.upper().strip()
+        # Normalizar textos base
+        desc1_norm = desc1.upper().strip()  # EXTRACTO
+        desc2_norm = desc2.upper().strip()  # SISTEMA
         
-        # Aplicar reglas de normalización a AMBOS (Extracto y Sistema)
+        # Aplicar reglas SOLO al Extracto para proyectar lo que "Debería decir el Sistema"
+        desc_esperada_sistema = desc1_norm
+        
         if aliases:
             for alias in aliases:
-                # Si el patrón está en la descripción, reemplazarlo
+                # El patrón del alias (ej. "ADICION") se busca en el Extracto
                 if alias.patron in desc1_norm:
-                    desc1_norm = desc1_norm.replace(alias.patron, alias.reemplazo)
-                
-                # Aplicar también al sistema (desc2) para estandarización bidireccional
-                if alias.patron in desc2_norm:
-                    desc2_norm = desc2_norm.replace(alias.patron, alias.reemplazo)
-
-        # Usar SequenceMatcher de difflib (algoritmo de Ratcliff/Obershelp)
-        similitud = SequenceMatcher(None, desc1_norm, desc2_norm).ratio()
+                    # Se reemplaza por el texto del Sistema (ej. "TRASLADO DESDE CUENTA")
+                    # Usamos replace para permitir coincidencias parciales si el patrón es solo una parte
+                    desc_esperada_sistema = desc1_norm.replace(alias.patron, alias.reemplazo)
+        
+        # Usar SequenceMatcher para comparar lo que ESPERAMOS vs lo que TENEMOS
+        similitud = SequenceMatcher(None, desc_esperada_sistema, desc2_norm).ratio()
         
         return Decimal(str(round(similitud, 2)))
     

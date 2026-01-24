@@ -420,3 +420,33 @@ class PostgresMovimientoVinculacionRepository(MovimientoVinculacionRepository):
             raise e
         finally:
             cursor.close()
+
+    def obtener_por_sistema_id(self, sistema_id: int) -> Optional[MovimientoMatch]:
+        """Busca una vinculación por ID del movimiento del sistema."""
+        cursor = self.conn.cursor()
+        try:
+            query = """
+                SELECT id, movimiento_sistema_id, movimiento_extracto_id, estado,
+                       score_similitud, score_fecha, score_valor, score_descripcion,
+                       confirmado_por_usuario, fecha_confirmacion, created_by, 
+                       notas, created_at
+                FROM movimiento_vinculaciones
+                WHERE movimiento_sistema_id = %s
+            """
+            cursor.execute(query, (sistema_id,))
+            row = cursor.fetchone()
+            
+            if not row:
+                return None
+            
+            # Obtener movimientos relacionados
+            mov_extracto = self._obtener_movimiento_extracto(row[2])
+            mov_sistema = self._obtener_movimiento_sistema(row[1]) if row[1] else None
+            
+            if not mov_extracto:
+                return None
+            
+            return self._row_to_movimiento_match(row, mov_extracto, mov_sistema)
+            
+        finally:
+            cursor.close()

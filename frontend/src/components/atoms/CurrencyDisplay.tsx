@@ -1,18 +1,18 @@
 /**
  * CurrencyDisplay - Componente atómico para mostrar valores monetarios
  * 
- * Soporta COP y USD con formato apropiado para cada moneda.
+ * Soporta COP, USD y TRM con formato apropiado para cada moneda.
  * Aplica colorización automática basada en el valor.
  */
 
 import React from 'react'
 
-type CurrencyType = 'COP' | 'USD'
+export type CurrencyType = 'COP' | 'USD' | 'TRM'
 
 interface CurrencyDisplayProps {
     value: number
     className?: string
-    /** Tipo de moneda: COP o USD */
+    /** Tipo de moneda: COP, USD o TRM */
     currency?: CurrencyType
     /** Si se debe mostrar el símbolo de moneda */
     showSymbol?: boolean
@@ -30,11 +30,15 @@ interface CurrencyDisplayProps {
 const CURRENCY_CONFIG: Record<CurrencyType, { locale: string, options: Intl.NumberFormatOptions }> = {
     COP: {
         locale: 'es-CO',
-        options: { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }
+        options: { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }
     },
     USD: {
-        locale: 'en-US',
+        locale: 'en-US', // Usa punto para decimales como solicitado
         options: { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }
+    },
+    TRM: {
+        locale: 'es-CO', // Usa punto miles y coma decimales
+        options: { style: 'currency', currency: 'COP', minimumFractionDigits: 2, maximumFractionDigits: 2 } // "COP" para formato pesos pero con decimales
     }
 }
 
@@ -54,14 +58,16 @@ export const formatCurrency = (
     const config = CURRENCY_CONFIG[currency]
     const numValue = Number(value)
 
-    if (showSymbol) {
-        return new Intl.NumberFormat(config.locale, config.options).format(numValue)
+    // Para TRM, si no mostramos símbolo, formateamos como número
+    // Para evitar que salga COP 4.000,00 si el style es currency
+    if (!showSymbol) {
+        return numValue.toLocaleString(config.locale, {
+            minimumFractionDigits: config.options.minimumFractionDigits,
+            maximumFractionDigits: config.options.maximumFractionDigits
+        })
     }
 
-    return numValue.toLocaleString(config.locale, {
-        maximumFractionDigits: currency === 'USD' ? 2 : 0,
-        minimumFractionDigits: currency === 'USD' ? 2 : 0
-    })
+    return new Intl.NumberFormat(config.locale, config.options).format(numValue)
 }
 
 /**

@@ -47,7 +47,7 @@ export const MatchingFilters = ({
 
     return (
         <div className={`bg-white rounded-xl border border-gray-200 p-3 ${className}`}>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                     <Filter size={18} className="text-gray-600" />
                     <h3 className="font-semibold text-gray-900">Filtros</h3>
@@ -63,7 +63,7 @@ export const MatchingFilters = ({
                 )}
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
                 {/* Line 1: Estado del Match + Buttons */}
                 <div className="flex flex-wrap items-center gap-2">
                     <label className="text-sm font-medium text-gray-700 whitespace-nowrap">

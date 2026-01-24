@@ -1,108 +1,108 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import { Input } from '../atoms/Input'
+import { getNumberColorClass } from '../atoms/CurrencyDisplay'
 
-interface CurrencyInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
-    value: string | number
-    onValueChange: (val: string) => void
+interface CurrencyInputProps extends Omit<React.ComponentProps<typeof Input>, 'value' | 'onChange'> {
+    value: number | null
+    onChange: (value: number | null) => void
+    currency?: 'COP' | 'USD' | 'TRM'
 }
 
-export const CurrencyInput = ({ value, onValueChange, className = '', ...props }: CurrencyInputProps) => {
-    const [display, setDisplay] = useState('')
-    const isEditing = useRef(false)
+export const CurrencyInput: React.FC<CurrencyInputProps> = ({
+    value,
+    onChange,
+    currency = 'COP',
+    className = '',
+    ...props
+}) => {
+    const [displayValue, setDisplayValue] = useState('')
+    const isFirstRender = useRef(true)
 
-    // Parsear valor del input (con formato es-CO) a valor numérico JS
-    // "1.000,50" -> "1000.50" | "-1.000,50" -> "-1000.50"
-    const parse = (val: string) => {
-        // Preservar signo negativo
-        const isNegative = val.startsWith('-')
-        // Eliminar puntos de miles
-        let clean = val.replace(/\./g, '')
-        // Reemplazar coma decimal por punto
-        clean = clean.replace(',', '.')
-        // Asegurar que el signo negativo esté presente si lo había
-        if (isNegative && !clean.startsWith('-')) {
-            clean = '-' + clean
-        }
-        return clean
+    // Configuración de formato según moneda
+    const formatConfig = {
+        COP: { start: 0, end: 0, locale: 'es-CO' },
+        USD: { start: 2, end: 2, locale: 'en-US' },
+        TRM: { start: 2, end: 2, locale: 'es-CO' }
+    }[currency]
+
+    // Formatear valor numérico a string
+    const formatNumber = (num: number | null): string => {
+        if (num === null || num === undefined) return ''
+        return new Intl.NumberFormat(formatConfig.locale, {
+            minimumFractionDigits: formatConfig.start,
+            maximumFractionDigits: formatConfig.end
+        }).format(num)
     }
 
-    // Formatear valor numérico JS a formato visual es-CO
-    // "1000.50" -> "1.000,50" | "-1000.50" -> "-1.000,50"
-    const format = (val: string | number) => {
-        if (val === '' || val === undefined || val === null) return ''
-
-        const valStr = val.toString()
-
-        // Manejar signo negativo
-        const isNegative = valStr.startsWith('-')
-        const absValStr = isNegative ? valStr.slice(1) : valStr
-
-        // Manejar el caso de string intermedio que termina en punto (convertido de coma)
-        // Ejemplo val="123." -> queremos mostrar "123,"
-        if (absValStr.endsWith('.')) {
-            const clean = absValStr.slice(0, -1)
-            const formatted = clean.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-            return `${isNegative ? '-' : ''}${formatted},`
-        }
-
-        const num = parseFloat(absValStr)
-        if (isNaN(num)) return ''
-
-        const parts = absValStr.split('.')
-        const integerPart = parts[0]
-        const decimalPart = parts[1]
-
-        const formattedInt = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-
-        if (decimalPart !== undefined) {
-            return `${isNegative ? '-' : ''}${formattedInt},${decimalPart}`
-        }
-        return `${isNegative ? '-' : ''}${formattedInt}`
-    }
-
+    // Actualizar displayValue cuando cambia el prop value externamente
     useEffect(() => {
-        if (!isEditing.current) {
-            setDisplay(format(value))
+        if (isFirstRender.current) {
+            setDisplayValue(formatNumber(value))
+            isFirstRender.current = false
+            return
+        }
+
+        // Solo actualizar si el valor prop cambia significativamente respecto al parseado actual
+        const currentParsed = parseNumber(displayValue)
+        if (value !== currentParsed) {
+            setDisplayValue(formatNumber(value))
         }
     }, [value])
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const input = e.target.value
+    // Parsear string formateado a número
+    const parseNumber = (str: string): number | null => {
+        if (!str || str === '-') return null
 
-        // Permitir solo dígitos, puntos, comas y signo negativo al inicio
-        // Regex: opcionalmente un guión al inicio, seguido de dígitos, puntos y comas
-        if (!/^-?[\d.,]*$/.test(input)) return
+        let cleanStr = str
 
-        setDisplay(input)
-
-        // Calcular valor real
-        let raw = parse(input)
-
-        // Validar que sea un número válido o un guión solo (inicio de negativo)
-        if (raw === '' || raw === '-' || !isNaN(Number(raw))) {
-            onValueChange(raw)
+        if (currency === 'USD') {
+            // Estilo US: 1,234.56 -> Boro comas
+            cleanStr = str.replace(/,/g, '')
+        } else {
+            // Estilo CO: 1.234,56 -> Borro puntos, cambio coma por punto
+            cleanStr = str.replace(/\./g, '').replace(',', '.')
         }
+
+        const num = parseFloat(cleanStr)
+        return isNaN(num) ? null : num
     }
 
-    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-        isEditing.current = false
-        setDisplay(format(value))
-        if (props.onBlur) props.onBlur(e)
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newVal = e.target.value
+
+        // Validar caracteres permitidos: números, puntos, comas, guión al inicio
+        // Regex simplificado que permite estructura básica, validación estricta al parsear
+        if (!/^-?[0-9.,]*$/.test(newVal)) return
+
+        setDisplayValue(newVal)
+
+        // Actualizar el padre con el valor numerico
+        const numVal = parseNumber(newVal)
+        onChange(numVal)
     }
 
-    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-        isEditing.current = true
-        if (props.onFocus) props.onFocus(e)
+    const handleBlur = () => {
+        // Al salir, formatear bonito lo que haya
+        const num = parseNumber(displayValue)
+        setDisplayValue(formatNumber(num))
     }
+
+    // Calcular color del texto basado en el valor
+    const colorClass = value !== null ? getNumberColorClass(value) : 'text-gray-900'
 
     return (
-        <input
+        <Input
             {...props}
             type="text"
-            value={display}
+            value={displayValue}
             onChange={handleChange}
-            onBlur={handleBlur}
-            onFocus={handleFocus}
-            className={`text-right ${className}`} // Alineación derecha por defecto para números
+            onBlur={(e) => {
+                handleBlur()
+                props.onBlur?.(e)
+            }}
+            placeholder={currency === 'COP' ? '0' : '0,00'}
+            className={`text-right font-mono ${colorClass} ${className}`}
         />
     )
 }
+

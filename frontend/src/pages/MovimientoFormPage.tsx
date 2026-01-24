@@ -230,9 +230,9 @@ export const MovimientoFormPage = () => {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Valor: *</label>
                         <CurrencyInput
-                            value={formData.valor}
-                            onValueChange={val => {
-                                setFormData({ ...formData, valor: val })
+                            value={formData.valor ? parseFloat(formData.valor) : null}
+                            onChange={val => {
+                                setFormData({ ...formData, valor: val !== null ? val.toString() : '' })
                             }}
                             onBlur={() => {
                                 const val = parseFloat(formData.valor)
@@ -261,40 +261,42 @@ export const MovimientoFormPage = () => {
                             <div className="relative">
                                 <span className="absolute left-3 top-2 text-blue-500">$</span>
                                 <CurrencyInput
-                                    value={formData.usd}
-                                    onValueChange={newUsd => {
+                                    value={formData.usd ? parseFloat(formData.usd) : null}
+                                    onChange={newUsd => {
                                         let newValor = formData.valor
-                                        if (newUsd && formData.trm) {
-                                            const u = parseFloat(newUsd)
+                                        if (newUsd !== null && formData.trm) {
+                                            const u = newUsd
                                             const t = parseFloat(formData.trm)
                                             if (!isNaN(u) && !isNaN(t)) {
                                                 newValor = (u * t).toFixed(2)
                                             }
                                         }
-                                        setFormData(prev => ({ ...prev, usd: newUsd, valor: newValor }))
+                                        setFormData(prev => ({ ...prev, usd: newUsd !== null ? newUsd.toString() : '', valor: newValor }))
                                     }}
                                     className="w-full pl-7 pr-3 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                                     placeholder="0.00"
+                                    currency="USD"
                                 />
                             </div>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-blue-900 mb-1">TRM (Tasa de Cambio)</label>
                             <CurrencyInput
-                                value={formData.trm}
-                                onValueChange={newTrm => {
+                                value={formData.trm ? parseFloat(formData.trm) : null}
+                                onChange={newTrm => {
                                     let newValor = formData.valor
-                                    if (formData.usd && newTrm) {
+                                    if (formData.usd && newTrm !== null) {
                                         const u = parseFloat(formData.usd)
-                                        const t = parseFloat(newTrm)
+                                        const t = newTrm
                                         if (!isNaN(u) && !isNaN(t)) {
                                             newValor = (u * t).toFixed(2)
                                         }
                                     }
-                                    setFormData(prev => ({ ...prev, trm: newTrm, valor: newValor }))
+                                    setFormData(prev => ({ ...prev, trm: newTrm !== null ? newTrm.toString() : '', valor: newValor }))
                                 }}
                                 className="w-full px-3 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                                 placeholder="0.00"
+                                currency="TRM"
                             />
                         </div>
                     </div>

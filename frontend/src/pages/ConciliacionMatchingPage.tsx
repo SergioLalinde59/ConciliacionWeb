@@ -3,14 +3,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Settings, AlertCircle } from 'lucide-react'
 import { MatchingTable } from '../components/organisms/MatchingTable'
 import { MatchingStatsCard } from '../components/organisms/MatchingStatsCard'
-import { MatchingFilters } from '../components/organisms/MatchingFilters'
+import { MatchEstado } from '../types/Matching'
+import type { ConfiguracionMatchingUpdate } from '../types/Matching'
+import type { Cuenta, Movimiento } from '../types'
 import { ConfiguracionMatchingForm } from '../components/organisms/ConfiguracionMatchingForm'
 import { MatchesIncorrectosModal } from '../components/organisms/MatchesIncorrectosModal'
+import { MovimientoModal } from '../components/organisms/modals/MovimientoModal'
 import { matchingService } from '../services/matching.service'
-import { cuentasService } from '../services/api'
-import type { ConfiguracionMatchingUpdate } from '../types/Matching'
-import { MatchEstado } from '../types/Matching'
-import type { Cuenta } from '../types'
+import { cuentasService, movimientosService } from '../services/api'
+import { UnmatchedSystemTable } from '../components/organisms/UnmatchedSystemTable'
 
 export const ConciliacionMatchingPage = () => {
     // State para filtros principales
@@ -20,12 +21,14 @@ export const ConciliacionMatchingPage = () => {
 
     // State para filtros de matches
     const [selectedEstados, setSelectedEstados] = useState<MatchEstado[]>([MatchEstado.SIN_MATCH])
-    const [minScore, setMinScore] = useState(0)
-    const [soloConfirmados, setSoloConfirmados] = useState(false)
 
     // State para UI
     const [showConfigModal, setShowConfigModal] = useState(false)
     const [showMatchesIncorrectosModal, setShowMatchesIncorrectosModal] = useState(false)
+
+    // State para edición de movimiento de sistema (desde popover)
+    const [editingSystemMov, setEditingSystemMov] = useState<Movimiento | null>(null)
+    const [showEditSystemModal, setShowEditSystemModal] = useState(false)
 
     const queryClient = useQueryClient()
 
@@ -69,12 +72,61 @@ export const ConciliacionMatchingPage = () => {
 
 
 
-    // Detectar matches 1-a-muchos
-    const { data: matches1aMuchosData } = useQuery({
-        queryKey: ['matches-1-a-muchos', cuentaId, year, month],
-        queryFn: () => matchingService.detectarMatches1aMuchos(cuentaId!, year, month),
-        enabled: cuentaId !== null
-    })
+    // Detectar matches 1-a-muchos (Calculado LOCALMENTE para in-memory validation)
+    const matches1aMuchosData = useMemo(() => {
+        if (!matchingResult || !matchingResult.matches) return null
+
+        // Agrupar por movimiento de sistema ID
+        const conteoPorSistema: Record<number, {
+            sistemaMov: any,
+            extractoMovs: any[]
+        }> = {}
+
+        matchingResult.matches.forEach(match => {
+            if (match.mov_sistema) {
+                const sysId = match.mov_sistema.id
+                if (!conteoPorSistema[sysId]) {
+                    conteoPorSistema[sysId] = {
+                        sistemaMov: match.mov_sistema,
+                        extractoMovs: []
+                    }
+                }
+                conteoPorSistema[sysId].extractoMovs.push(match.mov_extracto)
+            }
+        })
+
+        // Filtrar los que tienen > 1 vinculación
+        const casosProblematicos = Object.values(conteoPorSistema)
+            .filter(grupo => grupo.extractoMovs.length > 1)
+            .map(grupo => ({
+                sistema_id: grupo.sistemaMov.id,
+                sistema_descripcion: grupo.sistemaMov.descripcion,
+                sistema_valor: grupo.sistemaMov.valor,
+                sistema_fecha: grupo.sistemaMov.fecha,
+                num_vinculaciones: grupo.extractoMovs.length,
+                extracto_ids: grupo.extractoMovs.map(e => e.id),
+                extracto_descripciones: grupo.extractoMovs.map(e => e.descripcion),
+                extracto_valores: grupo.extractoMovs.map(e => e.valor),
+                extracto_fechas: grupo.extractoMovs.map(e => e.fecha)
+            }))
+
+        if (casosProblematicos.length === 0) return null
+
+        const totalExtractosAfectados = casosProblematicos.reduce((acc, curr) => acc + curr.num_vinculaciones, 0)
+
+        return {
+            casos_problematicos: casosProblematicos,
+            total_movimientos_sistema_afectados: casosProblematicos.length,
+            total_extractos_afectados: totalExtractosAfectados
+        }
+    }, [matchingResult])
+
+    // Detectar matches 1-a-muchos (BACKEND - Legacy/Backup)
+    // const { data: matches1aMuchosDataLegacy } = useQuery({
+    //     queryKey: ['matches-1-a-muchos', cuentaId, year, month],
+    //     queryFn: () => matchingService.detectarMatches1aMuchos(cuentaId!, year, month),
+    //     enabled: cuentaId !== null
+    // })
 
     // Cargar configuración
     const { data: configuracion } = useQuery({
@@ -128,15 +180,43 @@ export const ConciliacionMatchingPage = () => {
     })
 
     const invalidarMatches1aMuchosMutation = useMutation({
+        // NOTA: Este endpoint del backend borra de DB. 
+        // Si los duplicados son solo en memoria (no guardados), esto podría no hacer nada en DB 
+        // pero refrescar la query limpiaría el estado inestable.
         mutationFn: () => matchingService.invalidarMatches1aMuchos(cuentaId!, year, month),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['matching', cuentaId, year, month] })
-            queryClient.invalidateQueries({ queryKey: ['matches-1-a-muchos', cuentaId, year, month] })
+            // queryClient.invalidateQueries({ queryKey: ['matches-1-a-muchos', cuentaId, year, month] })
             setShowMatchesIncorrectosModal(false)
         },
         onError: (error) => {
             console.error(error)
             alert('Error al invalidar matches incorrectos')
+        }
+    })
+
+    // Mutations para sistema (Floating Window)
+    const deleteSystemMovMutation = useMutation({
+        mutationFn: (id: number) => movimientosService.eliminarLote([id]),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['matching', cuentaId, year, month] })
+        },
+        onError: (error) => {
+            console.error(error)
+            alert('Error al eliminar movimiento del sistema')
+        }
+    })
+
+    const updateSystemMovMutation = useMutation({
+        mutationFn: (data: { id: number, datos: Partial<Movimiento> }) =>
+            movimientosService.actualizar(data.id, data.datos),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['matching', cuentaId, year, month] })
+            setShowEditSystemModal(false)
+        },
+        onError: (error) => {
+            console.error(error)
+            alert('Error al actualizar movimiento')
         }
     })
 
@@ -170,7 +250,7 @@ export const ConciliacionMatchingPage = () => {
             // Dentro del mismo estado, ordenar por score descendente
             return b.score_total - a.score_total
         })
-    }, [matchingResult, minScore, selectedEstados, soloConfirmados])
+    }, [matchingResult, selectedEstados])
 
     const limpiarFiltros = () => {
         setSelectedEstados([])
@@ -179,7 +259,7 @@ export const ConciliacionMatchingPage = () => {
 
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-3">
             {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
@@ -202,7 +282,7 @@ export const ConciliacionMatchingPage = () => {
             </div>
 
             {/* Filtros Principales */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <div className="bg-white rounded-xl border border-gray-200 p-3">
                 <div className="flex gap-4">
                     <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -298,80 +378,92 @@ export const ConciliacionMatchingPage = () => {
             )}
 
             {/* Estadísticas y Filtros */}
+            {/* Estadísticas y Filtros */}
             {
                 matchingResult && (
-                    <div className="grid grid-cols-1 lg:grid-cols-[350px,1fr] gap-6">
-                        <div className="space-y-6">
-                            <MatchingStatsCard estadisticas={matchingResult.estadisticas} />
-                            <MatchingFilters
-                                selectedEstados={selectedEstados}
-                                onEstadosChange={setSelectedEstados}
-                                minScore={minScore}
-                                onMinScoreChange={setMinScore}
-                                soloConfirmados={soloConfirmados}
-                                onSoloConfirmadosChange={setSoloConfirmados}
-                                onLimpiar={limpiarFiltros}
-                            />
-                        </div>
-
-                        {/* Tabla de Matches */}
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-semibold text-gray-900">
-                                    Matches Encontrados ({matchesFiltrados.length})
-                                </h2>
+                    <>
+                        <div className="grid grid-cols-1 lg:grid-cols-[350px,1fr] gap-4">
+                            <div className="space-y-3">
+                                <MatchingStatsCard
+                                    estadisticas={matchingResult.estadisticas}
+                                    unmatchedSystemRecordsCount={matchingResult.movimientos_sistema_sin_match?.length || 0}
+                                />
                             </div>
 
-                            <MatchingTable
-                                matches={matchesFiltrados}
-                                onAprobar={(match) => {
-                                    if (match.mov_sistema) {
-                                        vincularMutation.mutate({
-                                            extractoId: match.mov_extracto.id,
-                                            sistemaId: match.mov_sistema.id,
-                                            usuario: 'sistema', // TODO: Usar usuario real
-                                            notas: 'Aprobado desde Probable'
-                                        })
-                                    }
-                                }}
-                                onCrear={(match) => {
-                                    createMovementsMutation.mutate([{
-                                        movimiento_extracto_id: match.mov_extracto.id,
-                                        descripcion: match.mov_extracto.descripcion
-                                    }])
-                                }}
-                                onDesvincular={(match) => {
-                                    desvincularMutation.mutate(match.mov_extracto.id)
-                                }}
-                                onAprobarTodo={() => {
-                                    const probables = matchesFiltrados.filter(m => m.estado === MatchEstado.PROBABLE)
-                                    if (probables.length === 0) return
-
-                                    probables.forEach(match => {
+                            {/* Tabla de Matches */}
+                            <div className="space-y-4">
+                                <MatchingTable
+                                    matches={matchesFiltrados}
+                                    selectedEstados={selectedEstados}
+                                    onEstadosChange={setSelectedEstados}
+                                    onLimpiar={limpiarFiltros}
+                                    onAprobar={(match) => {
                                         if (match.mov_sistema) {
                                             vincularMutation.mutate({
                                                 extractoId: match.mov_extracto.id,
                                                 sistemaId: match.mov_sistema.id,
-                                                usuario: 'sistema',
-                                                notas: 'Aprobación masiva'
+                                                usuario: 'sistema', // TODO: Usar usuario real
+                                                notas: 'Aprobado desde Probable'
                                             })
                                         }
-                                    })
-                                }}
-                                onCrearTodo={() => {
-                                    const sinMatch = matchesFiltrados.filter(m => m.estado === MatchEstado.SIN_MATCH && !m.mov_sistema)
-                                    if (sinMatch.length === 0) return
+                                    }}
+                                    onCrear={(match) => {
+                                        createMovementsMutation.mutate([{
+                                            movimiento_extracto_id: match.mov_extracto.id,
+                                            descripcion: match.mov_extracto.descripcion
+                                        }])
+                                    }}
+                                    onDesvincular={(match) => {
+                                        desvincularMutation.mutate(match.mov_extracto.id)
+                                    }}
+                                    onAprobarTodo={() => {
+                                        const probables = matchesFiltrados.filter(m => m.estado === MatchEstado.PROBABLE)
+                                        if (probables.length === 0) return
 
-                                    const itemsToCreate = sinMatch.map(m => ({
-                                        movimiento_extracto_id: m.mov_extracto.id,
-                                        descripcion: m.mov_extracto.descripcion
-                                    }))
-                                    createMovementsMutation.mutate(itemsToCreate)
-                                }}
-                                loading={isLoading}
-                            />
+                                        probables.forEach(match => {
+                                            if (match.mov_sistema) {
+                                                vincularMutation.mutate({
+                                                    extractoId: match.mov_extracto.id,
+                                                    sistemaId: match.mov_sistema.id,
+                                                    usuario: 'sistema',
+                                                    notas: 'Aprobación masiva'
+                                                })
+                                            }
+                                        })
+                                    }}
+                                    onCrearTodo={() => {
+                                        const sinMatch = matchesFiltrados.filter(m => m.estado === MatchEstado.SIN_MATCH && !m.mov_sistema)
+                                        if (sinMatch.length === 0) return
+
+                                        const itemsToCreate = sinMatch.map(m => ({
+                                            movimiento_extracto_id: m.mov_extracto.id,
+                                            descripcion: m.mov_extracto.descripcion
+                                        }))
+                                        createMovementsMutation.mutate(itemsToCreate)
+                                    }}
+                                    loading={isLoading}
+                                />
+                            </div>
                         </div>
-                    </div>
+
+                        {/* Tabla de Registros en Tránsito / Sin Match */}
+                        {matchingResult.movimientos_sistema_sin_match && matchingResult.movimientos_sistema_sin_match.length > 0 && (
+                            <div className="mt-4">
+                                <UnmatchedSystemTable
+                                    records={matchingResult.movimientos_sistema_sin_match}
+                                    onDelete={(id) => {
+                                        if (confirm('¿Estás seguro de eliminar este movimiento del sistema?')) {
+                                            deleteSystemMovMutation.mutate(id)
+                                        }
+                                    }}
+                                    onEdit={(mov) => {
+                                        setEditingSystemMov(mov as any)
+                                        setShowEditSystemModal(true)
+                                    }}
+                                />
+                            </div>
+                        )}
+                    </>
                 )
             }
 
@@ -398,45 +490,54 @@ export const ConciliacionMatchingPage = () => {
             )}
 
             {/* Loading State */}
-            {
-                isLoading && (
-                    <div className="flex items-center justify-center py-12">
-                        <div className="text-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                            <p className="text-gray-600">Ejecutando algoritmo de matching...</p>
-                        </div>
+            {isLoading && (
+                <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">Ejecutando algoritmo de matching...</p>
                     </div>
-                )
-            }
+                </div>
+            )}
 
             {/* Modal de Configuración */}
-            {
-                showConfigModal && configuracion && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                            <ConfiguracionMatchingForm
-                                configuracion={configuracion}
-                                onSave={async (config) => { await actualizarConfigMutation.mutateAsync(config) }}
-                                onCancel={() => setShowConfigModal(false)}
-                            />
-                        </div>
+            {showConfigModal && configuracion && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <ConfiguracionMatchingForm
+                            configuracion={configuracion}
+                            onSave={async (config) => { await actualizarConfigMutation.mutateAsync(config) }}
+                            onCancel={() => setShowConfigModal(false)}
+                        />
                     </div>
-                )
-            }
+                </div>
+            )}
 
             {/* Modal de Matches Incorrectos */}
-            {
-                showMatchesIncorrectosModal && matches1aMuchosData && matches1aMuchosData.casos_problematicos.length > 0 && (
-                    <MatchesIncorrectosModal
-                        casos={matches1aMuchosData.casos_problematicos}
-                        totalMovimientosSistema={matches1aMuchosData.total_movimientos_sistema_afectados}
-                        totalExtractos={matches1aMuchosData.total_extractos_afectados}
-                        onClose={() => setShowMatchesIncorrectosModal(false)}
-                        onCorregir={async () => { await invalidarMatches1aMuchosMutation.mutateAsync() }}
-                        isLoading={invalidarMatches1aMuchosMutation.isPending}
-                    />
-                )
-            }
-        </div >
+            {showMatchesIncorrectosModal && matches1aMuchosData && matches1aMuchosData.casos_problematicos.length > 0 && (
+                <MatchesIncorrectosModal
+                    casos={matches1aMuchosData.casos_problematicos}
+                    totalMovimientosSistema={matches1aMuchosData.total_movimientos_sistema_afectados}
+                    totalExtractos={matches1aMuchosData.total_extractos_afectados}
+                    onClose={() => setShowMatchesIncorrectosModal(false)}
+                    onCorregir={async () => { await invalidarMatches1aMuchosMutation.mutateAsync() }}
+                    isLoading={invalidarMatches1aMuchosMutation.isPending}
+                />
+            )}
+
+            {/* Modal de Edición de Sistema */}
+            {showEditSystemModal && editingSystemMov && (
+                <MovimientoModal
+                    isOpen={showEditSystemModal}
+                    onClose={() => setShowEditSystemModal(false)}
+                    movimiento={editingSystemMov}
+                    onSave={async (data) => {
+                        await updateSystemMovMutation.mutateAsync({
+                            id: editingSystemMov.id,
+                            datos: data
+                        })
+                    }}
+                />
+            )}
+        </div>
     )
 }

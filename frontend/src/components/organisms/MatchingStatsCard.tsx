@@ -5,6 +5,7 @@ import type { MatchingEstadisticas } from '../../types/Matching'
 interface MatchingStatsCardProps {
     estadisticas: MatchingEstadisticas
     className?: string
+    unmatchedSystemRecordsCount?: number
 }
 
 /**
@@ -15,7 +16,8 @@ interface MatchingStatsCardProps {
  */
 export const MatchingStatsCard = ({
     estadisticas,
-    className = ''
+    className = '',
+    unmatchedSystemRecordsCount = 0
 }: MatchingStatsCardProps) => {
     const totalMatches = estadisticas.exactos + estadisticas.probables
     const porcentajeExactos = estadisticas.total_extracto > 0
@@ -28,11 +30,9 @@ export const MatchingStatsCard = ({
         ? (estadisticas.sin_match / estadisticas.total_extracto * 100).toFixed(1)
         : '0'
 
-    const totalProcesados = estadisticas.exactos + estadisticas.sin_match + estadisticas.ignorados
-
     return (
         <Card className={className}>
-            <div className="space-y-3">
+            <div className="space-y-2">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold text-gray-900">Estadísticas de Matching</h3>
@@ -41,111 +41,103 @@ export const MatchingStatsCard = ({
                     </div>
                 </div>
 
-                {/* Totales */}
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                {/* 5 Cards Row */}
+                <div className="grid grid-cols-5 gap-2">
+                    {/* 1. Extracto */}
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-col justify-between">
                         <div className="flex items-center gap-2 mb-1">
-                            <TrendingUp size={16} className="text-emerald-600" />
+                            <div className="p-1.5 bg-emerald-100 rounded-full">
+                                <TrendingUp size={16} className="text-emerald-600" />
+                            </div>
                             <span className="text-xs font-medium text-emerald-700">Extracto</span>
                         </div>
                         <p className="text-2xl font-bold text-emerald-900">
                             {estadisticas.total_extracto}
                         </p>
                     </div>
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+
+                    {/* 2. Sistema */}
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex flex-col justify-between">
                         <div className="flex items-center gap-2 mb-1">
-                            <TrendingDown size={16} className="text-blue-600" />
+                            <div className="p-1.5 bg-blue-100 rounded-full">
+                                <TrendingDown size={16} className="text-blue-600" />
+                            </div>
                             <span className="text-xs font-medium text-blue-700">Sistema</span>
                         </div>
-                        <p className="text-2xl font-bold text-blue-900">
-                            {estadisticas.total_sistema}
-                        </p>
-                    </div>
-                </div>
-
-                {/* Desglose de Estados - Horizontal Ribbon */}
-                <div className="space-y-2">
-                    <h4 className="text-sm font-semibold text-gray-700">Desglose por Estado</h4>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        {/* Sin Match */}
-                        <div className="p-3 bg-gray-50 border-2 border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
-                            <div className="flex items-center gap-2 mb-1">
-                                <div className="p-1.5 bg-gray-400 rounded-full">
-                                    <XCircle size={16} className="text-white" />
-                                </div>
-                                <p className="text-xs text-gray-600 font-medium">Sin Match</p>
-                            </div>
-                            <div className="flex items-baseline gap-2">
-                                <p className="text-2xl font-bold text-gray-900">{estadisticas.sin_match}</p>
-                                <span className="px-2 py-0.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-full">
-                                    {porcentajeSinMatch}%
+                        <div className="flex flex-col items-end">
+                            <p className="text-2xl font-bold text-blue-900 leading-none">
+                                {estadisticas.total_sistema - unmatchedSystemRecordsCount}
+                            </p>
+                            {unmatchedSystemRecordsCount > 0 && (
+                                <span className="text-[10px] text-blue-600 font-medium mt-1">
+                                    + {unmatchedSystemRecordsCount} en tránsito
                                 </span>
-                            </div>
-                        </div>
-
-                        {/* Matches Probables */}
-                        <div className="p-3 bg-amber-50 border-2 border-amber-200 rounded-xl hover:border-amber-300 transition-colors">
-                            <div className="flex items-center gap-2 mb-1">
-                                <div className="p-1.5 bg-amber-500 rounded-full">
-                                    <AlertCircle size={16} className="text-white" />
-                                </div>
-                                <p className="text-xs text-amber-700 font-medium">Matches Probables</p>
-                            </div>
-                            <div className="flex items-baseline gap-2">
-                                <p className="text-2xl font-bold text-amber-900">{estadisticas.probables}</p>
-                                <span className="px-2 py-0.5 bg-amber-200 text-amber-800 text-xs font-medium rounded-full">
-                                    {porcentajeProbables}%
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Matches Exactos */}
-                        <div className="p-3 bg-emerald-50 border-2 border-emerald-200 rounded-xl hover:border-emerald-300 transition-colors">
-                            <div className="flex items-center gap-2 mb-1">
-                                <div className="p-1.5 bg-emerald-500 rounded-full">
-                                    <CheckCircle size={16} className="text-white" />
-                                </div>
-                                <p className="text-xs text-emerald-700 font-medium">Matches Exactos</p>
-                            </div>
-                            <div className="flex items-baseline gap-2">
-                                <p className="text-2xl font-bold text-emerald-900">{estadisticas.exactos}</p>
-                                <span className="px-2 py-0.5 bg-emerald-200 text-emerald-800 text-xs font-medium rounded-full">
-                                    {porcentajeExactos}%
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Additional Stats - Ignorados */}
-                    {estadisticas.ignorados > 0 && (
-                        <div className="flex gap-3 pt-1">
-                            {estadisticas.ignorados > 0 && (
-                                <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg flex-1">
-                                    <div className="p-1.5 bg-red-400 rounded">
-                                        <EyeOff size={14} className="text-white" />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-red-700 font-medium">Ignorados</p>
-                                        <p className="text-base font-bold text-red-900">{estadisticas.ignorados}</p>
-                                    </div>
-                                </div>
                             )}
                         </div>
-                    )}
+                    </div>
+
+                    {/* 3. Sin Match */}
+                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl flex flex-col justify-between">
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className="p-1.5 bg-gray-200 rounded-full">
+                                <XCircle size={16} className="text-gray-600" />
+                            </div>
+                            <span className="text-xs font-medium text-gray-700">Sin Match</span>
+                        </div>
+                        <div className="flex items-baseline gap-2">
+                            <p className="text-2xl font-bold text-gray-900">{estadisticas.sin_match}</p>
+                            <span className="text-xs text-gray-500 font-medium">
+                                {porcentajeSinMatch}%
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* 4. Matches Probables */}
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex flex-col justify-between">
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className="p-1.5 bg-amber-100 rounded-full">
+                                <AlertCircle size={16} className="text-amber-600" />
+                            </div>
+                            <span className="text-xs font-medium text-amber-700">Probables</span>
+                        </div>
+                        <div className="flex items-baseline gap-2">
+                            <p className="text-2xl font-bold text-amber-900">{estadisticas.probables}</p>
+                            <span className="text-xs text-amber-600 font-medium">
+                                {porcentajeProbables}%
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* 5. Matches Exactos */}
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-col justify-between">
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className="p-1.5 bg-emerald-100 rounded-full">
+                                <CheckCircle size={16} className="text-emerald-600" />
+                            </div>
+                            <span className="text-xs font-medium text-emerald-700">Exactos</span>
+                        </div>
+                        <div className="flex items-baseline gap-2">
+                            <p className="text-2xl font-bold text-emerald-900">{estadisticas.exactos}</p>
+                            <span className="text-xs text-emerald-600 font-medium">
+                                {porcentajeExactos}%
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Barra de progreso visual */}
-                <div className="pt-3 border-t border-gray-200">
-                    <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
-                        <span>Progreso de Revisión</span>
-                        <span className="font-semibold">
-                            {estadisticas.total_extracto > 0
-                                ? ((totalProcesados / estadisticas.total_extracto) * 100).toFixed(0)
-                                : '0'}%
-                        </span>
+                {/* Ignorados - Only show if > 0 */}
+                {estadisticas.ignorados > 0 && (
+                    <div className="flex justify-end">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-50 border border-red-100 rounded-full text-xs text-red-700">
+                            <EyeOff size={12} />
+                            <span>{estadisticas.ignorados} ignorados</span>
+                        </div>
                     </div>
-                    <div className="h-3 bg-gray-100 rounded-full overflow-hidden flex">
+                )}
+
+                {/* Barra de progreso visual */}
+                <div className="pt-2">
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden flex">
                         {estadisticas.sin_match > 0 && (
                             <div
                                 className="bg-gray-400 h-full"
@@ -174,28 +166,6 @@ export const MatchingStatsCard = ({
                                 title={`${estadisticas.ignorados} ignorados`}
                             />
                         )}
-                    </div>
-                    <div className="flex items-center justify-between mt-2 text-xs">
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1">
-                                <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                                <span className="text-gray-600">Sin Match</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                                <span className="text-gray-600">Probables</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                                <span className="text-gray-600">Exactos</span>
-                            </div>
-                            {estadisticas.ignorados > 0 && (
-                                <div className="flex items-center gap-1">
-                                    <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                                    <span className="text-gray-600">Ignorados</span>
-                                </div>
-                            )}
-                        </div>
                     </div>
                 </div>
             </div>

@@ -115,3 +115,9 @@ from src.domain.ports.matching_alias_repository import MatchingAliasRepository
 
 def get_matching_alias_repository(conn=Depends(get_db_connection)) -> MatchingAliasRepository:
     return PostgresMatchingAliasRepository(conn)
+from src.domain.services.date_range_service import DateRangeService
+
+def get_date_range_service(
+    repo=Depends(get_movimiento_extracto_repository)
+) -> DateRangeService:
+    return DateRangeService(repo)

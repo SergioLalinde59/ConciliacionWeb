@@ -172,11 +172,11 @@ export const ConciliacionMovimientosTab: React.FC<Props> = ({ cuentaId, year, mo
                         </div>
                         <div className="flex justify-between">
                             <span className="text-gray-600">Ingresos</span>
-                            <span className="font-medium text-green-600"><CurrencyDisplay value={stats.extracto.ingresos} /></span>
+                            <span className="font-medium"><CurrencyDisplay value={stats.extracto.ingresos} /></span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-gray-600">Egresos</span>
-                            <span className="font-medium text-red-600"><CurrencyDisplay value={stats.extracto.egresos} /></span>
+                            <span className="font-medium"><CurrencyDisplay value={stats.extracto.egresos} /></span>
                         </div>
                         {showUsd && (
                             <>
@@ -214,11 +214,11 @@ export const ConciliacionMovimientosTab: React.FC<Props> = ({ cuentaId, year, mo
                         </div>
                         <div className="flex justify-between">
                             <span className="text-gray-600">Ingresos</span>
-                            <span className="font-medium text-green-600"><CurrencyDisplay value={stats.sistema.ingresos} /></span>
+                            <span className="font-medium"><CurrencyDisplay value={stats.sistema.ingresos} /></span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-gray-600">Egresos</span>
-                            <span className="font-medium text-red-600"><CurrencyDisplay value={stats.sistema.egresos} /></span>
+                            <span className="font-medium"><CurrencyDisplay value={stats.sistema.egresos} /></span>
                         </div>
                         {showUsd && (
                             <>
@@ -259,13 +259,13 @@ export const ConciliacionMovimientosTab: React.FC<Props> = ({ cuentaId, year, mo
                         </div>
                         <div className="flex justify-between">
                             <span className="text-gray-600">Ingresos</span>
-                            <span className={`font-medium ${stats.diferencias.ingresos !== 0 ? 'text-purple-600 font-bold' : 'text-gray-400'}`}>
+                            <span className="font-medium">
                                 <CurrencyDisplay value={stats.diferencias.ingresos} />
                             </span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-gray-600">Egresos</span>
-                            <span className={`font-medium ${stats.diferencias.egresos !== 0 ? 'text-purple-600 font-bold' : 'text-gray-400'}`}>
+                            <span className="font-medium">
                                 <CurrencyDisplay value={stats.diferencias.egresos} />
                             </span>
                         </div>
@@ -329,7 +329,7 @@ export const ConciliacionMovimientosTab: React.FC<Props> = ({ cuentaId, year, mo
                             columns={[
                                 { key: 'fecha', header: 'Fecha', accessor: (m) => <span className="text-xs">{m.fecha}</span>, sortable: true },
                                 { key: 'descripcion', header: 'Descripción', accessor: (m) => <span className="text-sm line-clamp-2" title={m.descripcion}>{m.descripcion}</span>, sortable: true },
-                                { key: 'valor', header: 'Valor', accessor: (m) => <span className={`text-sm font-medium ${m.valor > 0 ? 'text-green-600' : m.valor < 0 ? 'text-red-600' : 'text-blue-600'}`}><CurrencyDisplay value={m.valor} /></span>, align: 'right', sortable: true }
+                                { key: 'valor', header: 'Valor', accessor: (m) => <CurrencyDisplay value={m.valor} className="text-sm font-medium" />, align: 'right', sortable: true }
                             ]}
                             getRowKey={(m) => m.id}
                             showActions={false}
@@ -394,7 +394,7 @@ export const ConciliacionMovimientosTab: React.FC<Props> = ({ cuentaId, year, mo
                                 },
                                 { key: 'fecha', header: 'Fecha', accessor: (m) => <span className="text-xs">{m.fecha}</span>, sortable: true },
                                 { key: 'descripcion', header: 'Descripción', accessor: (m) => <span className="text-sm line-clamp-2" title={m.descripcion}>{m.descripcion}</span>, sortable: true },
-                                { key: 'valor', header: 'Valor', accessor: (m) => <span className={`text-sm font-medium ${m.valor > 0 ? 'text-green-600' : m.valor < 0 ? 'text-red-600' : 'text-blue-600'}`}><CurrencyDisplay value={m.valor} /></span>, align: 'right', sortable: true }
+                                { key: 'valor', header: 'Valor', accessor: (m) => <CurrencyDisplay value={m.valor} className="text-sm font-medium" />, align: 'right', sortable: true }
                             ]}
                             getRowKey={(m) => m.id}
                             showActions={false}

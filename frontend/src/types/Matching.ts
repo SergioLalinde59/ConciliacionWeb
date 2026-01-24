@@ -99,6 +99,7 @@ export interface MatchingEstadisticas {
 export interface MatchingResult {
     matches: MovimientoMatch[]
     estadisticas: MatchingEstadisticas
+    movimientos_sistema_sin_match: import('./Matching').MovimientoSistema[] // Array de movimientos del sistema no emparejados
 }
 
 // ============================================================================

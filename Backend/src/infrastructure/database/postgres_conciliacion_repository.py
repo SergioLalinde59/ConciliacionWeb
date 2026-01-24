@@ -3,6 +3,7 @@ from decimal import Decimal
 import json
 from src.domain.models.conciliacion import Conciliacion
 from src.domain.ports.conciliacion_repository import ConciliacionRepository
+from datetime import date
 
 class PostgresConciliacionRepository(ConciliacionRepository):
     def __init__(self, connection):
@@ -183,20 +184,27 @@ class PostgresConciliacionRepository(ConciliacionRepository):
         finally:
             cursor.close()
 
-    def recalcular_sistema(self, cuenta_id: int, year: int, month: int) -> Conciliacion:
+    def recalcular_sistema(self, cuenta_id: int, year: int, month: int, fecha_inicio: Optional[date] = None, fecha_fin: Optional[date] = None) -> Conciliacion:
         cursor = self.conn.cursor()
         try:
-            # 1. Calcular sumas desde movimientos
+            # Si no se pasan fechas, usar mes completo (fallback logic)
+            if not fecha_inicio or not fecha_fin:
+                import calendar
+                ultimo_dia = calendar.monthrange(year, month)[1]
+                fecha_inicio = date(year, month, 1)
+                fecha_fin = date(year, month, ultimo_dia)
+            
+            # 1. Calcular sumas desde movimientos usando el rango exacto
             query_sumas = """
                 SELECT 
                     COALESCE(SUM(CASE WHEN Valor > 0 THEN Valor ELSE 0 END), 0) as entradas,
                     COALESCE(SUM(CASE WHEN Valor < 0 THEN ABS(Valor) ELSE 0 END), 0) as salidas
                 FROM movimientos
                 WHERE CuentaID = %s 
-                  AND EXTRACT(YEAR FROM Fecha) = %s 
-                  AND EXTRACT(MONTH FROM Fecha) = %s
+                  AND Fecha >= %s 
+                  AND Fecha <= %s
             """
-            cursor.execute(query_sumas, (cuenta_id, year, month))
+            cursor.execute(query_sumas, (cuenta_id, fecha_inicio, fecha_fin))
             entradas_sys, salidas_sys = cursor.fetchone()
             
             # 2. Actualizar la tabla conciliaciones

@@ -28,20 +28,22 @@ def detectar_matches_1_a_muchos(cuenta_id: int, year: int, month: int) -> Dict[s
                 m.descripcion,
                 m.valor,
                 m.fecha,
-                COUNT(mv.id) as num_vinculaciones,
-                ARRAY_AGG(mv.movimiento_extracto_id ORDER BY mv.id) as extracto_ids,
-                ARRAY_AGG(me.descripcion ORDER BY mv.id) as extracto_descripciones,
-                ARRAY_AGG(me.valor ORDER BY mv.id) as extracto_valores,
-                ARRAY_AGG(me.fecha ORDER BY mv.id) as extracto_fechas
-            FROM movimientos m
-            JOIN movimiento_vinculaciones mv ON m.id = mv.movimiento_sistema_id
-            JOIN movimientos_extracto me ON mv.movimiento_extracto_id = me.id
-            WHERE m.cuentaid = %s
-              AND EXTRACT(YEAR FROM m.fecha) = %s
-              AND EXTRACT(MONTH FROM m.fecha) = %s
+                COUNT(mv_all.id) as num_vinculaciones_total,
+                ARRAY_AGG(DISTINCT mv_all.movimiento_extracto_id) as all_extracto_ids,
+                ARRAY_AGG(DISTINCT me_curr.descripcion) as current_extracto_descripciones,
+                ARRAY_AGG(DISTINCT me_curr.valor) as current_extracto_valores,
+                ARRAY_AGG(DISTINCT me_curr.fecha) as current_extracto_fechas
+            FROM movimientos_extracto me_curr
+            JOIN movimiento_vinculaciones mv_curr ON me_curr.id = mv_curr.movimiento_extracto_id
+            JOIN movimientos m ON mv_curr.movimiento_sistema_id = m.id
+            -- Join global para contar todas las veces que este sistema_id ha sido usado
+            JOIN movimiento_vinculaciones mv_all ON m.id = mv_all.movimiento_sistema_id
+            WHERE me_curr.cuenta_id = %s
+              AND me_curr.year = %s
+              AND me_curr.month = %s
             GROUP BY m.id, m.descripcion, m.valor, m.fecha
-            HAVING COUNT(mv.id) > 1
-            ORDER BY COUNT(mv.id) DESC
+            HAVING COUNT(mv_all.id) > 1
+            ORDER BY COUNT(mv_all.id) DESC
         """
         
         cursor.execute(query, (cuenta_id, year, month))
@@ -104,15 +106,21 @@ def invalidar_matches_1_a_muchos(cuenta_id: int, year: int, month: int) -> Dict[
                 'mensaje': 'No se encontraron matches 1-a-muchos'
             }
         
-        # 2. Eliminar TODAS las vinculaciones de esos movimientos del sistema
+        # 2. Eliminar vinculaciones SOLO del periodo actual que causan conflicto
         movimientos_sistema_ids = [caso['sistema_id'] for caso in casos['casos_problematicos']]
         
+        # Estrategia: Desvincular solo los del extracto actual (year, month)
+        # dejando intacta la vinculación antigua (histórica) si existe.
         delete_query = """
             DELETE FROM movimiento_vinculaciones
             WHERE movimiento_sistema_id = ANY(%s)
+              AND movimiento_extracto_id IN (
+                  SELECT id FROM movimientos_extracto 
+                  WHERE year = %s AND month = %s
+              )
         """
         
-        cursor.execute(delete_query, (movimientos_sistema_ids,))
+        cursor.execute(delete_query, (movimientos_sistema_ids, year, month))
         vinculaciones_eliminadas = cursor.rowcount
         
         conn.commit()

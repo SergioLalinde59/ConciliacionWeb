@@ -14,6 +14,7 @@ from src.domain.ports.configuracion_matching_repository import ConfiguracionMatc
 from src.domain.ports.movimiento_extracto_repository import MovimientoExtractoRepository
 from src.domain.ports.movimiento_repository import MovimientoRepository
 from src.domain.ports.matching_alias_repository import MatchingAliasRepository
+from src.domain.ports.cuenta_repository import CuentaRepository
 from src.domain.services.matching_service import MatchingService
 
 from src.infrastructure.api.dependencies import (
@@ -22,8 +23,12 @@ from src.infrastructure.api.dependencies import (
     get_matching_service,
     get_movimiento_extracto_repository,
     get_movimiento_repository,
-    get_matching_alias_repository
+    get_matching_alias_repository,
+    get_cuenta_repository,
+    get_date_range_service
 )
+
+from src.domain.services.date_range_service import DateRangeService
 
 from src.infrastructure.logging.config import logger
 
@@ -47,6 +52,7 @@ class MovimientoMatchResponse(BaseModel):
 class MatchingResultResponse(BaseModel):
     matches: List[MovimientoMatchResponse]
     estadisticas: dict
+    movimientos_sistema_sin_match: Optional[List[dict]] = None
 
 class VincularRequest(BaseModel):
     movimiento_extracto_id: int
@@ -292,7 +298,9 @@ def ejecutar_matching(
     repo_sistema: MovimientoRepository = Depends(get_movimiento_repository),
     vinculacion_repo: MovimientoVinculacionRepository = Depends(get_movimiento_vinculacion_repository),
     config_repo: ConfiguracionMatchingRepository = Depends(get_configuracion_matching_repository),
-    alias_repo: MatchingAliasRepository = Depends(get_matching_alias_repository)
+    alias_repo: MatchingAliasRepository = Depends(get_matching_alias_repository),
+    cuenta_repo: CuentaRepository = Depends(get_cuenta_repository),
+    date_service: DateRangeService = Depends(get_date_range_service)
 ):
     """
     Ejecuta el algoritmo de matching para un periodo específico.
@@ -310,11 +318,13 @@ def ejecutar_matching(
         movs_extracto = repo_extracto.obtener_por_periodo(cuenta_id, year, month)
         logger.info(f"Encontrados {len(movs_extracto)} movimientos en extracto")
         
-        # 3. Obtener movimientos del sistema
-        ultimo_dia = calendar.monthrange(year, month)[1]
+        # 3. Obtener movimientos del sistema (Rango Dinámico)
+        fecha_inicio_sistema, fecha_fin_sistema = date_service.get_range_for_period(cuenta_id, year, month)
+        logger.info(f"Ejecutando matching con rango sistema: {fecha_inicio_sistema} - {fecha_fin_sistema}")
+
         movs_sistema, _ = repo_sistema.buscar_avanzado(
-            fecha_inicio=date(year, month, 1),
-            fecha_fin=date(year, month, ultimo_dia),
+            fecha_inicio=fecha_inicio_sistema,
+            fecha_fin=fecha_fin_sistema,
             cuenta_id=cuenta_id
         )
         logger.info(f"Encontrados {len(movs_sistema)} movimientos en sistema")
@@ -379,8 +389,58 @@ def ejecutar_matching(
                     logger.warning(f"Error guardando vinculación: {e}")
         
         # 6. Combinar resultados (Existentes + Nuevos)
-        # Para items que dieron SIN_MATCH en 'matches_nuevos', no se guardaron, pero se devuelven.
         matches_finales = list(matches_map.values()) + matches_nuevos
+        
+        # --- CALCULAR NO EMPAREJADOS DEL SISTEMA ---
+        # Identificar qué movimientos del sistema (de los disponibles) NO fueron usados en los matches nuevos
+        used_system_ids = {m.mov_sistema.id for m in matches_nuevos if m.mov_sistema}
+        
+        # Los disponibles eran los que no estaban en DB.
+        # Restamos los que acabamos de usar en el matching en memoria.
+        movimientos_sistema_sin_match_objs = [
+            m for m in movs_sistema_disponibles 
+            if m.id not in used_system_ids
+        ]
+        
+        # Convertir a dicts
+        movimientos_sistema_sin_match_dicts = [
+            _movimiento_sistema_to_dict(m) for m in movimientos_sistema_sin_match_objs
+        ]
+        
+        # Ordenar por fecha desc
+        movimientos_sistema_sin_match_dicts.sort(key=lambda x: x['fecha'], reverse=True)
+        
+        # --- VALIDACIÓN DE INTEGRIDAD 1-A-1 (SOLO MASTERCARD) ---
+        # Verificar y corregir automáticamente relaciones 1-a-muchos (sistema -> múltiples extractos)
+        # REGLA DE NEGOCIO: Esta validación estricta solo aplica para cuentas MasterCard
+        try:
+            cuenta = cuenta_repo.obtener_por_id(cuenta_id)
+            es_mastercard = cuenta and "mastercard" in cuenta.cuenta.lower()
+            
+            if es_mastercard:
+                from src.application.services.matching_validation_service import detectar_matches_1_a_muchos, invalidar_matches_1_a_muchos
+                
+                logger.info("Ejecutando validación de integridad 1-a-1 (Cuenta MasterCard detectada)...")
+                resultado_validacion = detectar_matches_1_a_muchos(cuenta_id, year, month)
+                
+                if resultado_validacion['total_movimientos_sistema_afectados'] > 0:
+                    logger.warning(f"Detectadas inconsistencias 1-a-muchos: {resultado_validacion['total_movimientos_sistema_afectados']} casos. Ejecutando corrección automática...")
+                    
+                    # Invalidar (eliminar) vinculaciones corruptas
+                    res_invalidacion = invalidar_matches_1_a_muchos(cuenta_id, year, month)
+                    logger.info(f"Corrección completada: {res_invalidacion['vinculaciones_eliminadas']} vinculaciones eliminadas.")
+                    
+                    # RECARGAR datos para estadísticas correctas
+                    # Como hemos borrado registros, la lista 'matches_finales' en memoria está sucia.
+                    logger.info("Recargando resultados desde base de datos tras corrección...")
+                    matches_finales = vinculacion_repo.obtener_por_periodo(cuenta_id, year, month)
+            else:
+                 logger.info(f"Saltando validación de integridad 1-a-1 (Cuenta '{cuenta.cuenta if cuenta else 'Unknown'}' no es MasterCard)")
+                
+        except Exception as ev:
+            logger.error(f"Error en validación automática de integridad: {ev}", exc_info=True)
+            # No detenemos el proceso, solo logueamos el error
+        # ----------------------------------------
 
         # 7. Calcular estadísticas
         estadisticas = {
@@ -398,7 +458,8 @@ def ejecutar_matching(
 
         return MatchingResultResponse(
             matches=[_match_to_response(m) for m in matches_finales],
-            estadisticas=estadisticas
+            estadisticas=estadisticas,
+            movimientos_sistema_sin_match=movimientos_sistema_sin_match_dicts
         )
         
     except ValueError as ve:

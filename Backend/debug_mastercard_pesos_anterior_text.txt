@@ -15,32 +15,33 @@ para evitar cobro de intereses por mora, débitos a
 tus cuentas y el bloqueo de tu tarjeta.
 Recuerda estar al día en el pago de tu tarjeta para evitar cobro de intereses por mora, débitos a tus cuentas y el bloqueo de tu tarjeta.
 Cupo Total Cupo de Avances Período Facturado
-$ 150,000,000.00 $ 150,000,000.00 Desde: 30/12/2024 Hasta: 30/01/2025
+$ 150,000,000.00 $ 150,000,000.00 Desde: 28/02/2025 Hasta: 30/03/2025
 Disponible Total Disponible Avances Pague antes de Valor Pagado
-$ 134,699,778.62 $ 134,699,778.62 17/02/2025
+$ 138,251,113.09 $ 138,251,113.09 16/04/2025
 Tasas de interés vigente Resumen Saldo Total Resumen Pago Mínimo
-Saldo anterior 27.18 Saldo en mora 0.00
-M.V. E.A. + Compras del mes 32.57 + Cuota compras del mes 0.91
+Saldo anterior 167.24 Saldo en mora 0.00
+M.V. E.A. + Compras del mes 223.81 + Cuota compras del mes 6.23
 + Intereses de mora 0.00 + Intereses de mora 0.00
-Compra Internacional 1,8646 % 24,8186 % + Intereses corrientes 0.00 + Intereses corrientes 0.00
-Avance Internacional 1,8646 % 24,8186 % + Avances 0.00 + Cuota avances 0.00
-Mora 1,8646 % 24,8186 % + Otros cargos 0.00 + Otros cargos 0.00
-- Pagos / abonos 28.00 + Cuota compras anteriores 0.00
+Compra Internacional 1,8671 % 24,8553 % + Intereses corrientes 0.00 + Intereses corrientes 0.00
+Avance Internacional 1,8671 % 24,8553 % + Avances 0.00 + Cuota avances 0.00
+Mora 1,8671 % 24,8553 % + Otros cargos 0.00 + Otros cargos 0.00
+- Pagos / abonos 168.00 + Cuota compras anteriores 0.00
 Saldo a favor 0.00 - Saldo a favor 0.00
-= Pagos total 32.00 = Pago mínimo 1.00
+= Pagos total 224.00 = Pago mínimo 7.00
 * Otros cargos: Este valor incluye los siguientes conceptos: Comisión avance, cuota de manejo, IVA por reexpedición, GMF y cobro por reexpedición
 Con Bancolombia Acumulas + Más Puntos Colombia. Consulta tu saldo de puntos, su fecha de vencimiento, redime y entérate de todos los aliados para ti
 en www.puntoscolombia.com
 Número de Fecha de Tasa Tasa EA
 Descripción Valor Original Cargos y Abonos Saldo a Diferir Cuotas
 Autorización Transacción Pactada Facturada
-T01978 27/01/2025 APPLE.COM/BILL 3.04 1,8646 24,8186 0.08 2.96 1/36
+T07558 27/03/2025 APPLE.COM/BILL 3.09 1,8671 24,8553 0.09 3.00 1/36
 VR MONEDA ORIG 12900.0 USA
-R05460 20/01/2025 OPENAI *CHATGPT SUBSCR 20.00 1,8646 24,8186 0.56 19.44 1/36
-C02470 16/01/2025 ABONO SUCURSAL VIRTUAL 28.00- 28.00- 0.00
-T01558 13/01/2025 Adobe 4.53 1,8646 24,8186 0.13 4.40 1/36
+R02338 20/03/2025 OPENAI *CHATGPT SUBSCR 20.00 1,8671 24,8553 0.56 19.44 1/36
+C03202 17/03/2025 ABONO SUCURSAL VIRTUAL 168.00- 168.00- 0.00
+R04268 17/03/2025 GITHUB, INC. 100.00 1,8671 24,8553 2.78 97.22 1/36
+T04028 13/03/2025 Adobe 4.72 1,8671 24,8553 0.13 4.59 1/36
 VR MONEDA ORIG 19583.0 IRL
-R03815 10/01/2025 OPENAI 5.00 1,8646 24,8186 0.14 4.04 1/36
+T06235 05/03/2025 SupportPDFfiller.com 96.00 1,8671 24,8553 2.67 92.57 1/36
 DCF:defensor@bancolombia.com.co;www.bancolombia.com/personas/defensor-financiero; Cr48#18A-14 P11 Medellín;Tel6043561225-018000522622
 Pag. 1 / 1
 
@@ -61,49 +62,49 @@ para evitar cobro de intereses por mora, débitos a
 tus cuentas y el bloqueo de tu tarjeta.
 Recuerda estar al día en el pago de tu tarjeta para evitar cobro de intereses por mora, débitos a tus cuentas y el bloqueo de tu tarjeta.
 Cupo Total Cupo de Avances Período Facturado
-$ 150,000,000.00 $ 150,000,000.00 Desde: 30/12/2024 Hasta: 30/01/2025
+$ 150,000,000.00 $ 150,000,000.00 Desde: 28/02/2025 Hasta: 30/03/2025
 Disponible Total Disponible Avances Pague antes de Valor Pagado
-$ 134,699,778.62 $ 134,699,778.62 17/02/2025
+$ 138,251,113.09 $ 138,251,113.09 16/04/2025
 Tasas de interés vigente Resumen Saldo Total Resumen Pago Mínimo
-Saldo anterior 19,067,747.48 Saldo en mora 0.00
-M.V. E.A. + Compras del mes 12,931,729.00 + Cuota compras del mes 12,931,728.48
+Saldo anterior 17,875,263.71 Saldo en mora 0.00
+M.V. E.A. + Compras del mes 10,822,652.00 + Cuota compras del mes 10,822,651.71
 + Intereses de mora 0.00 + Intereses de mora 0.00
-Compra un mes 0,0000 % 0,0000 % + Intereses corrientes 19,282.60 + Intereses corrientes 19,282.60
-Compra 2 - 36 meses 1,8646 % 24,8186 % + Avances 2,216,000.00 + Cuota avances 2,216,000.00
-Impuestos 1,8646 % 24,8186 % + Otros cargos 0.00 + Otros cargos 0.00
-Avances 1,8646 % 24,8186 % - Pagos / abonos 19,067,748.00 + Cuota compras anteriores 0.00
-Mora 1,8646 % 24,8186 % Saldo a favor 0.00 - Saldo a favor 0.00
-= Pagos total 15,167,012.00 = Pago mínimo 15,167,012.00
+Compra un mes 0,0000 % 0,0000 % + Intereses corrientes 0.00 + Intereses corrientes 0.00
+Compra 2 - 36 meses 1,8671 % 24,8553 % + Avances 0.00 + Cuota avances 0.00
+Impuestos 1,8671 % 24,8553 % + Otros cargos 0.00 + Otros cargos 0.00
+Avances 1,8671 % 24,8553 % - Pagos / abonos 17,875,264.00 + Cuota compras anteriores 0.00
+Mora 1,8671 % 24,8553 % Saldo a favor 0.00 - Saldo a favor 0.00
+= Pagos total 10,822,652.00 = Pago mínimo 10,822,652.00
 * Otros cargos: Este valor incluye los siguientes conceptos: Comisión avance, cuota de manejo, IVA por reexpedición, GMF y cobro por reexpedición
 Con Bancolombia Acumulas + Más Puntos Colombia. Consulta tu saldo de puntos, su fecha de vencimiento, redime y entérate de todos los aliados para ti
 en www.puntoscolombia.com
 Número de Fecha de Tasa Tasa EA
 Descripción Valor Original Cargos y Abonos Saldo a Diferir Cuotas
 Autorización Transacción Pactada Facturada
-30/01/2025 INTERESES CORRIENTES 19,282.60 19,282.60 0.00
-F04539 29/01/2025 CREPES Y WAFFLES LLANO 77,800.00 0,0000 00,0000 77,800.00 0.00 1/1
-T00036 29/01/2025 MERCPAGO*GRUPOR5LIMITA 331,200.00 0,0000 00,0000 331,200.00 0.00 1/1
-R08152 29/01/2025 CENINTRA N 2 153,100.00 0,0000 00,0000 153,100.00 0.00 1/1
-R7542Z 27/01/2025 TIGO SERVICIOS HOGAR Y 99,900.00 0,0000 00,0000 99,900.00 0.00 1/1
-R01492 25/01/2025 JF LA MONTA@A 408,000.00 0,0000 00,0000 408,000.00 0.00 1/1
-R04057 25/01/2025 MOVISTAR EPAYCO RECAR 3,000.00 0,0000 00,0000 3,000.00 0.00 1/1
-R01694 25/01/2025 TIGO ECCOMERCE 3,000.00 0,0000 00,0000 3,000.00 0.00 1/1
-R09516 25/01/2025 TIENDA D1 CANTARRANA 144,270.00 0,0000 00,0000 144,270.00 0.00 1/1
-R04708 25/01/2025 ECOPLASTICOS LA CEJA 119,800.00 0,0000 00,0000 119,800.00 0.00 1/1
-R03158 24/01/2025 PAGOSONLINE*DL 39,900.00 0,0000 00,0000 39,900.00 0.00 1/1
-R0954Z 23/01/2025 EPM SERVICIOS PUBLICOS 846,836.00 0,0000 00,0000 846,836.00 0.00 1/1
-R08899 23/01/2025 AGROFERTIL COLOMBIA 79,000.00 0,0000 00,0000 79,000.00 0.00 1/1
-U02277 23/01/2025 MUNICIPIO DE LA CEJA 2,300.00 0,0000 00,0000 2,300.00 0.00 1/1
-R02671 23/01/2025 CAPIRO VIVERO 297,000.00 0,0000 00,0000 297,000.00 0.00 1/1
-R1952Z 22/01/2025 EPM SERVICIOS PUBLICOS 943,199.00 0,0000 00,0000 943,199.00 0.00 1/1
-T02282 21/01/2025 RECARGA AUTOMATICA FLYPASS 100,000.00 0,0000 00,0000 100,000.00 0.00 1/1
-T05513 21/01/2025 DLO*GOOGLE YouTubePrem 41,900.00 0,0000 00,0000 41,900.00 0.00 1/1
-R03921 21/01/2025 PRICESMART 521,691.00 0,0000 00,0000 521,691.00 0.00 1/1
-R0877Z 20/01/2025 TIGO SERVICIOS HOGAR Y 38,610.00 0,0000 00,0000 38,610.00 0.00 1/1
-R03289 20/01/2025 EXITO LA CEJA 144,300.00 0,0000 00,0000 144,300.00 0.00 1/1
-R09134 20/01/2025 TIENDA D1 LA CEJA SAN 67,520.00 0,0000 00,0000 67,520.00 0.00 1/1
-U01650 17/01/2025 IMPUESTO DIAN PSE 2,216,000.00 1,8646 24,8186 2,216,000.00 0.00 1/1
-C07949 16/01/2025 ABONO SUCURSAL VIRTUAL 19,067,748.00- 19,067,748.00- 0.00
+R00475 26/03/2025 PLANTAS DEL TAMBO 1,474,250.00 0,0000 00,0000 1,474,250.00 0.00 1/1
+R02199 26/03/2025 AMAZON.COM 33,554.00 0,0000 00,0000 33,554.00 0.00 1/1
+R04775 26/03/2025 AMAZON.COM 53,963.00 0,0000 00,0000 53,963.00 0.00 1/1
+U02911 26/03/2025 MUNICIPIO DE LA CEJA 83,752.00 0,0000 00,0000 83,752.00 0.00 1/1
+R02913 26/03/2025 AMAZON.COM 184,690.00 0,0000 00,0000 184,690.00 0.00 1/1
+R01163 25/03/2025 AMAZON.COM 41,285.00 0,0000 00,0000 41,285.00 0.00 1/1
+R02409 25/03/2025 TIENDA D1 LA CEJA 4 49,440.00 0,0000 00,0000 49,440.00 0.00 1/1
+R02792 25/03/2025 PRICESMART 754,450.00 0,0000 00,0000 754,450.00 0.00 1/1
+R01864 21/03/2025 EXITO LA CEJA 33,200.00 0,0000 00,0000 33,200.00 0.00 1/1
+T09520 21/03/2025 DLO*GOOGLE YouTubePrem 41,900.00 0,0000 00,0000 41,900.00 0.00 1/1
+R01542 21/03/2025 TIENDA D1 LA CEJA SAN 84,410.00 0,0000 00,0000 84,410.00 0.00 1/1
+R6686Z 20/03/2025 EPM SERVICIOS PUBLICOS 793,651.00 0,0000 00,0000 793,651.00 0.00 1/1
+R02522 20/03/2025 EXITO LA CEJA 220,510.00 0,0000 00,0000 220,510.00 0.00 1/1
+R07229 20/03/2025 EXITO LA CEJA 83,100.00 0,0000 00,0000 83,100.00 0.00 1/1
+R07148 20/03/2025 MERCOLANTA MONTE MADER 53,400.00 0,0000 00,0000 53,400.00 0.00 1/1
+R3584Z 19/03/2025 TIGO SERVICIOS HOGAR Y 41,310.00 0,0000 00,0000 41,310.00 0.00 1/1
+R3585Z 19/03/2025 EPM SERVICIOS PUBLICOS 870,516.00 0,0000 00,0000 870,516.00 0.00 1/1
+T03955 18/03/2025 RECARGA AUTOMATICA FLYPASS 100,000.00 0,0000 00,0000 100,000.00 0.00 1/1
+R04272 18/03/2025 SUPERMERC LA VAQUITA P 40,060.00 0,0000 00,0000 40,060.00 0.00 1/1
+C03002 17/03/2025 ABONO SUCURSAL VIRTUAL 17,875,264.00- 17,875,264.00- 0.00
+R08078 17/03/2025 SURAMERICANA SEGUROS D 890,020.00 0,0000 00,0000 890,020.00 0.00 1/1
+R08100 17/03/2025 SURAMERICANA SEGUROS D 2,709,260.00 0,0000 00,0000 2,709,260.00 0.00 1/1
+R03557 17/03/2025 COMCEL RECARGAS T1 PA 5,000.00 0,0000 00,0000 5,000.00 0.00 1/1
+R8926Z 15/03/2025 CORPAUL 10,000.00 0,0000 00,0000 10,000.00 0.00 1/1
 DCF:defensor@bancolombia.com.co;www.bancolombia.com/personas/defensor-financiero; Cr48#18A-14 P11 Medellín;Tel6043561225-018000522622
 Pag. 1 / 2
 

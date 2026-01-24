@@ -1,17 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from typing import Optional
 from datetime import date
-from src.domain.models.conciliacion import Conciliacion
-from src.domain.ports.conciliacion_repository import ConciliacionRepository
-from src.infrastructure.api.dependencies import get_conciliacion_repository
-from src.application.services.procesador_archivos_service import ProcesadorArchivosService
-from fastapi import APIRouter, Depends, HTTPException, Body, File, UploadFile, Form
-from src.infrastructure.api.routers.archivos import get_procesador_service
+from fastapi import File, UploadFile, Form
 from pydantic import BaseModel
 from decimal import Decimal
-
 import logging
+
+from src.domain.models.conciliacion import Conciliacion
+from src.domain.ports.conciliacion_repository import ConciliacionRepository
+from src.infrastructure.api.dependencies import get_conciliacion_repository, get_date_range_service
+from src.domain.services.date_range_service import DateRangeService
+from src.application.services.procesador_archivos_service import ProcesadorArchivosService
+from src.infrastructure.api.routers.archivos import get_procesador_service
+
 router = APIRouter(prefix="/api/conciliaciones", tags=["conciliaciones"])
+
 logger = logging.getLogger(__name__)
 print("DEBUG: Conciliaciones Router Module Loaded - vDebugger")
 
@@ -95,7 +98,8 @@ def obtener_conciliacion(
 @router.post("/", response_model=ConciliacionResponse)
 def guardar_conciliacion(
     data: ConciliacionUpdate,
-    repo: ConciliacionRepository = Depends(get_conciliacion_repository)
+    repo: ConciliacionRepository = Depends(get_conciliacion_repository),
+    # date_service: DateRangeService = Depends(get_date_range_service) # Optional if we want to recalc immediately
 ):
     # Convertir de Pydantic a Domain Model
     conciliacion = Conciliacion(
@@ -118,21 +122,31 @@ def guardar_conciliacion(
     # Mejor que sea explicito o el repo podria hacerlo.
     # Vamos a invocar recalcular aqui mismo para devolver la foto completa
     try:
-        final = repo.recalcular_sistema(data.cuenta_id, data.year, data.month)
-        return final
+        # Calcular fechas dinámicas
+        # Necesitamos el date_range_service, pero este endpoint no lo tiene inyectado.
+        # Mala práctica instanciarlo aqui, pero para quick fix...
+        # Mejor: No recalcular aqui si no tenemos el servicio. El frontend puede llamar a /recalcular despues.
+        # O inyectamos el servicio en este endpoint tambien.
+        pass
+        # final = repo.recalcular_sistema(data.cuenta_id, data.year, data.month)
+        # return final
     except Exception as e:
-        # Si falla el recalculo, devolvemos lo guardado al menos
-        return guardado
+        pass
+    
+    return guardado
 
 @router.post("/{cuenta_id}/{year}/{month}/recalcular", response_model=ConciliacionResponse)
 def recalcular_conciliacion(
     cuenta_id: int, 
     year: int, 
     month: int,
-    repo: ConciliacionRepository = Depends(get_conciliacion_repository)
+    repo: ConciliacionRepository = Depends(get_conciliacion_repository),
+    date_service: DateRangeService = Depends(get_date_range_service)
 ):
     try:
-        return repo.recalcular_sistema(cuenta_id, year, month)
+        fecha_inicio, fecha_fin = date_service.get_range_for_period(cuenta_id, year, month)
+        logger.info(f"Recalculando sistema (conciliacion) con rango: {fecha_inicio} - {fecha_fin}")
+        return repo.recalcular_sistema(cuenta_id, year, month, fecha_inicio, fecha_fin)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -272,7 +286,8 @@ def comparar_movimientos(
     year: int,
     month: int,
     repo_sistema: MovimientoRepository = Depends(get_movimiento_repository),
-    repo_extracto: MovimientoExtractoRepository = Depends(get_movimiento_extracto_repository)
+    repo_extracto: MovimientoExtractoRepository = Depends(get_movimiento_extracto_repository),
+    date_service: DateRangeService = Depends(get_date_range_service)
 ):
     """
     Compara movimientos del sistema vs extracto para identificar diferencias.
@@ -281,21 +296,19 @@ def comparar_movimientos(
     - Estadísticas de ambas fuentes (incluyendo USD)
     - Diferencias detectadas
     """
-    from datetime import date
-    import calendar
-    
-    # Calcular último día del mes
-    ultimo_dia = calendar.monthrange(year, month)[1]
-    
-    # Obtener movimientos del sistema (tabla movimientos)
-    movs_sistema, _ = repo_sistema.buscar_avanzado(
-        fecha_inicio=date(year, month, 1),
-        fecha_fin=date(year, month, ultimo_dia),
-        cuenta_id=cuenta_id
-    )
-    
+    # Obtener rango dinámico para el sistema
+    fecha_inicio_sistema, fecha_fin_sistema = date_service.get_range_for_period(cuenta_id, year, month)
+    logger.info(f"Comparando movimientos con rango sistema: {fecha_inicio_sistema} - {fecha_fin_sistema}")
+
     # Obtener movimientos del extracto (tabla movimientos_extracto)
     movs_extracto = repo_extracto.obtener_por_periodo(cuenta_id, year, month)
+
+    # Obtener movimientos del sistema (tabla movimientos)
+    movs_sistema, _ = repo_sistema.buscar_avanzado(
+        fecha_inicio=fecha_inicio_sistema,
+        fecha_fin=fecha_fin_sistema,
+        cuenta_id=cuenta_id
+    )
     
     # helper para sumar usd safely
     def sum_usd(movs, condition):

@@ -1,4 +1,4 @@
-import { Edit2, LayoutList } from 'lucide-react'
+import { Edit2, LayoutList, Trash2 } from 'lucide-react'
 import { Button } from '../atoms/Button'
 import { DataTable } from '../molecules/DataTable'
 import type { Column } from '../molecules/DataTable'
@@ -9,6 +9,7 @@ interface MovimientosTableProps {
     movimientos: Movimiento[]
     loading: boolean
     onEdit: (mov: Movimiento) => void
+    onDelete?: (mov: Movimiento) => void
     totales: {
         ingresos: number
         egresos: number
@@ -16,7 +17,7 @@ interface MovimientosTableProps {
     }
 }
 
-export const MovimientosTable = ({ movimientos, loading, onEdit, totales }: MovimientosTableProps) => {
+export const MovimientosTable = ({ movimientos, loading, onEdit, onDelete, totales }: MovimientosTableProps) => {
 
     const columns: Column<Movimiento>[] = useMemo(() => [
         {
@@ -26,14 +27,14 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, totales }: Movi
             width: 'w-10',
             align: 'center',
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
-            cellClassName: '!py-0.5 !px-0.5 font-mono text-[9px] text-gray-400',
+            cellClassName: '!py-0.5 !px-0.5 font-mono text-[11px] text-gray-400',
             accessor: (row) => `#${row.id}`
         },
         {
             key: 'fecha',
             header: 'FECHA',
             sortable: true,
-            width: 'w-20',
+            width: 'w-18',
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
             cellClassName: '!py-0.5 !px-0.5 text-[13px] text-gray-600 font-normal',
             accessor: (row) => row.fecha
@@ -42,20 +43,16 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, totales }: Movi
             key: 'cuenta',
             header: 'CUENTA',
             sortable: true,
-            width: 'w-32',
+            width: 'w-30',
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
             cellClassName: '!py-0.5 !px-0.5 text-[12px] text-gray-500',
-            accessor: (row) => (
-                <div className="flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
-                    {row.cuenta_display}
-                </div>
-            )
+            accessor: (row) => row.cuenta_display
         },
         {
             key: 'tercero',
             header: 'TERCERO',
             sortable: true,
+            width: 'w-45',
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
             cellClassName: '!py-0.5 !px-0.5 text-[12px] text-gray-600',
             accessor: (row) => (
@@ -68,16 +65,17 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, totales }: Movi
             key: 'clasificacion',
             header: 'CLASIFICACIÓN',
             sortable: true,
+            width: 'w-30',
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
             cellClassName: '!py-0.5 !px-0.5',
             accessor: (row) => (
                 row.centro_costo_display ? (
                     <div className="flex flex-col gap-0">
-                        <span className="text-[11px] font-bold text-slate-700 leading-tight">{row.centro_costo_display}</span>
-                        <span className="text-[10px] text-slate-400 italic font-medium leading-tight">{row.concepto_display}</span>
+                        <span className="text-[13px] font-bold text-slate-700 leading-tight">{row.centro_costo_display}</span>
+                        <span className="text-[12px] text-slate-400 italic font-medium leading-tight">{row.concepto_display}</span>
                     </div>
                 ) : (
-                    <span className="inline-flex items-center px-1 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100 italic leading-none">
+                    <span className="inline-flex items-center px-1 py-0.5 rounded text-[12px] font-medium bg-amber-50 text-amber-700 border border-amber-100 italic leading-none">
                         Sin clasificar
                     </span>
                 )
@@ -90,7 +88,7 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, totales }: Movi
             align: 'right',
             width: 'w-24',
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
-            cellClassName: '!py-0.5 !px-0.5 font-mono text-xs font-bold',
+            cellClassName: '!py-0.5 !px-0.5 font-mono text-sm font-bold',
             accessor: (row) => (
                 <span className={row.valor < 0 ? 'text-rose-500' : 'text-emerald-500'}>
                     {new Intl.NumberFormat('es-CO', {
@@ -108,8 +106,12 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, totales }: Movi
             align: 'right',
             width: 'w-20',
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
-            cellClassName: '!py-0.5 !px-0.5 font-mono text-[11px] text-gray-500',
-            accessor: (row) => row.usd ? `$${Math.abs(row.usd).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'
+            cellClassName: '!py-0.5 !px-0.5 font-mono text-sm font-bold',
+            accessor: (row) => (
+                <span className={row.usd && row.usd < 0 ? 'text-rose-500' : 'text-emerald-500'}>
+                    {row.usd ? (row.usd < 0 ? '-' : '') + `$${Math.abs(row.usd).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'}
+                </span>
+            )
         },
         {
             key: 'trm',
@@ -118,8 +120,12 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, totales }: Movi
             align: 'right',
             width: 'w-16',
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
-            cellClassName: '!py-0.5 !px-0.5 font-mono text-[10px] text-gray-400',
-            accessor: (row) => row.trm ? row.trm.toLocaleString('es-CO', { minimumFractionDigits: 0 }) : '-'
+            cellClassName: '!py-0.5 !px-0.5 font-mono text-sm font-bold',
+            accessor: (row) => (
+                <span className="text-emerald-500">
+                    {row.trm ? Math.abs(row.trm).toLocaleString('es-CO', { minimumFractionDigits: 0 }) : '-'}
+                </span>
+            )
         },
         {
             key: 'moneda',
@@ -127,29 +133,40 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, totales }: Movi
             sortable: true,
             width: 'w-20',
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
-            cellClassName: '!py-0.5 !px-0.5 text-[12px] text-gray-500',
+            cellClassName: '!py-0.5 !px-0.5 text-[13px] text-gray-500',
             accessor: (row) => row.moneda_display
         },
         {
             key: 'actions',
             header: 'ACCIÓN',
             align: 'center',
-            width: 'w-10',
+            width: 'w-20',
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
             cellClassName: '!py-0.5 !px-0.5',
             accessor: (row) => (
-                <Button
-                    variant="ghost-warning"
-                    size="sm"
-                    onClick={() => onEdit(row)}
-                    className="!p-1.5"
-                    title="Editar Movimiento"
-                >
-                    <Edit2 size={15} />
-                </Button>
+                <div className="flex items-center justify-center gap-1">
+                    <Button
+                        variant="ghost-warning"
+                        size="sm"
+                        onClick={() => onEdit(row)}
+                        className="!p-1.5"
+                        title="Editar Movimiento"
+                    >
+                        <Edit2 size={15} />
+                    </Button>
+                    <Button
+                        variant="ghost-danger"
+                        size="sm"
+                        onClick={() => onDelete && onDelete(row)}
+                        className="!p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50"
+                        title="Borrar Movimiento"
+                    >
+                        <Trash2 size={15} />
+                    </Button>
+                </div>
             )
         }
-    ], [onEdit])
+    ], [onEdit, onDelete])
 
 
 

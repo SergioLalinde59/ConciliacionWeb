@@ -155,7 +155,7 @@ export const DashboardPage = () => {
 
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="max-w-7xl mx-auto space-y-6">
             <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Dashboard Financiero</h1>
@@ -206,15 +206,15 @@ export const DashboardPage = () => {
             />
 
             {/* SECCIÓN 1: RIBBON Y GRÁFICOS (Stats) */}
-            <div className="space-y-6">
+            <div className="space-y-4">
                 <DashboardSummaryRibbon
                     ingresos={totales.ingresos}
                     egresos={totales.egresos}
                     saldo={totales.saldo}
                 />
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <div className="flex justify-between items-center mb-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                    <div className="flex justify-between items-center mb-4">
                         <h2 className="text-lg font-bold text-gray-800">Comportamiento por Cuenta</h2>
                         {/* <Button variant="secondary" size="sm" onClick={() => setDetailsModalOpen(true)}>
                             <List size={16} className="mr-2" />
@@ -222,11 +222,11 @@ export const DashboardPage = () => {
                         </Button> */}
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="min-h-[300px]">
                             <DashboardAccountChart data={chartData} isLoading={loadingStats} />
                         </div>
-                        <div className="border-l border-gray-100 pl-8 hidden lg:block overflow-y-auto max-h-[400px]">
+                        <div className="border-l border-gray-100 pl-6 hidden lg:block overflow-y-auto max-h-[400px]">
                             <h3 className="text-sm font-semibold text-gray-500 mb-4 uppercase">Resumen por Cuenta</h3>
                             <DashboardAccountStats stats={filteredStats} loading={loadingStats} />
                         </div>

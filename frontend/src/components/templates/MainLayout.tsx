@@ -12,7 +12,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <Sidebar />
             <Toaster position="top-right" />
             <main className="flex-1 overflow-y-auto bg-gray-50">
-                <div className="p-8">
+                <div className="p-6">
                     {children}
                 </div>
             </main>

@@ -47,6 +47,11 @@ export const movimientosService = {
             body: JSON.stringify(mov)
         }).then(handleResponse),
 
+    eliminar: (id: number): Promise<void> =>
+        fetch(`${API_BASE_URL}/api/movimientos/${id}`, {
+            method: 'DELETE'
+        }).then(handleResponse),
+
     autoClasificar: (): Promise<{ clasificados: number; resumen?: string }> =>
         fetch(`${API_BASE_URL}/api/movimientos/auto-clasificar`, { method: 'POST' }).then(handleResponse),
 

@@ -516,3 +516,25 @@ def eliminar_movimientos_lote(
     except Exception as e:
         logger.error(f"Error eliminando lote: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error eliminando movimientos: {str(e)}")
+
+@router.delete("/{id}")
+def eliminar_movimiento(
+    id: int, 
+    repo: MovimientoRepository = Depends(get_movimiento_repository),
+    repo_vinculacion: MovimientoVinculacionRepository = Depends(get_movimiento_vinculacion_repository)
+):
+    """
+    Elimina físicamente un movimiento del sistema.
+    Antes de eliminar, desvincula cualquier conciliación existente.
+    """
+    try:
+        # 1. Desvincular de cualquier match (Extracto -> Sistema)
+        repo_vinculacion.desvincular_por_sistema_id(id)
+        
+        # 2. Eliminar movimiento del sistema
+        repo.eliminar(id)
+        
+        return {"mensaje": "Movimiento eliminado correctamente"}
+    except Exception as e:
+        logger.error(f"Error eliminando movimiento {id}: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))

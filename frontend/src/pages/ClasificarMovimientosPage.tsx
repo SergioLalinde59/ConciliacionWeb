@@ -361,12 +361,12 @@ export const ClasificarMovimientosPage: React.FC = () => {
             {/* Right Panel: Editor */}
             <div className="flex-1 flex flex-col bg-gray-50 overflow-y-auto">
                 {movimientoActual ? (
-                    <div className="p-6">
+                    <div className="p-4">
                         {/* Header Movimiento */}
-                        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                            <div className="flex justify-between items-start mb-4">
+                        <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+                            <div className="flex justify-between items-start mb-2">
                                 <div>
-                                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Editor de Clasificación</h1>
+                                    <h1 className="text-2xl font-bold text-gray-900 mb-1">Editor de Clasificación</h1>
                                     <p className="text-gray-500 text-sm">ID: {movimientoActual.id}</p>
                                 </div>
                                 <div className="text-right">
@@ -375,7 +375,7 @@ export const ClasificarMovimientosPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-blue-50 p-4 rounded-md border border-blue-100 mb-4">
+                            <div className="bg-blue-50 p-4 rounded-md border border-blue-100 mb-3">
                                 <p className="text-lg text-blue-900 font-medium">{movimientoActual.descripcion}</p>
                                 {movimientoActual.referencia && (
                                     <p className="text-sm text-blue-700 mt-1">Ref: {movimientoActual.referencia}</p>
@@ -384,7 +384,7 @@ export const ClasificarMovimientosPage: React.FC = () => {
 
                             {/* Sugerencia Bar */}
                             {sugerenciaData?.sugerencia.razon && (
-                                <div className="bg-green-50 px-4 py-2 rounded border border-green-200 text-green-800 text-sm flex items-center gap-2 mb-4">
+                                <div className="bg-green-50 px-4 py-2 rounded border border-green-200 text-green-800 text-sm flex items-center gap-2 mb-3">
                                     <Search className="h-4 w-4" />
                                     <strong>Sugerencia:</strong> {sugerenciaData.sugerencia.razon}
                                 </div>
@@ -392,7 +392,7 @@ export const ClasificarMovimientosPage: React.FC = () => {
 
                             {/* Alert: Tercero no existe para esta referencia */}
                             {sugerenciaData?.referencia_no_existe && (
-                                <div className="bg-orange-50 px-4 py-3 rounded border border-orange-200 text-orange-800 text-sm flex items-center justify-between gap-4 mb-4">
+                                <div className="bg-orange-50 px-4 py-3 rounded border border-orange-200 text-orange-800 text-sm flex items-center justify-between gap-4 mb-3">
                                     <div className="flex items-center gap-2">
                                         <span className="text-orange-500 font-bold text-lg">⚠</span>
                                         <span>
@@ -409,7 +409,7 @@ export const ClasificarMovimientosPage: React.FC = () => {
                             )}
 
                             {/* Form Area */}
-                            <div className="space-y-2">
+                            <div className="space-y-1.5">
                                 {/* Tercero */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Tercero</label>
@@ -513,7 +513,7 @@ export const ClasificarMovimientosPage: React.FC = () => {
 
                         {/* History Context - SIEMPRE MOSTRAR */}
                         {sugerenciaData && (
-                            <div className="bg-white rounded-lg shadow-sm p-6">
+                            <div className="bg-white rounded-lg shadow-sm p-4">
                                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                                     <Clock className="h-5 w-5 text-gray-400" />
                                     Historial Relacionado ({sugerenciaData.contexto.length})

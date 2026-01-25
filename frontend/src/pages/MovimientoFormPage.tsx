@@ -173,7 +173,7 @@ export const MovimientoFormPage = () => {
 
     return (
         <div className="max-w-5xl mx-auto">
-            <div className="mb-6">
+            <div className="mb-4">
                 <h1 className="text-2xl font-bold text-gray-900">
                     {isEdit ? 'Editar Movimiento' : 'Nuevo Movimiento'}
                 </h1>
@@ -182,7 +182,7 @@ export const MovimientoFormPage = () => {
                 </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
                 {/* Sección de Datos Básicos */}
                 <div className="grid grid-cols-12 gap-4 items-start">
                     <div className="col-span-2">
@@ -297,8 +297,8 @@ export const MovimientoFormPage = () => {
                 )}
 
                 {/* Separador Clasificación */}
-                <div className="border-t border-gray-200 pt-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Clasificación</h3>
+                <div className="border-t border-gray-200 pt-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Clasificación</h3>
                 </div>
 
                 <div>

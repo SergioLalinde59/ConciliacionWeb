@@ -163,7 +163,7 @@ export const SugerenciasReclasificacionPage = () => {
     if (loading && sugerencias.length === 0) return <div className="p-8 text-center bg-white rounded-lg shadow-sm border border-gray-100">Cargando sugerencias...</div>
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <header className="flex justify-between items-end">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Depuración Inteligente de Traslados</h1>

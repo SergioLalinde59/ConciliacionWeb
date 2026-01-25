@@ -432,8 +432,8 @@ export const ReporteIngresosGastosMesPage = () => {
 
 
     return (
-        <div className="max-w-7xl mx-auto pb-12">
-            <div className="mb-6">
+        <div className="max-w-7xl mx-auto pb-6">
+            <div className="mb-4">
                 <h1 className="text-2xl font-bold text-gray-900">Ingresos y Gastos por Mes</h1>
                 <p className="text-gray-500 text-sm mt-1">
                     Evolución mensual de tus finanzas
@@ -468,7 +468,7 @@ export const ReporteIngresosGastosMesPage = () => {
 
 
             {/* Totales Cards */}
-            <div className="mb-6">
+            <div className="mb-4">
                 <EstadisticasTotales
                     ingresos={totales.ingresos}
                     egresos={totales.egresos}
@@ -477,10 +477,10 @@ export const ReporteIngresosGastosMesPage = () => {
             </div>
 
             {/* Gráficas */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* Gráfica Ingresos */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-[400px]">
-                    <h3 className="text-lg font-bold text-emerald-800 mb-6 flex items-center gap-2">
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-[400px]">
+                    <h3 className="text-lg font-bold text-emerald-800 mb-4 flex items-center gap-2">
                         <BarChart2 size={20} className="text-emerald-500" />
                         Evolución Ingresos
                     </h3>
@@ -504,8 +504,8 @@ export const ReporteIngresosGastosMesPage = () => {
                 </div>
 
                 {/* Gráfica Egresos */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-[400px]">
-                    <h3 className="text-lg font-bold text-rose-800 mb-6 flex items-center gap-2">
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-[400px]">
+                    <h3 className="text-lg font-bold text-rose-800 mb-4 flex items-center gap-2">
                         <BarChart2 size={20} className="text-rose-500" />
                         Evolución Egresos
                     </h3>
@@ -531,7 +531,7 @@ export const ReporteIngresosGastosMesPage = () => {
 
             {/* Tabla Detallada */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-6 border-b border-gray-50 flex justify-between items-center">
+                <div className="p-4 border-b border-gray-50 flex justify-between items-center">
                     <h3 className="text-lg font-bold text-gray-800">Detalle Mensual</h3>
                     <span className="text-xs text-gray-400">(Click en fila para ver detalle)</span>
                 </div>

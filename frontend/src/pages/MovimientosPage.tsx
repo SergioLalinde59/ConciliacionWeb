@@ -11,6 +11,8 @@ import { getMesActual } from '../utils/dateUtils'
 import { FiltrosReporte } from '../components/organisms/FiltrosReporte'
 import { EstadisticasTotales } from '../components/organisms/EstadisticasTotales'
 import { MovimientosTable } from '../components/organisms/MovimientosTable'
+import { MovimientoModal } from '../components/organisms/modals/MovimientoModal'
+import toast from 'react-hot-toast'
 
 
 export const MovimientosPage = () => {
@@ -45,6 +47,10 @@ export const MovimientosPage = () => {
     const [movimientos, setMovimientos] = useState<Movimiento[]>([])
     const [loading, setLoading] = useState(true)
     const [totalesGlobales, setTotalesGlobales] = useState<{ ingresos: number; egresos: number; saldo: number } | null>(null)
+
+    // Estado para borrado
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+    const [movimientoToDelete, setMovimientoToDelete] = useState<Movimiento | null>(null)
 
 
 
@@ -164,6 +170,26 @@ export const MovimientosPage = () => {
         setMostrarEgresos(true)
     }
 
+    const handleDeleteClick = (mov: Movimiento) => {
+        setMovimientoToDelete(mov)
+        setIsDeleteModalOpen(true)
+    }
+
+    const handleConfirmDelete = async () => {
+        if (!movimientoToDelete) return
+
+        try {
+            await apiService.movimientos.eliminar(movimientoToDelete.id)
+            toast.success('Movimiento eliminado correctamente')
+            setIsDeleteModalOpen(false)
+            setMovimientoToDelete(null)
+            cargarMovimientos() // Recargar lista
+        } catch (error: any) {
+            console.error('Error eliminando movimiento:', error)
+            toast.error(error.message || 'Error al eliminar el movimiento')
+        }
+    }
+
     return (
         <div className="max-w-7xl mx-auto pb-12">
             <div className="flex justify-between items-center mb-6">
@@ -229,7 +255,20 @@ export const MovimientosPage = () => {
                 movimientos={movimientos}
                 loading={loading}
                 onEdit={(mov) => navigate(`/movimientos/editar/${mov.id}`)}
+                onDelete={handleDeleteClick}
                 totales={totales}
+            />
+
+            {/* Modal de Borrado */}
+            <MovimientoModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => {
+                    setIsDeleteModalOpen(false)
+                    setMovimientoToDelete(null)
+                }}
+                movimiento={movimientoToDelete}
+                onSave={handleConfirmDelete}
+                mode="delete"
             />
 
 

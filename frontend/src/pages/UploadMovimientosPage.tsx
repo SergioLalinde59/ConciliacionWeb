@@ -173,16 +173,16 @@ export const UploadMovimientosPage: React.FC = () => {
 
     return (
         <div className="max-w-4xl mx-auto p-6">
-            <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <UploadCloud className="h-8 w-8 text-blue-600" />
                 Cargar Movimientos Bancarios
             </h1>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 space-y-8">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
 
                 {/* 1. Selección */}
-                <form onSubmit={handleAnalizar} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form onSubmit={handleAnalizar} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="md:col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Cuenta Asociada</label>
                             <select
@@ -213,7 +213,7 @@ export const UploadMovimientosPage: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:bg-gray-50 transition-colors">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
                         <input
                             type="file"
                             id="file-upload"
@@ -262,8 +262,8 @@ export const UploadMovimientosPage: React.FC = () => {
 
                 {/* 2. Estadísticas de Validación */}
                 {stats && analyzed && (
-                    <div className="animate-fade-in space-y-8">
-                        <div className="grid grid-cols-4 gap-4">
+                    <div className="animate-fade-in space-y-6">
+                        <div className="grid grid-cols-4 gap-3">
                             <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center">
                                 <span className="text-3xl font-bold text-blue-600 block">{stats.leidos}</span>
                                 <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Registros Leídos</span>

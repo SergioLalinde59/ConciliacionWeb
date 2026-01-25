@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react'
-import { X, Save, AlertCircle } from 'lucide-react'
+import { X, Save, AlertCircle, Trash2 } from 'lucide-react'
 import { Input } from '../../atoms/Input'
 import { Select } from '../../atoms/Select'
 import { Button } from '../../atoms/Button'
 import { CurrencyInput } from '../../molecules/CurrencyInput'
 import { catalogosService } from '../../../services/catalogs.service'
 import { cuentasService } from '../../../services/api'
-// MovimientoSistema import removed
 import type { Cuenta } from '../../../types'
 
 interface MovimientoModalProps {
     isOpen: boolean
     onClose: () => void
-    movimiento?: any // Usamos any por flexibilidad temporal, luego tipar estricto
+    movimiento?: any
     onSave: (data: any) => Promise<void>
+    mode?: 'create' | 'edit' | 'delete'
 }
 
 interface FormData {
@@ -30,7 +30,7 @@ interface FormData {
     concepto_id: string
 }
 
-export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave }: MovimientoModalProps) => {
+export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave, mode = 'create' }: MovimientoModalProps) => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -53,6 +53,11 @@ export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave }: Movimie
         centro_costo_id: '',
         concepto_id: ''
     })
+
+    const isReadOnly = mode === 'delete'
+    const title = mode === 'delete' ? 'Borrar Movimiento' : (movimiento ? 'Editar Movimiento' : 'Nuevo Movimiento')
+    const submitLabel = mode === 'delete' ? 'Confirmar Borrado' : 'Guardar Movimiento'
+    const submitIcon = mode === 'delete' ? Trash2 : Save
 
     useEffect(() => {
         if (isOpen) {
@@ -108,6 +113,7 @@ export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave }: Movimie
     }
 
     const handleCurrencyChange = (val: number | null, field: 'valor' | 'usd' | 'trm') => {
+        if (isReadOnly) return
         setFormData(prev => ({
             ...prev,
             [field]: val === null ? '' : val.toString()
@@ -120,25 +126,28 @@ export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave }: Movimie
         setError(null)
 
         try {
-            const payload = {
-                fecha: formData.fecha,
-                descripcion: formData.descripcion,
-                referencia: formData.referencia || null,
-                valor: formData.valor ? parseFloat(formData.valor) : 0, // Valor required
-                usd: formData.usd ? parseFloat(formData.usd) : null,
-                trm: formData.trm ? parseFloat(formData.trm) : null,
-                moneda_id: parseInt(formData.moneda_id),
-                cuenta_id: parseInt(formData.cuenta_id),
-                tercero_id: formData.tercero_id ? parseInt(formData.tercero_id) : null,
-                centro_costo_id: formData.centro_costo_id ? parseInt(formData.centro_costo_id) : null,
-                concepto_id: formData.concepto_id ? parseInt(formData.concepto_id) : null
+            if (mode === 'delete') {
+                await onSave(movimiento) // Pass full object or ID for delete
+            } else {
+                const payload = {
+                    fecha: formData.fecha,
+                    descripcion: formData.descripcion,
+                    referencia: formData.referencia || null,
+                    valor: formData.valor ? parseFloat(formData.valor) : 0, // Valor required
+                    usd: formData.usd ? parseFloat(formData.usd) : null,
+                    trm: formData.trm ? parseFloat(formData.trm) : null,
+                    moneda_id: parseInt(formData.moneda_id),
+                    cuenta_id: parseInt(formData.cuenta_id),
+                    tercero_id: formData.tercero_id ? parseInt(formData.tercero_id) : null,
+                    centro_costo_id: formData.centro_costo_id ? parseInt(formData.centro_costo_id) : null,
+                    concepto_id: formData.concepto_id ? parseInt(formData.concepto_id) : null
+                }
+                await onSave(payload)
             }
-
-            await onSave(payload)
             onClose()
         } catch (err: any) {
             console.error(err)
-            setError(err.message || "Error al guardar")
+            setError(err.message || "Error al procesar")
         } finally {
             setLoading(false)
         }
@@ -148,10 +157,10 @@ export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave }: Movimie
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center p-6 border-b border-gray-100">
-                    <h2 className="text-xl font-bold text-gray-900">
-                        {movimiento ? 'Editar Movimiento' : 'Nuevo Movimiento'}
+            <div className={`bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto ${mode === 'delete' ? 'border-2 border-red-500' : ''}`}>
+                <div className={`flex justify-between items-center p-6 border-b ${mode === 'delete' ? 'bg-red-50 border-red-100' : 'border-gray-100'}`}>
+                    <h2 className={`text-xl font-bold ${mode === 'delete' ? 'text-red-700' : 'text-gray-900'}`}>
+                        {title}
                     </h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                         <X size={24} />
@@ -159,6 +168,16 @@ export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave }: Movimie
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    {mode === 'delete' && (
+                        <div className="bg-red-50 text-red-700 p-4 rounded-lg flex items-start gap-3 text-sm mb-4 border border-red-200">
+                            <AlertCircle size={20} className="mt-0.5 shrink-0" />
+                            <div>
+                                <p className="font-bold">¿Estás seguro de que deseas eliminar este movimiento?</p>
+                                <p>Esta acción no se puede deshacer.</p>
+                            </div>
+                        </div>
+                    )}
+
                     {error && (
                         <div className="bg-red-50 text-red-700 p-3 rounded-lg flex items-center gap-2 text-sm">
                             <AlertCircle size={16} />
@@ -171,14 +190,16 @@ export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave }: Movimie
                             label="Fecha"
                             type="date"
                             value={formData.fecha}
-                            onChange={e => setFormData({ ...formData, fecha: e.target.value })}
+                            onChange={e => !isReadOnly && setFormData({ ...formData, fecha: e.target.value })}
                             required
+                            disabled={isReadOnly}
                         />
                         <Select
                             label="Cuenta"
                             value={formData.cuenta_id}
-                            onChange={e => setFormData({ ...formData, cuenta_id: e.target.value })}
+                            onChange={e => !isReadOnly && setFormData({ ...formData, cuenta_id: e.target.value })}
                             required
+                            disabled={isReadOnly}
                         >
                             <option value="">Seleccione Cuenta...</option>
                             {cuentas.map(c => (
@@ -190,17 +211,19 @@ export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave }: Movimie
                     <Input
                         label="Descripción"
                         value={formData.descripcion}
-                        onChange={e => setFormData({ ...formData, descripcion: e.target.value })}
+                        onChange={e => !isReadOnly && setFormData({ ...formData, descripcion: e.target.value })}
                         required
                         placeholder="Descripción del movimiento"
+                        disabled={isReadOnly}
                     />
 
                     <div className="grid grid-cols-2 gap-4">
                         <Input
                             label="Referencia"
                             value={formData.referencia}
-                            onChange={e => setFormData({ ...formData, referencia: e.target.value })}
+                            onChange={e => !isReadOnly && setFormData({ ...formData, referencia: e.target.value })}
                             placeholder="Opcional"
+                            disabled={isReadOnly}
                         />
                         <CurrencyInput
                             label="Valor"
@@ -208,6 +231,7 @@ export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave }: Movimie
                             onChange={(val) => handleCurrencyChange(val, 'valor')}
                             currency="COP"
                             required
+                            disabled={isReadOnly}
                         />
                     </div>
 
@@ -217,12 +241,14 @@ export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave }: Movimie
                             value={formData.usd ? parseFloat(formData.usd) : null}
                             onChange={(val) => handleCurrencyChange(val, 'usd')}
                             currency="USD"
+                            disabled={isReadOnly}
                         />
                         <CurrencyInput
                             label="TRM (Opcional)"
                             value={formData.trm ? parseFloat(formData.trm) : null}
                             onChange={(val) => handleCurrencyChange(val, 'trm')}
                             currency="TRM"
+                            disabled={isReadOnly}
                         />
                     </div>
 
@@ -233,7 +259,8 @@ export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave }: Movimie
                             <Select
                                 label="Tercero"
                                 value={formData.tercero_id}
-                                onChange={e => setFormData({ ...formData, tercero_id: e.target.value })}
+                                onChange={e => !isReadOnly && setFormData({ ...formData, tercero_id: e.target.value })}
+                                disabled={isReadOnly}
                             >
                                 <option value="">Seleccione Tercero...</option>
                                 {terceros.map(t => (
@@ -245,7 +272,8 @@ export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave }: Movimie
                                 <Select
                                     label="Centro de Costo"
                                     value={formData.centro_costo_id}
-                                    onChange={e => setFormData({ ...formData, centro_costo_id: e.target.value })}
+                                    onChange={e => !isReadOnly && setFormData({ ...formData, centro_costo_id: e.target.value })}
+                                    disabled={isReadOnly}
                                 >
                                     <option value="">Seleccione...</option>
                                     {centrosCostos.map(c => (
@@ -256,7 +284,8 @@ export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave }: Movimie
                                 <Select
                                     label="Concepto"
                                     value={formData.concepto_id}
-                                    onChange={e => setFormData({ ...formData, concepto_id: e.target.value })}
+                                    onChange={e => !isReadOnly && setFormData({ ...formData, concepto_id: e.target.value })}
+                                    disabled={isReadOnly}
                                 >
                                     <option value="">Seleccione...</option>
                                     {conceptos.map(c => (
@@ -280,10 +309,10 @@ export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave }: Movimie
                         <Button
                             type="submit"
                             isLoading={loading}
-                            icon={Save}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                            icon={submitIcon}
+                            className={`flex-1 text-white ${mode === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}
                         >
-                            Guardar Movimiento
+                            {submitLabel}
                         </Button>
                     </div>
                 </form>

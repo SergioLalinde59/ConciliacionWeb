@@ -433,8 +433,8 @@ export const ReporteClasificacionesPage = () => {
     }, [datos])
 
     return (
-        <div className="max-w-7xl mx-auto pb-12">
-            <div className="mb-6">
+        <div className="max-w-7xl mx-auto pb-6">
+            <div className="mb-4">
                 <h1 className="text-2xl font-bold text-gray-900">Reporte de Clasificaciones</h1>
                 <p className="text-gray-500 text-sm mt-1">
                     Análisis detallado: {tipoAgrupacion === 'tercero' ? 'Pareto de Terceros' : tipoAgrupacion === 'centro_costo' ? 'Centros de Costo por Tercero' : 'Conceptos por Centro de Costo'}
@@ -479,10 +479,10 @@ export const ReporteClasificacionesPage = () => {
             />
 
             {/* Gráfica y Tabla */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Gráfica */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-[500px]">
-                    <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-[500px]">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <BarChart2 size={20} className="text-blue-500" />
                         Distribución ({tipoAgrupacion === 'tercero' ? 'Por Tercero' : tipoAgrupacion === 'centro_costo' ? 'Por Centro de Costo' : 'Por Concepto'})
                         <span className="text-xs font-normal text-gray-400 ml-auto">(Click en barra para detalle)</span>
@@ -518,7 +518,7 @@ export const ReporteClasificacionesPage = () => {
 
                 {/* Tabla Detallada */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-6 border-b border-gray-50 flex justify-between items-center">
+                    <div className="p-4 border-b border-gray-50 flex justify-between items-center">
                         <h3 className="text-lg font-bold text-gray-800">Detalle por Tercero</h3>
                         <span className="text-xs text-gray-400">(Click en fila para detalle)</span>
                     </div>

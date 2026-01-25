@@ -94,7 +94,7 @@ export const Sidebar = () => {
                         <Link
                             key={item.path}
                             to={item.path}
-                            className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all ${isActive(item.path)
+                            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isActive(item.path)
                                 ? 'bg-slate-800 text-blue-400 border-r-2 border-blue-400'
                                 : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                 }`}
@@ -110,14 +110,14 @@ export const Sidebar = () => {
 
     return (
         <aside className="w-64 bg-slate-900 text-white min-h-screen flex flex-col shadow-xl no-print">
-            <div className="p-6 border-b border-slate-800">
+            <div className="p-4 border-b border-slate-800">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                     <span className="text-blue-400 text-2xl">⚡</span> Movimientos Bancarios
                 </h2>
                 <p className="text-slate-500 text-xs mt-1">Gestión Hexagonal</p>
             </div>
 
-            <nav className="flex-1 py-6 overflow-y-auto">
+            <nav className="flex-1 py-4 overflow-y-auto">
                 <div className="px-4 mb-2">
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Principal</p>
                     <Link

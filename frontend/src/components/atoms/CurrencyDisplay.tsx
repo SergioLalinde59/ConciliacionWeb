@@ -30,7 +30,7 @@ interface CurrencyDisplayProps {
 const CURRENCY_CONFIG: Record<CurrencyType, { locale: string, options: Intl.NumberFormatOptions }> = {
     COP: {
         locale: 'es-CO',
-        options: { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }
+        options: { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 2 }
     },
     USD: {
         locale: 'en-US', // Usa punto para decimales como solicitado

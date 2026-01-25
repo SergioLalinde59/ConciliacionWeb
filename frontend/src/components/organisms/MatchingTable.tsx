@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { ChevronDown, ChevronUp, ArrowUpDown, Check, CheckCheck, Unlink, X } from 'lucide-react'
 import { MatchStatusBadge } from '../atoms/MatchStatusBadge'
 import type { MovimientoMatch } from '../../types/Matching'
@@ -216,10 +216,17 @@ export const MatchingTable = ({
 
     const sortedMatches = getSortedMatches()
 
+    const totalDifference = useMemo(() => {
+        return matches.reduce((sum, m) => {
+            const diff = m.mov_extracto.valor - (m.mov_sistema?.valor || 0)
+            return sum + diff
+        }, 0)
+    }, [matches])
+
     const estadosOptions = [
         { value: MatchEstado.SIN_MATCH, label: 'Sin Match', color: 'gray' },
         { value: MatchEstado.PROBABLE, label: 'Probable', color: 'amber' },
-        { value: MatchEstado.EXACTO, label: 'Exacto', color: 'emerald' }
+        { value: MatchEstado.OK, label: 'OK', color: 'emerald' }
     ]
 
     return (
@@ -270,6 +277,9 @@ export const MatchingTable = ({
                     )}
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">
                         {matches.length} registros
+                    </span>
+                    <span className={`px-3 py-1 bg-purple-100 rounded-full text-xs font-bold ${getValueColor(totalDifference)}`}>
+                        Dif: {formatDifference(totalDifference)}
                     </span>
                 </div>
             </div>
@@ -516,7 +526,7 @@ export const MatchingTable = ({
                                                         </button>
                                                     )}
 
-                                                    {/* Aprobar (Probable -> Exacto) */}
+                                                    {/* Aprobar (Probable -> OK) */}
                                                     {match.estado === MatchEstado.PROBABLE && onAprobar && (
                                                         <button
                                                             onClick={() => onAprobar(match)}

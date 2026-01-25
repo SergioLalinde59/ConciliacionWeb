@@ -25,10 +25,10 @@ export const MatchStatusBadge = ({
 }: MatchStatusBadgeProps) => {
     const getVariantAndText = () => {
         switch (estado) {
-            case MatchEstado.EXACTO:
+            case MatchEstado.OK:
                 return {
                     variant: 'success' as const,
-                    text: 'Exacto',
+                    text: 'OK',
                     icon: '✓'
                 }
             case MatchEstado.PROBABLE:

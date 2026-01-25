@@ -8,8 +8,9 @@ import logging
 
 from src.domain.models.conciliacion import Conciliacion
 from src.domain.ports.conciliacion_repository import ConciliacionRepository
-from src.infrastructure.api.dependencies import get_conciliacion_repository, get_date_range_service
+from src.infrastructure.api.dependencies import get_conciliacion_repository, get_date_range_service, get_conciliacion_service
 from src.domain.services.date_range_service import DateRangeService
+from src.domain.services.conciliacion_service import ConciliacionService
 from src.application.services.procesador_archivos_service import ProcesadorArchivosService
 from src.infrastructure.api.routers.archivos import get_procesador_service
 
@@ -47,8 +48,9 @@ class ConciliacionResponse(BaseModel):
     diferencia_saldo: Optional[float]
     datos_extra: dict
     estado: str
+    semaforo_estado: Optional[str] = None # Nuevo campo calculado
     cuenta_nombre: Optional[str] = None
-    periodo_texto: Optional[str] = None  # Nuevo campo
+    periodo_texto: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -113,8 +115,13 @@ def guardar_conciliacion(
         extracto_salidas=data.extracto_salidas,
         extracto_saldo_final=data.extracto_saldo_final,
         datos_extra=data.datos_extra,
-        estado="PENDIENTE" # Reset estado al guardar cambios manuales
+        estado="PENDIENTE"
     )
+    
+    # REGLA DE NEGOCIO: Prohibir guardado manual de saldos de extracto.
+    # Solo permitimos guardar datos_extra o campos no financieros si fuera necesario.
+    # Pero el usuario fue enfático: "El usuario no debe guardar cambios manuales de los saldos"
+    raise HTTPException(status_code=400, detail="El guardado manual de saldos del extracto está deshabilitado. Use la carga de PDF.")
     
     guardado = repo.guardar(conciliacion)
     
@@ -149,6 +156,21 @@ def recalcular_conciliacion(
         return repo.recalcular_sistema(cuenta_id, year, month, fecha_inicio, fecha_fin)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/{cuenta_id}/{year}/{month}/cerrar", response_model=ConciliacionResponse)
+def cerrar_conciliacion(
+    cuenta_id: int,
+    year: int,
+    month: int,
+    repo: ConciliacionRepository = Depends(get_conciliacion_repository)
+):
+    """Aprueba y cierra formalmente el periodo de conciliación"""
+    try:
+        return repo.cerrar_periodo(cuenta_id, year, month)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/analizar-extracto")
 async def analizar_extracto(
@@ -285,9 +307,8 @@ def comparar_movimientos(
     cuenta_id: int,
     year: int,
     month: int,
-    repo_sistema: MovimientoRepository = Depends(get_movimiento_repository),
     repo_extracto: MovimientoExtractoRepository = Depends(get_movimiento_extracto_repository),
-    date_service: DateRangeService = Depends(get_date_range_service)
+    conciliacion_service: ConciliacionService = Depends(get_conciliacion_service)
 ):
     """
     Compara movimientos del sistema vs extracto para identificar diferencias.
@@ -296,19 +317,13 @@ def comparar_movimientos(
     - Estadísticas de ambas fuentes (incluyendo USD)
     - Diferencias detectadas
     """
-    # Obtener rango dinámico para el sistema
-    fecha_inicio_sistema, fecha_fin_sistema = date_service.get_range_for_period(cuenta_id, year, month)
-    logger.info(f"Comparando movimientos con rango sistema: {fecha_inicio_sistema} - {fecha_fin_sistema}")
+    logger.info(f"Comparando movimientos para cuenta {cuenta_id}, periodo {year}/{month}")
 
     # Obtener movimientos del extracto (tabla movimientos_extracto)
     movs_extracto = repo_extracto.obtener_por_periodo(cuenta_id, year, month)
 
-    # Obtener movimientos del sistema (tabla movimientos)
-    movs_sistema, _ = repo_sistema.buscar_avanzado(
-        fecha_inicio=fecha_inicio_sistema,
-        fecha_fin=fecha_fin_sistema,
-        cuenta_id=cuenta_id
-    )
+    # Obtener universo de movimientos del sistema (Calendario + Vinculados)
+    movs_sistema = conciliacion_service.obtener_universo_sistema(cuenta_id, year, month)
     
     # helper para sumar usd safely
     def sum_usd(movs, condition):

@@ -131,8 +131,8 @@ class MatchingService:
                     score_descripcion=score_descripcion
                 )
                 
-                # Remover de disponibles si es EXACTO (auto-vincular)
-                if estado == MatchEstado.EXACTO:
+                # Remover de disponibles si es OK (auto-vincular)
+                if estado == MatchEstado.OK:
                     movs_sistema_disponibles.remove(mov_sistema)
                 
                 resultados.append(match)
@@ -287,7 +287,7 @@ class MatchingService:
             MatchEstado correspondiente
         """
         if config.es_match_exacto(score_total):
-            return MatchEstado.EXACTO
+            return MatchEstado.OK
         elif config.es_match_probable(score_total):
             return MatchEstado.PROBABLE
         else:

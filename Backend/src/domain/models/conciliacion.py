@@ -53,7 +53,18 @@ class Conciliacion:
     
     @property
     def conciliacion_ok(self) -> bool:
-        """Valida si el sistema coincide con el extracto"""
+        """Valida si el sistema coincide con el extracto (Diferencia = 0)"""
         if self.diferencia_saldo is None:
-            return False
+            # Si no hay diferencia calculada, intentamos calcularla en memoria
+            diferencia = self.sistema_saldo_final - self.extracto_saldo_final
+            return abs(diferencia) < Decimal('0.01')
         return abs(self.diferencia_saldo) < Decimal('0.01')
+
+    @property
+    def semaforo_estado(self) -> str:
+        """Retorna el color del semáforo basado en lógica de negocio"""
+        if self.estado == 'CONCILIADO':
+            return 'VERDE' # Bloqueado y Aprobado
+        if self.estado == 'CUADRADO':
+            return 'AMARILLO' # Cuadrado Estricto (Balance Masas OK)
+        return 'ROJO' # Pendiente de cuadre

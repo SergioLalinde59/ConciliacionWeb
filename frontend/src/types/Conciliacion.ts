@@ -14,6 +14,7 @@ export interface Conciliacion {
     diferencia_saldo: number | null;
     datos_extra: Record<string, any>;
     estado: string;
+    semaforo_estado?: 'VERDE' | 'AMARILLO' | 'ROJO' | string;
     cuenta_nombre?: string;
 }
 

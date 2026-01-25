@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { LayoutList } from 'lucide-react'
+
 
 import type { Movimiento } from '../types'
 import { apiService } from '../services/api'
@@ -9,6 +10,8 @@ import { useSessionStorage } from '../hooks/useSessionStorage'
 import { getMesActual } from '../utils/dateUtils'
 import { FiltrosReporte } from '../components/organisms/FiltrosReporte'
 import { EstadisticasTotales } from '../components/organisms/EstadisticasTotales'
+import { MovimientosTable } from '../components/organisms/MovimientosTable'
+
 
 export const MovimientosPage = () => {
     const navigate = useNavigate()
@@ -41,46 +44,9 @@ export const MovimientosPage = () => {
     // Paginación ELIMINADA - mostrar todos los registros
     const [movimientos, setMovimientos] = useState<Movimiento[]>([])
     const [loading, setLoading] = useState(true)
-    const [sortConfig, setSortConfig] = useState<{ key: keyof Movimiento | 'clasificacion', direction: 'asc' | 'desc' } | null>(null)
     const [totalesGlobales, setTotalesGlobales] = useState<{ ingresos: number; egresos: number; saldo: number } | null>(null)
 
-    const handleSort = (key: keyof Movimiento | 'clasificacion') => {
-        let direction: 'asc' | 'desc' = 'asc'
-        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-            direction = 'desc'
-        }
-        setSortConfig({ key, direction })
-    }
 
-    const sortedMovimientos = useMemo(() => {
-        let sortableItems = [...movimientos]
-        if (sortConfig !== null) {
-            sortableItems.sort((a, b) => {
-                let aValue: any
-                let bValue: any
-
-                if (sortConfig.key === 'clasificacion') {
-                    aValue = (a.centro_costo_display || '') + (a.concepto_display || '')
-                    bValue = (b.centro_costo_display || '') + (b.concepto_display || '')
-                } else {
-                    aValue = a[sortConfig.key]
-                    bValue = b[sortConfig.key]
-                }
-
-                if (aValue === undefined || aValue === null) return 1
-                if (bValue === undefined || bValue === null) return -1
-
-                if (aValue < bValue) {
-                    return sortConfig.direction === 'asc' ? -1 : 1
-                }
-                if (aValue > bValue) {
-                    return sortConfig.direction === 'asc' ? 1 : -1
-                }
-                return 0
-            })
-        }
-        return sortableItems
-    }, [movimientos, sortConfig])
 
     const totales = useMemo(() => {
         // Use global totals from server if available, otherwise calculate from current page
@@ -201,10 +167,14 @@ export const MovimientosPage = () => {
     return (
         <div className="max-w-7xl mx-auto pb-12">
             <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Gestión de Movimientos</h1>
-                    <p className="text-gray-500 text-sm mt-1">Visualización y clasificación de transacciones</p>
+                <div className="flex items-center gap-2">
+                    <LayoutList className="text-blue-600" size={24} />
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Gestión de Movimientos</h1>
+                        <p className="text-gray-500 text-sm mt-1">Visualización y clasificación de transacciones</p>
+                    </div>
                 </div>
+
                 <button
                     onClick={() => navigate('/movimientos/nuevo')}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm transition-colors flex items-center gap-2 no-print"
@@ -254,241 +224,15 @@ export const MovimientosPage = () => {
                 saldo={totales.saldo}
             />
 
-            {/* Tabla de Resultados */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="border-b border-gray-200 bg-gray-50/50">
-                                <th
-                                    className="py-3 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-12 text-center cursor-pointer hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                                    onClick={() => handleSort('id')}
-                                >
-                                    <div className="flex items-center justify-center gap-1">
-                                        ID
-                                        {sortConfig?.key === 'id' ? (
-                                            sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
-                                        ) : <ArrowUpDown size={12} className="text-gray-300" />}
-                                    </div>
-                                </th>
-                                <th
-                                    className="py-3 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                                    onClick={() => handleSort('fecha')}
-                                >
-                                    <div className="flex items-center gap-1">
-                                        Fecha
-                                        {sortConfig?.key === 'fecha' ? (
-                                            sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
-                                        ) : <ArrowUpDown size={12} className="text-gray-300" />}
-                                    </div>
-                                </th>
-                                <th
-                                    className="py-3 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                                    onClick={() => handleSort('cuenta_display')}
-                                >
-                                    <div className="flex items-center gap-1">
-                                        Cuenta
-                                        {sortConfig?.key === 'cuenta_display' ? (
-                                            sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
-                                        ) : <ArrowUpDown size={12} className="text-gray-300" />}
-                                    </div>
-                                </th>
-                                <th
-                                    className="py-3 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                                    onClick={() => handleSort('tercero_display')}
-                                >
-                                    <div className="flex items-center gap-1">
-                                        Tercero
-                                        {sortConfig?.key === 'tercero_display' ? (
-                                            sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
-                                        ) : <ArrowUpDown size={12} className="text-gray-300" />}
-                                    </div>
-                                </th>
-                                <th
-                                    className="py-3 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                                    onClick={() => handleSort('clasificacion')}
-                                >
-                                    <div className="flex items-center gap-1">
-                                        Clasificación
-                                        {sortConfig?.key === 'clasificacion' ? (
-                                            sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
-                                        ) : <ArrowUpDown size={12} className="text-gray-300" />}
-                                    </div>
-                                </th>
-                                <th
-                                    className="py-3 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right cursor-pointer hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                                    onClick={() => handleSort('valor')}
-                                >
-                                    <div className="flex items-center justify-end gap-1">
-                                        Valor
-                                        {sortConfig?.key === 'valor' ? (
-                                            sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
-                                        ) : <ArrowUpDown size={12} className="text-gray-300" />}
-                                    </div>
-                                </th>
-                                <th
-                                    className="py-3 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right cursor-pointer hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                                    onClick={() => handleSort('usd')}
-                                >
-                                    <div className="flex items-center justify-end gap-1">
-                                        Valor USD
-                                        {sortConfig?.key === 'usd' ? (
-                                            sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
-                                        ) : <ArrowUpDown size={12} className="text-gray-300" />}
-                                    </div>
-                                </th>
-                                <th
-                                    className="py-3 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right cursor-pointer hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                                    onClick={() => handleSort('trm')}
-                                >
-                                    <div className="flex items-center justify-end gap-1">
-                                        TRM
-                                        {sortConfig?.key === 'trm' ? (
-                                            sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
-                                        ) : <ArrowUpDown size={12} className="text-gray-300" />}
-                                    </div>
-                                </th>
-                                <th
-                                    className="py-3 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                                    onClick={() => handleSort('moneda_display')}
-                                >
-                                    <div className="flex items-center gap-1">
-                                        Moneda
-                                        {sortConfig?.key === 'moneda_display' ? (
-                                            sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
-                                        ) : <ArrowUpDown size={12} className="text-gray-300" />}
-                                    </div>
-                                </th>
-                                <th
-                                    className="py-3 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                                    onClick={() => handleSort('detalle')}
-                                >
-                                    <div className="flex items-center gap-1">
-                                        Detalle
-                                        {sortConfig?.key === 'detalle' ? (
-                                            sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
-                                        ) : <ArrowUpDown size={12} className="text-gray-300" />}
-                                    </div>
-                                </th>
-                                <th
-                                    className="py-3 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                                    onClick={() => handleSort('referencia')}
-                                >
-                                    <div className="flex items-center gap-1">
-                                        Referencia
-                                        {sortConfig?.key === 'referencia' ? (
-                                            sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
-                                        ) : <ArrowUpDown size={12} className="text-gray-300" />}
-                                    </div>
-                                </th>
-                                <th
-                                    className="py-3 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                                    onClick={() => handleSort('descripcion')}
-                                >
-                                    <div className="flex items-center gap-1">
-                                        Descripción
-                                        {sortConfig?.key === 'descripcion' ? (
-                                            sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
-                                        ) : <ArrowUpDown size={12} className="text-gray-300" />}
-                                    </div>
-                                </th>
-                                <th className="py-3 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center w-12">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={13} className="py-20 text-center">
-                                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
-                                        <p className="mt-2 text-sm text-gray-500 font-medium">Cargando transacciones...</p>
-                                    </td>
-                                </tr>
-                            ) : movimientos.length === 0 ? (
-                                <tr>
-                                    <td colSpan={13} className="py-20 text-center text-gray-500">
-                                        <div className="bg-gray-50 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
-                                            <Search size={24} className="text-gray-300" />
-                                        </div>
-                                        <p className="font-medium">No se encontraron movimientos.</p>
-                                        <p className="text-xs mt-1">Intenta ajustar los filtros de búsqueda.</p>
-                                    </td>
-                                </tr>
-                            ) : (
-                                sortedMovimientos.map((mov) => (
-                                    <tr key={mov.id} className="hover:bg-blue-50/30 transition-colors group">
-                                        <td className="py-2 px-2 text-xs text-gray-400 font-mono text-center">#{mov.id}</td>
-                                        <td className="py-2 px-2 text-sm text-gray-700 whitespace-nowrap">
-                                            {mov.fecha}
-                                        </td>
-                                        <td className="py-2 px-2 text-xs text-gray-600">
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
-                                                {mov.cuenta_display}
-                                            </div>
-                                        </td>
-                                        <td className="py-2 px-2 text-xs text-gray-600 overflow-hidden">
-                                            <div className="max-w-[160px] truncate">
-                                                {mov.tercero_display || <span className="text-gray-300 italic">No asignado</span>}
-                                            </div>
-                                        </td>
-                                        <td className="py-2 px-2">
-                                            {mov.centro_costo_display ? (
-                                                <div className="flex flex-col gap-0.5">
-                                                    <span className="text-[11px] font-bold text-slate-700">{mov.centro_costo_display}</span>
-                                                    <span className="text-[10px] text-slate-400 italic font-medium">{mov.concepto_display}</span>
-                                                </div>
-                                            ) : (
-                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100 italic">
-                                                    Sin clasificar
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="py-2 px-2 text-xs font-bold text-right font-mono">
-                                            <span className={mov.valor < 0 ? 'text-rose-500' : 'text-emerald-500'}>
-                                                {mov.valor < 0 ? '-' : ''}${Math.abs(mov.valor).toLocaleString('es-CO', { minimumFractionDigits: 0 })}
-                                            </span>
-                                        </td>
-                                        <td className="py-2 px-2 text-xs text-right font-mono text-gray-600 w-20">
-                                            {mov.usd ? `$${Math.abs(mov.usd).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'}
-                                        </td>
-                                        <td className="py-2 px-2 text-xs text-right font-mono text-gray-600">
-                                            {mov.trm ? mov.trm.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : '-'}
-                                        </td>
-                                        <td className="py-2 px-2 text-xs text-gray-600">
-                                            {mov.moneda_display}
-                                        </td>
-                                        <td className="py-2 px-2 text-xs text-gray-600 max-w-[100px] truncate" title={mov.detalle || ''}>
-                                            {mov.detalle || '-'}
-                                        </td>
-                                        <td className="py-2 px-2 text-xs text-gray-600 max-w-[80px] truncate" title={mov.referencia || ''}>
-                                            {mov.referencia || '-'}
-                                        </td>
-                                        <td className="py-2 px-2 text-xs text-gray-600 max-w-[100px] truncate" title={mov.descripcion || ''}>
-                                            {mov.descripcion || '-'}
-                                        </td>
-                                        <td className="py-2 px-2 text-center">
-                                            <button
-                                                onClick={() => navigate(`/movimientos/editar/${mov.id}`)}
-                                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-white rounded-lg border border-transparent hover:border-blue-100 transition-all shadow-sm group-hover:bg-white"
-                                                title="Editar Movimiento"
-                                            >
-                                                ✏️
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+            {/* Tabla de Resultados unificada */}
+            <MovimientosTable
+                movimientos={movimientos}
+                loading={loading}
+                onEdit={(mov) => navigate(`/movimientos/editar/${mov.id}`)}
+                totales={totales}
+            />
 
-                {/* Indicador de registros */}
-                <div className="p-4 border-t border-gray-100 bg-gray-50 text-sm text-gray-600 flex justify-between items-center">
-                    <span>
-                        Mostrando <strong>{sortedMovimientos.length}</strong> registro{sortedMovimientos.length !== 1 ? 's' : ''}
-                    </span>
-                </div>
-            </div>
+
         </div>
     )
 }

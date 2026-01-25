@@ -194,48 +194,93 @@ class PostgresConciliacionRepository(ConciliacionRepository):
                 fecha_inicio = date(year, month, 1)
                 fecha_fin = date(year, month, ultimo_dia)
             
-            # 1. Calcular sumas desde movimientos usando el rango exacto
+            # 1. Calcular sumas desde movimientos vinculados (Consolidado Bancario)
+            # Regla de Negocio: Sumar solo lo que ya tiene pareja en el banco para este mes.
             query_sumas = """
                 SELECT 
-                    COALESCE(SUM(CASE WHEN Valor > 0 THEN Valor ELSE 0 END), 0) as entradas,
-                    COALESCE(SUM(CASE WHEN Valor < 0 THEN ABS(Valor) ELSE 0 END), 0) as salidas
-                FROM movimientos
-                WHERE CuentaID = %s 
-                  AND Fecha >= %s 
-                  AND Fecha <= %s
+                    COALESCE(SUM(CASE WHEN m.Valor > 0 THEN m.Valor ELSE 0 END), 0) as entradas,
+                    COALESCE(SUM(CASE WHEN m.Valor < 0 THEN ABS(m.Valor) ELSE 0 END), 0) as salidas
+                FROM movimientos m
+                JOIN movimiento_vinculaciones mv ON m.id = mv.movimiento_sistema_id
+                JOIN movimientos_extracto me ON mv.movimiento_extracto_id = me.id
+                WHERE me.cuenta_id = %s 
+                  AND me.year = %s 
+                  AND me.month = %s
             """
-            cursor.execute(query_sumas, (cuenta_id, fecha_inicio, fecha_fin))
+            cursor.execute(query_sumas, (cuenta_id, year, month))
             entradas_sys, salidas_sys = cursor.fetchone()
             
             # 2. Actualizar la tabla conciliaciones
             # El sistema_saldo_final se calcula usando el saldo ANTERIOR del extracto como base
+            # Calculamos la diferencia aquí mismo para determinar el estado
+            
+            # Nota: No cambiamos de 'CONCILIADO' a otro estado automáticamente para evitar desbloqueos accidentales.
+            # Solo transicionamos de 'PENDIENTE' a 'CUADRADO' o viceversa.
+            
             update_query = """
                 UPDATE conciliaciones
                 SET 
                     sistema_entradas = %s,
                     sistema_salidas = %s,
                     sistema_saldo_final = (COALESCE(extracto_saldo_anterior, 0) + %s - %s),
+                    estado = CASE 
+                        WHEN estado = 'CONCILIADO' THEN 'CONCILIADO'
+                        WHEN ABS(entradas_sys_val - COALESCE(extracto_entradas, 0)) < 0.01 
+                             AND ABS(salidas_sys_val - COALESCE(extracto_salidas, 0)) < 0.01 
+                             AND ABS((COALESCE(extracto_saldo_anterior, 0) + entradas_sys_val - salidas_sys_val) - extracto_saldo_final) < 0.01 
+                        THEN 'CUADRADO'
+                        ELSE 'PENDIENTE'
+                    END,
                     updated_at = CURRENT_TIMESTAMP
+                FROM (SELECT %s::numeric as entradas_sys_val, %s::numeric as salidas_sys_val) as vals
                 WHERE cuenta_id = %s AND year = %s AND month = %s
                 RETURNING id
             """
             cursor.execute(update_query, (
-                entradas_sys, salidas_sys, 
-                entradas_sys, salidas_sys,
+                entradas_sys, salidas_sys, # SET sistema_entradas, sistema_salidas
+                entradas_sys, salidas_sys, # Para sistema_saldo_final calculation
+                entradas_sys, salidas_sys, # Para el FROM subquery
                 cuenta_id, year, month
             ))
             
             if cursor.rowcount == 0:
-                # No existe conciliación para actualizar -> No se puede recalcular sobre nada
-                # Se podría optar por crearla, pero requiere datos del extracto (saldo anterior)
-                # Así que mejor retornamos None o error
-                raise ValueError("No se puede recalcular: No existe conciliación creada para este periodo.")
+                # Si no existe, no hacemos nada (será NUEVA en el front)
+                return None
             
             self.conn.commit()
             
             # 3. Devolver el objeto actualizado
             return self.obtener_por_periodo(cuenta_id, year, month)
             
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+        finally:
+            cursor.close()
+
+    def cerrar_periodo(self, cuenta_id: int, year: int, month: int) -> Conciliacion:
+        """Cambia el estado a CONCILIADO si la diferencia es cero"""
+        cursor = self.conn.cursor()
+        try:
+            # Primero recalculamos para estar seguros
+            conciliacion = self.recalcular_sistema(cuenta_id, year, month)
+            
+            if not conciliacion:
+                raise ValueError("No existe conciliación para cerrar.")
+            
+            if not conciliacion.conciliacion_ok:
+                raise ValueError(f"No se puede cerrar: Existe una diferencia de {conciliacion.diferencia_saldo}")
+
+            query = """
+                UPDATE conciliaciones 
+                SET estado = 'CONCILIADO', updated_at = CURRENT_TIMESTAMP 
+                WHERE id = %s
+            """
+            cursor.execute(query, (conciliacion.id,))
+            self.conn.commit()
+            
+            conciliacion.estado = 'CONCILIADO'
+            return conciliacion
         except Exception as e:
             self.conn.rollback()
             raise e

@@ -25,10 +25,14 @@ from src.infrastructure.api.dependencies import (
     get_movimiento_repository,
     get_matching_alias_repository,
     get_cuenta_repository,
-    get_date_range_service
+    get_matching_alias_repository,
+    get_cuenta_repository,
+    get_date_range_service,
+    get_conciliacion_service
 )
 
 from src.domain.services.date_range_service import DateRangeService
+from src.domain.services.conciliacion_service import ConciliacionService
 
 from src.infrastructure.logging.config import logger
 
@@ -49,10 +53,36 @@ class MovimientoMatchResponse(BaseModel):
     created_by: Optional[str]
     notas: Optional[str]
 
+class DetailedStat(BaseModel):
+    cantidad: int
+    total: float
+    ingresos: float
+    egresos: float
+
+class MatchingEstadisticas(BaseModel):
+    total_extracto: DetailedStat
+    total_sistema: DetailedStat
+    ok: DetailedStat
+    probables: DetailedStat
+    sin_match: DetailedStat
+    ignorados: DetailedStat
+
+class MatchingIntegridad(BaseModel):
+    balance_ingresos: bool
+    balance_egresos: bool
+    igualdad_registros: bool
+    todo_vinculado: bool
+    sin_pendientes: bool
+    relacion_1_a_1: bool
+    es_cuadrado: bool
+
 class MatchingResultResponse(BaseModel):
     matches: List[MovimientoMatchResponse]
-    estadisticas: dict
+    estadisticas: MatchingEstadisticas
+    integridad: MatchingIntegridad
     movimientos_sistema_sin_match: Optional[List[dict]] = None
+
+# ... (displaced code removed) ...
 
 class VincularRequest(BaseModel):
     movimiento_extracto_id: int
@@ -217,7 +247,7 @@ def crear_movimientos_lote(
                     id=match_id,
                     mov_extracto=mov_extracto,
                     mov_sistema=mov_creado,
-                    estado=MatchEstado.EXACTO, # Siempre Exacto al crear/vincular explícitamente
+                    estado=MatchEstado.OK, # Siempre OK al crear/vincular explícitamente
                     score_total=score_total,
                     score_fecha=score_fecha,
                     score_valor=score_valor,
@@ -300,7 +330,7 @@ def ejecutar_matching(
     config_repo: ConfiguracionMatchingRepository = Depends(get_configuracion_matching_repository),
     alias_repo: MatchingAliasRepository = Depends(get_matching_alias_repository),
     cuenta_repo: CuentaRepository = Depends(get_cuenta_repository),
-    date_service: DateRangeService = Depends(get_date_range_service)
+    conciliacion_service: ConciliacionService = Depends(get_conciliacion_service)
 ):
     """
     Ejecuta el algoritmo de matching para un periodo específico.
@@ -318,16 +348,9 @@ def ejecutar_matching(
         movs_extracto = repo_extracto.obtener_por_periodo(cuenta_id, year, month)
         logger.info(f"Encontrados {len(movs_extracto)} movimientos en extracto")
         
-        # 3. Obtener movimientos del sistema (Rango Dinámico)
-        fecha_inicio_sistema, fecha_fin_sistema = date_service.get_range_for_period(cuenta_id, year, month)
-        logger.info(f"Ejecutando matching con rango sistema: {fecha_inicio_sistema} - {fecha_fin_sistema}")
-
-        movs_sistema, _ = repo_sistema.buscar_avanzado(
-            fecha_inicio=fecha_inicio_sistema,
-            fecha_fin=fecha_fin_sistema,
-            cuenta_id=cuenta_id
-        )
-        logger.info(f"Encontrados {len(movs_sistema)} movimientos en sistema")
+        # 3. Obtener movimientos del sistema (Universo Completo: Calendario + Vinculados)
+        movs_sistema = conciliacion_service.obtener_universo_sistema(cuenta_id, year, month)
+        logger.info(f"Encontrados {len(movs_sistema)} movimientos en universo sistema")
 
         # 3.1 Obtener vinculaciones existentes en DB
         matches_existentes = vinculacion_repo.obtener_por_periodo(cuenta_id, year, month)
@@ -337,7 +360,7 @@ def ejecutar_matching(
         for match in matches_existentes:
             es_huerfano = False
             # Si el estado implica que debería haber un movimiento de sistema...
-            if match.estado in [MatchEstado.EXACTO, MatchEstado.PROBABLE, MatchEstado.MANUAL]:
+            if match.estado in [MatchEstado.OK, MatchEstado.PROBABLE, MatchEstado.MANUAL]:
                 # ...pero no hay movimiento de sistema asociado
                 if not match.mov_sistema:
                     es_huerfano = True
@@ -378,8 +401,8 @@ def ejecutar_matching(
              # Guardamos incluso SIN_MATCH para evitar re-procesar? 
              # No, SIN_MATCH no se suele guardar en DB a menos que queramos 'cachear' el fallo.
              # Pero si no lo guardamos, la próxima vez se re-calcula.
-             # La lógica original guardaba EXACTO y PROBABLE.
-            if match.estado in [MatchEstado.EXACTO, MatchEstado.PROBABLE]:
+             # La lógica original guardaba OK y PROBABLE.
+            if match.estado in [MatchEstado.OK, MatchEstado.PROBABLE]:
                 try:
                     match_guardado = vinculacion_repo.guardar(match)
                     # Actualizar ID generado
@@ -410,47 +433,84 @@ def ejecutar_matching(
         # Ordenar por fecha desc
         movimientos_sistema_sin_match_dicts.sort(key=lambda x: x['fecha'], reverse=True)
         
-        # --- VALIDACIÓN DE INTEGRIDAD 1-A-1 (SOLO MASTERCARD) ---
-        # Verificar y corregir automáticamente relaciones 1-a-muchos (sistema -> múltiples extractos)
-        # REGLA DE NEGOCIO: Esta validación estricta solo aplica para cuentas MasterCard
-        try:
-            cuenta = cuenta_repo.obtener_por_id(cuenta_id)
-            es_mastercard = cuenta and "mastercard" in cuenta.cuenta.lower()
-            
-            if es_mastercard:
-                from src.application.services.matching_validation_service import detectar_matches_1_a_muchos, invalidar_matches_1_a_muchos
-                
-                logger.info("Ejecutando validación de integridad 1-a-1 (Cuenta MasterCard detectada)...")
-                resultado_validacion = detectar_matches_1_a_muchos(cuenta_id, year, month)
-                
-                if resultado_validacion['total_movimientos_sistema_afectados'] > 0:
-                    logger.warning(f"Detectadas inconsistencias 1-a-muchos: {resultado_validacion['total_movimientos_sistema_afectados']} casos. Ejecutando corrección automática...")
-                    
-                    # Invalidar (eliminar) vinculaciones corruptas
-                    res_invalidacion = invalidar_matches_1_a_muchos(cuenta_id, year, month)
-                    logger.info(f"Corrección completada: {res_invalidacion['vinculaciones_eliminadas']} vinculaciones eliminadas.")
-                    
-                    # RECARGAR datos para estadísticas correctas
-                    # Como hemos borrado registros, la lista 'matches_finales' en memoria está sucia.
-                    logger.info("Recargando resultados desde base de datos tras corrección...")
-                    matches_finales = vinculacion_repo.obtener_por_periodo(cuenta_id, year, month)
-            else:
-                 logger.info(f"Saltando validación de integridad 1-a-1 (Cuenta '{cuenta.cuenta if cuenta else 'Unknown'}' no es MasterCard)")
-                
-        except Exception as ev:
-            logger.error(f"Error en validación automática de integridad: {ev}", exc_info=True)
-            # No detenemos el proceso, solo logueamos el error
-        # ----------------------------------------
+        # --- VALIDACIÓN DE INTEGRIDAD 1-A-1 ---
+        # Verificar relaciones 1-a-muchos (sistema -> múltiples extractos)
+        from src.application.services.matching_validation_service import detectar_matches_1_a_muchos
+        
+        resultado_validacion_1aM = detectar_matches_1_a_muchos(cuenta_id, year, month)
+        tiene_duplicados = resultado_validacion_1aM['total_movimientos_sistema_afectados'] > 0
+        
+        # 7. Calcular estadísticas detalladas
 
-        # 7. Calcular estadísticas
+        # 7. Calcular estadísticas detalladas
+        def calcular_stat_movimientos(movimientos):
+            """Helper para calcular stats de una lista de objetos movimiento o extracto"""
+            cantidad = len(movimientos)
+            total = sum(m.valor for m in movimientos)
+            
+            # Para ingresos/egresos, usamos la lógica de signo
+            ingresos = sum(m.valor for m in movimientos if m.valor > 0)
+            egresos = sum(m.valor for m in movimientos if m.valor < 0)
+            
+            return {
+                'cantidad': cantidad,
+                'total': float(total),
+                'ingresos': float(ingresos),
+                'egresos': float(egresos)
+            }
+
+        def calcular_stat_matches(matches, key='mov_extracto'):
+            """Helper para calcular stats de una lista de MovimientoMatch usando el lado extracto o sistema"""
+            # Filtrar los que tienen el objeto requerido (ej: mov_sistema puede ser None)
+            valid_items = [getattr(m, key) for m in matches if getattr(m, key)]
+            return calcular_stat_movimientos(valid_items)
+
+        # Filtrar listas de matches por estado
+        ok_list = [m for m in matches_finales if m.estado == MatchEstado.OK]
+        probables_list = [m for m in matches_finales if m.estado == MatchEstado.PROBABLE]
+        sin_match_list = [m for m in matches_finales if m.estado == MatchEstado.SIN_MATCH]
+        ignorados_list = [m for m in matches_finales if m.estado == MatchEstado.IGNORADO]
+
+        # Consolidar movimientos de sistema vinculados (ignorando duplicados para no inflar balance si los hay)
+        # Nota: La integridad 1-a-1 ya se valida por aparte.
+        sistema_vinculado_ids = set()
+        sistema_vinculado_objs = []
+        for m in matches_finales:
+            if m.mov_sistema and m.mov_sistema.id not in sistema_vinculado_ids:
+                sistema_vinculado_ids.add(m.mov_sistema.id)
+                sistema_vinculado_objs.append(m.mov_sistema)
+
         estadisticas = {
-            'total_extracto': len(movs_extracto),
-            'total_sistema': len(movs_sistema),
-            'exactos': sum(1 for m in matches_finales if m.estado == MatchEstado.EXACTO),
-            'probables': sum(1 for m in matches_finales if m.estado == MatchEstado.PROBABLE),
-            'sin_match': sum(1 for m in matches_finales if m.estado == MatchEstado.SIN_MATCH),
-            'ignorados': sum(1 for m in matches_finales if m.estado == MatchEstado.IGNORADO)
+            'total_extracto': calcular_stat_movimientos(movs_extracto),
+            # SISTEMA CONSOLIDADO: Solo los movimientos que están vinculados
+            'total_sistema': calcular_stat_movimientos(sistema_vinculado_objs),
+            'ok': calcular_stat_matches(ok_list, key='mov_extracto'),
+            'probables': calcular_stat_matches(probables_list, key='mov_extracto'),
+            'sin_match': calcular_stat_matches(sin_match_list, key='mov_extracto'),
+            'ignorados': calcular_stat_matches(ignorados_list, key='mov_extracto')
         }
+
+        # --- VALIDACIÓN DE CUADRE ESTRICTO (5 PILARES) ---
+        integridad = {
+            # 1. Balance Global (Extracto vs Lado Sistema Consolidado)
+            "balance_ingresos": abs(estadisticas['total_extracto']['ingresos'] - estadisticas['total_sistema']['ingresos']) < 0.01,
+            "balance_egresos": abs(estadisticas['total_extracto']['egresos'] - estadisticas['total_sistema']['egresos']) < 0.01,
+            
+            # 2. Igualdad de Volumen (Cantidad vinculada vs Cantidad extracto)
+            "igualdad_registros": estadisticas['total_extracto']['cantidad'] == estadisticas['total_sistema']['cantidad'],
+            
+            # 3. Vinculación Total (Todo lo del extracto debe estar OK/MANUAL)
+            "todo_vinculado": estadisticas['ok']['cantidad'] == estadisticas['total_extracto']['cantidad'] and estadisticas['total_extracto']['cantidad'] > 0,
+            
+            # 4. Sin Pendientes (Ni en extracto ni probables)
+            "sin_pendientes": estadisticas['sin_match']['cantidad'] == 0 and estadisticas['probables']['cantidad'] == 0,
+            
+            # 5. Relación 1 a 1 (Sin duplicados de sistema)
+            "relacion_1_a_1": not tiene_duplicados,
+        }
+        
+        # Un periodo está CUADRADO si cumple TODO lo anterior
+        integridad["es_cuadrado"] = all(integridad.values())
         
         # 8. Retornar respuesta
         # Ordenar por fecha y valor para consistencia visual
@@ -459,6 +519,7 @@ def ejecutar_matching(
         return MatchingResultResponse(
             matches=[_match_to_response(m) for m in matches_finales],
             estadisticas=estadisticas,
+            integridad=integridad,
             movimientos_sistema_sin_match=movimientos_sistema_sin_match_dicts
         )
         
@@ -482,7 +543,7 @@ def vincular_manual(
     """
     Vincula manualmente un movimiento del extracto con uno del sistema.
     
-    Crea una vinculación con estado EXACTO y calcula los scores de similitud.
+    Crea una vinculación con estado OK y calcula los scores de similitud.
     """
     try:
         logger.info(f"Vinculación manual: extracto {request.movimiento_extracto_id} -> sistema {request.movimiento_id}")
@@ -502,6 +563,14 @@ def vincular_manual(
                 detail=f"Movimiento del sistema {request.movimiento_id} no encontrado"
             )
         
+        # 1.1 VALIDACIÓN 1-A-1: Verificar si el movimiento de sistema ya está vinculado
+        vinculacion_existente_sistema = vinculacion_repo.obtener_por_sistema_id(request.movimiento_id)
+        if vinculacion_existente_sistema and vinculacion_existente_sistema.mov_extracto.id != request.movimiento_extracto_id:
+            raise HTTPException(
+                status_code=400,
+                detail=f"El movimiento del sistema ya está vinculado a otro registro del extracto (ID {vinculacion_existente_sistema.mov_extracto.id})"
+            )
+        
         # 2. Obtener configuración para calcular scores
         config = config_repo.obtener_activa()
         
@@ -518,7 +587,7 @@ def vincular_manual(
         )
         score_total = config.calcular_score_ponderado(score_fecha, score_valor, score_descripcion)
         
-        # 4. Crear vinculación EXACTO (Usuario confirmó)
+        # 4. Crear vinculación OK (Usuario confirmó)
         # Verificar si ya existe una vinculación para este extracto (ej. PROBABLE)
         existing_match = vinculacion_repo.obtener_por_extracto_id(request.movimiento_extracto_id)
         match_id = existing_match.id if existing_match else None
@@ -528,7 +597,7 @@ def vincular_manual(
             id=match_id,
             mov_extracto=mov_extracto,
             mov_sistema=mov_sistema,
-            estado=MatchEstado.EXACTO, # Usuario request: "deben quedar marcados como Exacto"
+            estado=MatchEstado.OK, # Usuario request: "deben quedar marcados como OK"
             score_total=score_total,
             score_fecha=score_fecha,
             score_valor=score_valor,

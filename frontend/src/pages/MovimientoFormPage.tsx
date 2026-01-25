@@ -241,14 +241,8 @@ export const MovimientoFormPage = () => {
                                     setFormData({ ...formData, valor: '' })
                                 }
                             }}
-                            className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-semibold ${formData.valor && parseFloat(formData.valor) > 0
-                                ? 'text-green-600'
-                                : formData.valor && parseFloat(formData.valor) < 0
-                                    ? 'text-red-600'
-                                    : 'text-gray-900'
-                                }`}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-semibold"
                             required
-                            placeholder="0.00"
                         />
                     </div>
                 </div>

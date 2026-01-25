@@ -14,7 +14,7 @@ CREATE TABLE movimiento_vinculaciones (
     
     -- Estado del Match
     estado VARCHAR(20) NOT NULL CHECK (estado IN (
-        'EXACTO',           -- Match perfecto automático
+        'OK',               -- Match perfecto automático
         'PROBABLE',         -- Match sugerido por algoritmo
         'MANUAL',           -- Vinculado manualmente por usuario
         'TRASLADO',         -- Detectado como traslado entre cuentas
@@ -76,7 +76,7 @@ CREATE UNIQUE INDEX idx_vinculaciones_extracto_unico
 
 -- Comentarios
 COMMENT ON TABLE movimiento_vinculaciones IS 'Vinculaciones entre movimientos del extracto y sistema para conciliación';
-COMMENT ON COLUMN movimiento_vinculaciones.estado IS 'Estado del matching: EXACTO, PROBABLE, MANUAL, TRASLADO, SIN_MATCH, IGNORADO';
+COMMENT ON COLUMN movimiento_vinculaciones.estado IS 'Estado del matching: OK, PROBABLE, MANUAL, TRASLADO, SIN_MATCH, IGNORADO';
 COMMENT ON COLUMN movimiento_vinculaciones.score_similitud IS 'Score total de similitud calculado por el algoritmo (0.00 a 1.00)';
 COMMENT ON COLUMN movimiento_vinculaciones.es_traslado IS 'Indica si el movimiento es un traslado entre cuentas propias';
 COMMENT ON COLUMN movimiento_vinculaciones.confirmado_por_usuario IS 'Indica si el usuario confirmó/revisó esta vinculación';

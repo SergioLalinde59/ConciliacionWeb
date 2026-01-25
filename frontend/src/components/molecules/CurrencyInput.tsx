@@ -20,7 +20,7 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
 
     // Configuración de formato según moneda
     const formatConfig = {
-        COP: { start: 0, end: 0, locale: 'es-CO' },
+        COP: { start: 0, end: 2, locale: 'es-CO' },
         USD: { start: 2, end: 2, locale: 'en-US' },
         TRM: { start: 2, end: 2, locale: 'es-CO' }
     }[currency]
@@ -53,14 +53,56 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
     const parseNumber = (str: string): number | null => {
         if (!str || str === '-') return null
 
-        let cleanStr = str
-
+        // Si es USD, el punto es decimal y la coma es miles
         if (currency === 'USD') {
-            // Estilo US: 1,234.56 -> Boro comas
-            cleanStr = str.replace(/,/g, '')
+            const cleanStr = str.replace(/,/g, '')
+            const num = parseFloat(cleanStr)
+            return isNaN(num) ? null : num
+        }
+
+        // Para COP/TRM, detectamos heurísticamente si el último separador es decimal
+        // Es decimal SI:
+        // 1. Es una coma (es-CO standard)
+        // 2. Es un punto Y solo hay uno Y no tiene 3 dígitos después (ej: 1.50)
+        // 3. Es un punto Y hay más de uno, pero el último tiene != 3 dígitos (ej: 1.234.56)
+
+        const lastSepMatch = str.match(/[.,](?=[^.,]*$)/)
+        if (!lastSepMatch) {
+            const num = parseFloat(str)
+            return isNaN(num) ? null : num
+        }
+
+        const lastSep = lastSepMatch[0]
+        const lastSepIndex = lastSepMatch.index!
+        const afterLastSep = str.substring(lastSepIndex + 1)
+
+        let isDecimal = false
+        if (lastSep === ',') {
+            isDecimal = true
+        } else if (lastSep === '.') {
+            // Si tiene exactamente 3 dígitos y hay otros puntos antes, probablemente es miles
+            // Ej: 1.234.567 -> el .567 es miles
+            // Ej: 3.178.83 -> el .83 es decimal
+            const allPoints = str.split('.')
+            if (afterLastSep.length !== 3) {
+                isDecimal = true
+            } else if (allPoints.length <= 2) {
+                // Caso ambiguo "1.234". En COP asumimos miles por defecto.
+                isDecimal = false
+            } else {
+                // "1.234.567" -> miles
+                isDecimal = false
+            }
+        }
+
+        let cleanStr = ''
+        if (isDecimal) {
+            // Borrar todos los separadores anteriores, dejar el último como punto
+            const before = str.substring(0, lastSepIndex).replace(/[.,]/g, '')
+            cleanStr = before + '.' + afterLastSep
         } else {
-            // Estilo CO: 1.234,56 -> Borro puntos, cambio coma por punto
-            cleanStr = str.replace(/\./g, '').replace(',', '.')
+            // Borrar todos los separadores (miles)
+            cleanStr = str.replace(/[.,]/g, '')
         }
 
         const num = parseFloat(cleanStr)
@@ -100,7 +142,7 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
                 handleBlur()
                 props.onBlur?.(e)
             }}
-            placeholder={currency === 'COP' ? '0' : '0,00'}
+            placeholder={currency === 'USD' ? '0.00' : (currency === 'TRM' ? '0,00' : '0,00')}
             className={`text-right font-mono ${colorClass} ${className}`}
         />
     )

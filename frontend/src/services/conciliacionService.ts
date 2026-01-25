@@ -78,6 +78,13 @@ export const conciliacionService = {
     async obtenerMatches(cuentaId: number, year: number, month: number) {
         const response = await fetch(`${API_BASE_URL}/api/matching/${cuentaId}/${year}/${month}`);
         return handleResponse(response);
+    },
+
+    async cerrarConciliacion(cuentaId: number, year: number, month: number): Promise<Conciliacion> {
+        const response = await fetch(`${API_BASE_URL}/api/conciliaciones/${cuentaId}/${year}/${month}/cerrar`, {
+            method: 'POST'
+        });
+        return handleResponse(response);
     }
 
 };

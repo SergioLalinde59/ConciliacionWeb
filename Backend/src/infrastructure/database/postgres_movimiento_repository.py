@@ -132,7 +132,30 @@ class PostgresMovimientoRepository(MovimientoRepository):
             concepto_nombre=row[18] if len(row) > 18 and row[18] else None
         )
 
+    def _validar_bloqueo(self, cuenta_id: int, fecha: date):
+        """Lanza error si el periodo está CONCILIADO"""
+        if not cuenta_id or not fecha:
+            return
+            
+        cursor = self.conn.cursor()
+        query = "SELECT estado FROM conciliaciones WHERE cuenta_id = %s AND year = %s AND month = %s"
+        cursor.execute(query, (cuenta_id, fecha.year, fecha.month))
+        row = cursor.fetchone()
+        cursor.close()
+        
+        if row and row[0] == 'CONCILIADO':
+            raise ValueError(f"No se permite modificar movimientos: El periodo {fecha.year}-{fecha.month} está CONCILIADO y bloqueado.")
+
     def guardar(self, mov: Movimiento) -> Movimiento:
+        # Check lock
+        self._validar_bloqueo(mov.cuenta_id, mov.fecha)
+        
+        # If updating, check old lock too (in case date or account changed)
+        if mov.id:
+            old_mov = self.obtener_por_id(mov.id)
+            if old_mov and (old_mov.fecha != mov.fecha or old_mov.cuenta_id != mov.cuenta_id):
+                self._validar_bloqueo(old_mov.cuenta_id, old_mov.fecha)
+
         cursor = self.conn.cursor()
         try:
             if mov.id:
@@ -209,6 +232,33 @@ class PostgresMovimientoRepository(MovimientoRepository):
         row = cursor.fetchone()
         cursor.close()
         return self._row_to_movimiento(row) if row else None
+
+    def obtener_por_ids(self, ids: List[int]) -> List[Movimiento]:
+        if not ids:
+            return []
+            
+        cursor = self.conn.cursor()
+        query = """
+            SELECT m.Id, m.Fecha, m.Descripcion, m.Referencia, m.Valor, m.USD, m.TRM, 
+                   m.MonedaID, m.CuentaID, m.TerceroID, m.centro_costo_id, m.ConceptoID, m.created_at, m.Detalle,
+                   c.cuenta AS cuenta_nombre,
+                   mon.moneda AS moneda_nombre,
+                   t.tercero AS tercero_nombre,
+                   g.centro_costo AS centro_costo_nombre,
+                   con.concepto AS concepto_nombre
+            FROM movimientos m
+            LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
+            LEFT JOIN monedas mon ON m.MonedaID = mon.monedaid
+            LEFT JOIN terceros t ON m.TerceroID = t.terceroid
+            LEFT JOIN centro_costos g ON m.centro_costo_id = g.centro_costo_id
+            LEFT JOIN conceptos con ON m.ConceptoID = con.conceptoid
+            WHERE m.Id = ANY(%s)
+            ORDER BY m.Fecha DESC
+        """
+        cursor.execute(query, (ids,))
+        rows = cursor.fetchall()
+        cursor.close()
+        return [self._row_to_movimiento(row) for row in rows]
 
     def obtener_todos(self) -> List[Movimiento]:
         cursor = self.conn.cursor()
@@ -840,6 +890,9 @@ class PostgresMovimientoRepository(MovimientoRepository):
             
             cuenta_id = row[0] if row else None
             fecha = row[1] if row else None
+            
+            if cuenta_id and fecha:
+                self._validar_bloqueo(cuenta_id, fecha)
 
             # 2. Eliminar
             query = "DELETE FROM movimientos WHERE Id = %s"

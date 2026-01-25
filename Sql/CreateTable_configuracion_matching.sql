@@ -56,7 +56,7 @@ CREATE INDEX idx_configuracion_matching_activo
 COMMENT ON TABLE configuracion_matching IS 'Parámetros configurables para el algoritmo de matching de conciliación';
 COMMENT ON COLUMN configuracion_matching.tolerancia_valor IS 'Margen de error aceptable en pesos para considerar valores iguales';
 COMMENT ON COLUMN configuracion_matching.similitud_descripcion_minima IS 'Porcentaje mínimo de similitud en descripción (0.00 a 1.00)';
-COMMENT ON COLUMN configuracion_matching.score_minimo_exacto IS 'Score mínimo para considerar un match como EXACTO';
+COMMENT ON COLUMN configuracion_matching.score_minimo_exacto IS 'Score mínimo para considerar un match como OK';
 COMMENT ON COLUMN configuracion_matching.score_minimo_probable IS 'Score mínimo para considerar un match como PROBABLE';
 
 -- Insertar configuración inicial

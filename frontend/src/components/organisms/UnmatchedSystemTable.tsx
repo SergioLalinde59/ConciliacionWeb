@@ -5,12 +5,18 @@ import { useMemo } from 'react'
 
 interface UnmatchedSystemTableProps {
     records: any[] // Usamos any o un tipo compatible que tenga las props necesarias
-    onEdit: (mov: any) => void
-    onDelete: (id: number) => void
+    onEdit?: (mov: any) => void
+    onDelete?: (id: number) => void
 }
 
 export const UnmatchedSystemTable = ({ records, onEdit, onDelete }: UnmatchedSystemTableProps) => {
     if (!records || records.length === 0) return null
+
+    const { totalIngresos, totalEgresos, totalNeto } = useMemo(() => {
+        const ingresos = records.reduce((sum, row) => sum + (Number(row.valor) > 0 ? Number(row.valor) : 0), 0)
+        const egresos = records.reduce((sum, row) => sum + (Number(row.valor) < 0 ? Number(row.valor) : 0), 0)
+        return { totalIngresos: ingresos, totalEgresos: egresos, totalNeto: ingresos + egresos }
+    }, [records])
 
     const columns: Column<any>[] = useMemo(() => [
         {
@@ -70,20 +76,24 @@ export const UnmatchedSystemTable = ({ records, onEdit, onDelete }: UnmatchedSys
             cellClassName: '!py-0.5',
             accessor: (row) => (
                 <div className="flex justify-center gap-2">
-                    <button
-                        onClick={() => onEdit(row)}
-                        className="p-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Modificar"
-                    >
-                        <Edit2 size={16} />
-                    </button>
-                    <button
-                        onClick={() => onDelete(row.id)}
-                        className="p-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Eliminar (Es un error)"
-                    >
-                        <Trash2 size={16} />
-                    </button>
+                    {onEdit && (
+                        <button
+                            onClick={() => onEdit(row)}
+                            className="p-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Modificar"
+                        >
+                            <Edit2 size={16} />
+                        </button>
+                    )}
+                    {onDelete && (
+                        <button
+                            onClick={() => onDelete(row.id)}
+                            className="p-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Eliminar (Es un error)"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    )}
                 </div>
             )
         }
@@ -101,9 +111,20 @@ export const UnmatchedSystemTable = ({ records, onEdit, onDelete }: UnmatchedSys
                         </p>
                     </div>
                 </div>
-                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold">
-                    {records.length} registros
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-bold">
+                        {records.length} registros
+                    </span>
+                    <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">
+                        Ingresos: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(totalIngresos)}
+                    </span>
+                    <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-bold">
+                        Egresos: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(totalEgresos)}
+                    </span>
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold">
+                        Total: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(totalNeto)}
+                    </span>
+                </div>
             </div>
 
             <DataTable

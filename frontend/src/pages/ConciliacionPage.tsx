@@ -6,10 +6,9 @@ import { FiltrosReporte } from '../components/organisms/FiltrosReporte';
 import { conciliacionService } from '../services/conciliacionService';
 import { cuentasService } from '../services/api';
 import { getMesActual, getMonthsBetween } from '../utils/dateUtils';
-import type { Conciliacion, ConciliacionUpdate } from '../types/Conciliacion';
+import type { Conciliacion } from '../types/Conciliacion';
 import type { Cuenta } from '../types';
 import { CurrencyDisplay } from '../components/atoms/CurrencyDisplay';
-import { EditableCurrencyCell } from '../components/molecules/EditableCurrencyCell';
 import { DataTable, type Column } from '../components/molecules/DataTable';
 
 import { ConciliacionMovimientosTab } from '../components/organisms/ConciliacionMovimientosTab';
@@ -89,47 +88,22 @@ export const ConciliacionPage = () => {
 
     const getConcKey = (cuentaId: number, year: number, month: number) => `${cuentaId}-${year}-${month}`;
 
-    const handleUpdate = (cuentaId: number, year: number, month: number, field: keyof Conciliacion, value: string) => {
-        const numValue = parseFloat(value) || 0;
-        const key = getConcKey(cuentaId, year, month);
-        setConciliaciones(prev => ({
-            ...prev,
-            [key]: {
-                ...prev[key],
-                [field]: numValue
-            }
-        }));
-    };
 
-    const saveMutation = useMutation({
-        mutationFn: conciliacionService.save,
+    const closeMutation = useMutation({
+        mutationFn: ({ cuentaId, year, month }: { cuentaId: number, year: number, month: number }) =>
+            conciliacionService.cerrarConciliacion(cuentaId, year, month),
         onSuccess: (data) => {
             const key = getConcKey(data.cuenta_id, data.year, data.month);
             setConciliaciones(prev => ({
                 ...prev,
                 [key]: data
             }));
+        },
+        onError: (error: any) => {
+            alert("Error al cerrar: " + (error.message || "Error desconocido"));
         }
     });
 
-    const handleSave = (cuentaId: number, year: number, month: number) => {
-        const key = getConcKey(cuentaId, year, month);
-        const current = conciliaciones[key];
-        if (!current) return;
-
-        const updateData: ConciliacionUpdate = {
-            cuenta_id: current.cuenta_id,
-            year: current.year,
-            month: current.month,
-            fecha_corte: current.fecha_corte,
-            extracto_saldo_anterior: current.extracto_saldo_anterior,
-            extracto_entradas: current.extracto_entradas,
-            extracto_salidas: current.extracto_salidas,
-            extracto_saldo_final: current.extracto_saldo_final,
-            datos_extra: current.datos_extra
-        };
-        saveMutation.mutate(updateData);
-    };
 
     const handleRecalculate = async (cuentaId: number, year: number, month: number) => {
         try {
@@ -213,14 +187,24 @@ export const ConciliacionPage = () => {
             header: 'Cuenta / Periodo',
             accessor: (row) => {
                 const monthName = getMonthName(row.month);
+                const colorMap = {
+                    'VERDE': 'bg-green-500',
+                    'AMARILLO': 'bg-yellow-500',
+                    'ROJO': 'bg-red-500'
+                };
+                const statusColor = row.conciliacion?.semaforo_estado ? colorMap[row.conciliacion.semaforo_estado as keyof typeof colorMap] : 'bg-gray-300';
+
                 return (
-                    <div className="flex flex-col">
-                        <span className="font-medium text-gray-800">{row.cuenta.nombre}</span>
-                        <span className="text-xs text-gray-400 font-normal capitalize">{monthName} {row.year}</span>
+                    <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full ${statusColor} shadow-sm`} title={row.conciliacion?.estado} />
+                        <div className="flex flex-col">
+                            <span className="font-medium text-gray-800">{row.cuenta.nombre}</span>
+                            <span className="text-xs text-gray-400 font-normal capitalize">{monthName} {row.year}</span>
+                        </div>
                     </div>
                 );
             },
-            width: 'w-48',
+            width: 'w-56',
             sortable: true,
             sortKey: 'nombre_cuenta'
         },
@@ -228,12 +212,7 @@ export const ConciliacionPage = () => {
         {
             key: 'extracto_saldo_anterior',
             header: 'Saldo Ant',
-            accessor: (row) => (
-                <EditableCurrencyCell
-                    value={row.extracto_saldo_anterior}
-                    onChange={(val) => handleUpdate(row.cuenta.id, row.year, row.month, 'extracto_saldo_anterior', val)}
-                />
-            ),
+            accessor: (row) => <CurrencyDisplay value={row.extracto_saldo_anterior} />,
             align: 'right',
             headerClassName: 'bg-emerald-50 text-emerald-800 border-l border-b-2 border-emerald-200',
             cellClassName: 'border-l border-gray-100 text-gray-600',
@@ -242,12 +221,7 @@ export const ConciliacionPage = () => {
         {
             key: 'extracto_entradas',
             header: 'Entradas',
-            accessor: (row) => (
-                <EditableCurrencyCell
-                    value={row.extracto_entradas}
-                    onChange={(val) => handleUpdate(row.cuenta.id, row.year, row.month, 'extracto_entradas', val)}
-                />
-            ),
+            accessor: (row) => <CurrencyDisplay value={row.extracto_entradas} />,
             align: 'right',
             headerClassName: 'bg-emerald-50 text-emerald-800 border-b-2 border-emerald-200',
             cellClassName: 'text-gray-600',
@@ -256,12 +230,7 @@ export const ConciliacionPage = () => {
         {
             key: 'extracto_salidas',
             header: 'Salidas',
-            accessor: (row) => (
-                <EditableCurrencyCell
-                    value={row.extracto_salidas}
-                    onChange={(val) => handleUpdate(row.cuenta.id, row.year, row.month, 'extracto_salidas', val)}
-                />
-            ),
+            accessor: (row) => <CurrencyDisplay value={row.extracto_salidas} />,
             align: 'right',
             headerClassName: 'bg-emerald-50 text-emerald-800 border-b-2 border-emerald-200',
             cellClassName: 'text-gray-600',
@@ -270,13 +239,7 @@ export const ConciliacionPage = () => {
         {
             key: 'extracto_saldo_final',
             header: 'Saldo Final',
-            accessor: (row) => (
-                <EditableCurrencyCell
-                    value={row.extracto_saldo_final}
-                    onChange={(val) => handleUpdate(row.cuenta.id, row.year, row.month, 'extracto_saldo_final', val)}
-                    className="font-bold border-b border-emerald-300"
-                />
-            ),
+            accessor: (row) => <CurrencyDisplay value={row.extracto_saldo_final} className="font-bold" />,
             align: 'right',
             headerClassName: 'bg-emerald-50 text-emerald-800 font-bold border-b-2 border-emerald-200',
             cellClassName: 'bg-emerald-50/30',
@@ -333,20 +296,26 @@ export const ConciliacionPage = () => {
                     >
                         <FileText size={18} />
                     </button>
-                    <button
-                        onClick={() => handleSave(row.cuenta.id, row.year, row.month)}
-                        className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors border border-transparent hover:border-blue-100"
-                        title="Guardar Cambios"
-                    >
-                        <Save size={18} />
-                    </button>
-                    <button
-                        onClick={() => handleRecalculate(row.cuenta.id, row.year, row.month)}
-                        className="p-1.5 hover:bg-orange-50 text-orange-500 rounded-lg transition-colors border border-transparent hover:border-orange-100"
-                        title="Recalcular Sistema"
-                    >
-                        <RefreshCw size={18} />
-                    </button>
+
+                    {row.conciliacion?.semaforo_estado === 'AMARILLO' && (
+                        <button
+                            onClick={() => closeMutation.mutate({ cuentaId: row.cuenta.id, year: row.year, month: row.month })}
+                            className="p-1.5 hover:bg-green-50 text-green-600 rounded-lg transition-colors border border-transparent hover:border-green-100"
+                            title="Aprobar y Cerrar Conciliación"
+                        >
+                            <Save size={18} />
+                        </button>
+                    )}
+
+                    {row.conciliacion?.estado !== 'CONCILIADO' && (
+                        <button
+                            onClick={() => handleRecalculate(row.cuenta.id, row.year, row.month)}
+                            className="p-1.5 hover:bg-orange-50 text-orange-500 rounded-lg transition-colors border border-transparent hover:border-orange-100"
+                            title="Recalcular Sistema"
+                        >
+                            <RefreshCw size={18} />
+                        </button>
+                    )}
                 </div>
             ),
             align: 'right',

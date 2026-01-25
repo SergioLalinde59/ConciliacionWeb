@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Settings, AlertCircle } from 'lucide-react'
+import { Settings, AlertCircle, CheckCircle, Check, CheckCheck } from 'lucide-react'
 import { MatchingTable } from '../components/organisms/MatchingTable'
 import { MatchingStatsCard } from '../components/organisms/MatchingStatsCard'
 import { MatchEstado } from '../types/Matching'
@@ -10,6 +10,7 @@ import { ConfiguracionMatchingForm } from '../components/organisms/Configuracion
 import { MatchesIncorrectosModal } from '../components/organisms/MatchesIncorrectosModal'
 import { MovimientoModal } from '../components/organisms/modals/MovimientoModal'
 import { matchingService } from '../services/matching.service'
+import { conciliacionService } from '../services/conciliacionService'
 import { cuentasService, movimientosService } from '../services/api'
 import { UnmatchedSystemTable } from '../components/organisms/UnmatchedSystemTable'
 
@@ -50,6 +51,15 @@ export const ConciliacionMatchingPage = () => {
             setCuentaId(reconcilableCuentas[0].id)
         }
     }, [reconcilableCuentas, cuentaId])
+
+    // Obtener estado de la conciliación para bloqueo
+    const { data: conciliacion } = useQuery({
+        queryKey: ['conciliacion', cuentaId, year, month],
+        queryFn: () => conciliacionService.getByPeriod(cuentaId!, year, month),
+        enabled: cuentaId !== null
+    })
+
+    const isLocked = conciliacion?.estado === 'CONCILIADO'
 
     // Ejecutar matching
     const { data: matchingResult, isLoading, isError, error, refetch } = useQuery({
@@ -220,6 +230,17 @@ export const ConciliacionMatchingPage = () => {
         }
     })
 
+    const closeMutation = useMutation({
+        mutationFn: () => conciliacionService.cerrarConciliacion(cuentaId!, year, month),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['conciliacion', cuentaId, year, month] })
+            alert("Conciliación cerrada y bloqueada exitosamente. 🟢")
+        },
+        onError: (error: any) => {
+            alert("Error al cerrar: " + (error.message || "Error desconocido"));
+        }
+    })
+
 
     // Filtrar matches
     const matchesFiltrados = useMemo(() => {
@@ -234,12 +255,12 @@ export const ConciliacionMatchingPage = () => {
 
 
 
-        // Ordenar por estado (Sin Match → Probables → Exactos → Manual → Ignorado)
+        // Ordenar por estado (Sin Match → Probables → OK → Manual → Ignorado)
         // Dentro de cada estado, ordenar por score descendente
         const estadoOrder = {
             'SIN_MATCH': 0,
             'PROBABLE': 1,
-            'EXACTO': 2,
+            'OK': 2,
             'MANUAL': 3,
             'IGNORADO': 4
         }
@@ -350,8 +371,91 @@ export const ConciliacionMatchingPage = () => {
                 </div>
             )}
 
+            {/* Banner de Bloqueo */}
+            {isLocked && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 mb-6">
+                    <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <CheckCircle className="w-6 h-6 text-emerald-600" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-emerald-900 mb-1">
+                                Período Conciliado y Bloqueado
+                            </h3>
+                            <p className="text-sm text-emerald-800">
+                                Esta cuenta ya ha sido marcada como <strong>CONCILIADA</strong> para este período. Los movimientos y vinculaciones están protegidos contra cambios.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Checklist de Cuadre Estricto */}
+            {matchingResult && !isLocked && (
+                <div className={`bg-white rounded-xl border p-5 mb-6 shadow-sm transition-colors ${matchingResult.integridad.es_cuadrado ? 'border-emerald-200 bg-emerald-50/10' : 'border-amber-200 bg-amber-50/10'}`}>
+                    <div className="flex flex-col md:flex-row gap-6 items-center">
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className={`w-3 h-3 rounded-full ${matchingResult.integridad.es_cuadrado ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Estado de Cuadre Estricto</h3>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+                                <Requirement
+                                    label="Balance Ingresos"
+                                    ok={matchingResult.integridad.balance_ingresos}
+                                    detail={matchingResult.integridad.balance_ingresos ? "Coincide" : `Dif: ${new Intl.NumberFormat('es-CO').format(matchingResult.estadisticas.total_extracto.ingresos - matchingResult.estadisticas.total_sistema.ingresos)}`}
+                                />
+                                <Requirement
+                                    label="Balance Egresos"
+                                    ok={matchingResult.integridad.balance_egresos}
+                                    detail={matchingResult.integridad.balance_egresos ? "Coincide" : `Dif: ${new Intl.NumberFormat('es-CO').format(matchingResult.estadisticas.total_extracto.egresos - matchingResult.estadisticas.total_sistema.egresos)}`}
+                                />
+                                <Requirement
+                                    label="Volumen Total"
+                                    ok={matchingResult.integridad.igualdad_registros}
+                                    detail={matchingResult.integridad.igualdad_registros ? "Igual" : `${matchingResult.estadisticas.total_extracto.cantidad} vs ${matchingResult.estadisticas.total_sistema.cantidad}`}
+                                />
+                                <Requirement
+                                    label="Vinculación"
+                                    ok={matchingResult.integridad.todo_vinculado}
+                                    detail={matchingResult.integridad.todo_vinculado ? "Completa" : `${matchingResult.estadisticas.ok.cantidad} de ${matchingResult.estadisticas.total_extracto.cantidad}`}
+                                />
+                                <Requirement
+                                    label="Sin Pendientes"
+                                    ok={matchingResult.integridad.sin_pendientes}
+                                    detail={matchingResult.integridad.sin_pendientes ? "Limpio" : `${matchingResult.estadisticas.sin_match.cantidad + matchingResult.estadisticas.probables.cantidad} por resolver`}
+                                />
+                                <Requirement
+                                    label="Relación 1 a 1"
+                                    ok={matchingResult.integridad.relacion_1_a_1}
+                                    detail={matchingResult.integridad.relacion_1_a_1 ? "Correcta" : "Duplicados"}
+                                />
+                            </div>
+                        </div>
+
+                        {matchingResult.integridad.es_cuadrado && (
+                            <div className="shrink-0 flex flex-col items-center gap-2 pr-2">
+                                <button
+                                    onClick={() => {
+                                        if (confirm('¿Deseas aprobar y cerrar formalmente la conciliación de este periodo? Una vez cerrada, no se permitirán más cambios.')) {
+                                            closeMutation.mutate();
+                                        }
+                                    }}
+                                    className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-lg shadow-emerald-200 transition-all flex items-center gap-2 hover:scale-105"
+                                >
+                                    <CheckCheck size={20} />
+                                    Aprobar y Cerrar
+                                </button>
+                                <span className="text-[10px] text-emerald-600 font-medium uppercase">Conciliación Lista</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Alerta de Matches Incorrectos */}
-            {matches1aMuchosData && matches1aMuchosData.total_movimientos_sistema_afectados > 0 && (
+            {matches1aMuchosData && matches1aMuchosData.total_movimientos_sistema_afectados > 0 && !isLocked && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
                     <div className="flex items-start gap-4">
                         <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -397,7 +501,7 @@ export const ConciliacionMatchingPage = () => {
                                     selectedEstados={selectedEstados}
                                     onEstadosChange={setSelectedEstados}
                                     onLimpiar={limpiarFiltros}
-                                    onAprobar={(match) => {
+                                    onAprobar={isLocked ? undefined : (match) => {
                                         if (match.mov_sistema) {
                                             vincularMutation.mutate({
                                                 extractoId: match.mov_extracto.id,
@@ -407,16 +511,16 @@ export const ConciliacionMatchingPage = () => {
                                             })
                                         }
                                     }}
-                                    onCrear={(match) => {
+                                    onCrear={isLocked ? undefined : (match) => {
                                         createMovementsMutation.mutate([{
                                             movimiento_extracto_id: match.mov_extracto.id,
                                             descripcion: match.mov_extracto.descripcion
                                         }])
                                     }}
-                                    onDesvincular={(match) => {
+                                    onDesvincular={isLocked ? undefined : (match) => {
                                         desvincularMutation.mutate(match.mov_extracto.id)
                                     }}
-                                    onAprobarTodo={() => {
+                                    onAprobarTodo={isLocked ? undefined : () => {
                                         const probables = matchesFiltrados.filter(m => m.estado === MatchEstado.PROBABLE)
                                         if (probables.length === 0) return
 
@@ -431,7 +535,7 @@ export const ConciliacionMatchingPage = () => {
                                             }
                                         })
                                     }}
-                                    onCrearTodo={() => {
+                                    onCrearTodo={isLocked ? undefined : () => {
                                         const sinMatch = matchesFiltrados.filter(m => m.estado === MatchEstado.SIN_MATCH && !m.mov_sistema)
                                         if (sinMatch.length === 0) return
 
@@ -451,12 +555,12 @@ export const ConciliacionMatchingPage = () => {
                             <div className="mt-4">
                                 <UnmatchedSystemTable
                                     records={matchingResult.movimientos_sistema_sin_match}
-                                    onDelete={(id) => {
+                                    onDelete={isLocked ? undefined : (id) => {
                                         if (confirm('¿Estás seguro de eliminar este movimiento del sistema?')) {
                                             deleteSystemMovMutation.mutate(id)
                                         }
                                     }}
-                                    onEdit={(mov) => {
+                                    onEdit={isLocked ? undefined : (mov) => {
                                         setEditingSystemMov(mov as any)
                                         setShowEditSystemModal(true)
                                     }}
@@ -541,3 +645,24 @@ export const ConciliacionMatchingPage = () => {
         </div>
     )
 }
+
+// Sub-componente para los requisitos
+const Requirement = ({ label, ok, detail }: { label: string, ok: boolean, detail: string }) => (
+    <div className={`p-2 rounded-lg border flex flex-col gap-0.5 ${ok ? 'bg-emerald-50/50 border-emerald-100' : 'bg-white border-gray-100'}`}>
+        <div className="flex items-center gap-1.5">
+            {ok ? (
+                <div className="w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <Check size={10} className="text-emerald-600" />
+                </div>
+            ) : (
+                <div className="w-4 h-4 rounded-full bg-amber-100 flex items-center justify-center">
+                    <AlertCircle size={10} className="text-amber-600" />
+                </div>
+            )}
+            <span className={`text-[10px] font-bold uppercase tracking-tight ${ok ? 'text-emerald-700' : 'text-gray-500'}`}>{label}</span>
+        </div>
+        <span className={`text-xs ml-5 font-medium ${ok ? 'text-emerald-600' : 'text-amber-700 italic'}`}>
+            {detail}
+        </span>
+    </div>
+)

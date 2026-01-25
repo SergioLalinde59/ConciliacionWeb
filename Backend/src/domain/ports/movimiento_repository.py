@@ -20,6 +20,11 @@ class MovimientoRepository(ABC):
         pass
 
     @abstractmethod
+    def obtener_por_ids(self, ids: List[int]) -> List[Movimiento]:
+        """Obtiene lista de movimientos por sus IDs"""
+        pass
+
+    @abstractmethod
     def buscar_por_fecha(self, fecha_inicio: date, fecha_fin: date) -> List[Movimiento]:
         """Busca movimientos en un rango de fechas"""
         pass

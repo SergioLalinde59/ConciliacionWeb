@@ -10,7 +10,7 @@ from src.domain.models.movimiento import Movimiento
 
 class MatchEstado(str, Enum):
     """Estados posibles de un matching entre extracto y sistema"""
-    EXACTO = "EXACTO"           # Match perfecto automático (score >= 95%)
+    OK = "OK"                   # Match perfecto automático (score >= 95%)
     PROBABLE = "PROBABLE"       # Match sugerido por algoritmo (score >= 70%)
     MANUAL = "MANUAL"           # Vinculado manualmente por usuario
     # TRASLADO eliminado de lógica de matching (ahora es creación de movimiento)
@@ -72,9 +72,9 @@ class MovimientoMatch:
                 setattr(self, attr, Decimal(str(value)))
     
     @property
-    def es_exacto(self) -> bool:
-        """Indica si es un match exacto"""
-        return self.estado == MatchEstado.EXACTO
+    def es_ok(self) -> bool:
+        """Indica si es un match OK (antes exacto)"""
+        return self.estado == MatchEstado.OK
     
     @property
     def es_probable(self) -> bool:

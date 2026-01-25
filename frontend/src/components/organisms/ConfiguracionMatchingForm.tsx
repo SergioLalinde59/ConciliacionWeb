@@ -165,7 +165,7 @@ export const ConfiguracionMatchingForm = ({
 
                 <div className="grid grid-cols-2 gap-3">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Score Mínimo Exacto</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Score Mínimo OK</label>
                         <input
                             type="number"
                             value={formData.score_minimo_exacto}

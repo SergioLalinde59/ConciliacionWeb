@@ -40,7 +40,7 @@ export const MatchingFilters = ({
     const estadosOptions = [
         { value: MatchEstado.SIN_MATCH, label: 'Sin Match', color: 'gray' },
         { value: MatchEstado.PROBABLE, label: 'Probable', color: 'amber' },
-        { value: MatchEstado.EXACTO, label: 'Exacto', color: 'emerald' }
+        { value: MatchEstado.OK, label: 'OK', color: 'emerald' }
     ]
 
     const hasActiveFilters = selectedEstados.length > 0 || minScore > 0 || soloConfirmados

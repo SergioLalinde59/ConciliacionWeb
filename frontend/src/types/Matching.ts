@@ -13,7 +13,7 @@
  * Estados posibles de una vinculación de matching
  */
 export const MatchEstado = {
-    EXACTO: 'EXACTO',
+    OK: 'OK',
     PROBABLE: 'PROBABLE',
     SIN_MATCH: 'SIN_MATCH',
     MANUAL: 'MANUAL',
@@ -84,13 +84,33 @@ export interface MovimientoMatch {
 /**
  * Estadísticas del resultado del matching
  */
+export interface DetailedStat {
+    cantidad: number
+    total: number
+    ingresos: number
+    egresos: number
+}
+
 export interface MatchingEstadisticas {
-    total_extracto: number
-    total_sistema: number
-    exactos: number
-    probables: number
-    sin_match: number
-    ignorados: number
+    total_extracto: DetailedStat
+    total_sistema: DetailedStat
+    ok: DetailedStat
+    probables: DetailedStat
+    sin_match: DetailedStat
+    ignorados: DetailedStat
+}
+
+/**
+ * Indicadores de integridad para el cuadre
+ */
+export interface MatchingIntegridad {
+    balance_ingresos: boolean
+    balance_egresos: boolean
+    igualdad_registros: boolean
+    todo_vinculado: boolean
+    sin_pendientes: boolean
+    relacion_1_a_1: boolean
+    es_cuadrado: boolean
 }
 
 /**
@@ -99,7 +119,8 @@ export interface MatchingEstadisticas {
 export interface MatchingResult {
     matches: MovimientoMatch[]
     estadisticas: MatchingEstadisticas
-    movimientos_sistema_sin_match: import('./Matching').MovimientoSistema[] // Array de movimientos del sistema no emparejados
+    integridad: MatchingIntegridad
+    movimientos_sistema_sin_match: MovimientoSistema[] // Array de movimientos del sistema no emparejados
 }
 
 // ============================================================================

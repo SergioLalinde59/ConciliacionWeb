@@ -16,28 +16,9 @@ class DateRangeService:
         - If no extract movements: Range is the full calendar month.
         """
         
-        # 1. Get extract movements
-        movs_extracto = self.extracto_repo.obtener_por_periodo(cuenta_id, year, month)
-        
-        # Default: Calendar Month
+        # Simply return the full calendar month range
         ultimo_dia = calendar.monthrange(year, month)[1]
-        default_start = date(year, month, 1)
-        default_end = date(year, month, ultimo_dia)
-
-        if not movs_extracto:
-            return default_start, default_end
-            
-        # 2. Calculate Min/Max from Extract
-        fechas = [m.fecha for m in movs_extracto]
-        min_date = min(fechas)
-        max_date = max(fechas)
+        start_date = date(year, month, 1)
+        end_date = date(year, month, ultimo_dia)
         
-        # 3. Apply logic:
-        # The user requested: "rangos de movimientos se define por la fecha menor y la fecha mayor de los movimientos del extracto"
-        # We should check if this covers cases where extract dates are strictly WITHIN the month, 
-        # but system movements exist outside that range but within the month?
-        # A strict interpretation implies: If extract is Jan 2 - Jan 28, we ONLY check system Jan 2 - Jan 28.
-        # System movements on Jan 1 or Jan 29 would be ignored.
-        # This seems to be the desired behavior to align "extracto range" with "sistema range".
-        
-        return min_date, max_date
+        return start_date, end_date

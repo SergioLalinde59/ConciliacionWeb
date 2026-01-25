@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react'
-import { ChevronDown, ChevronUp, ArrowUpDown, Check, CheckCheck, Unlink, X } from 'lucide-react'
+import { CheckCheck, Unlink, X } from 'lucide-react'
+import { Icon } from '../atoms/Icon'
+import { Button } from '../atoms/Button'
 import { MatchStatusBadge } from '../atoms/MatchStatusBadge'
 import type { MovimientoMatch } from '../../types/Matching'
 import { MatchEstado } from '../../types/Matching'
@@ -146,11 +148,11 @@ export const MatchingTable = ({
 
     const SortIcon = ({ column }: { column: SortColumn }) => {
         if (sortColumn !== column) {
-            return <ArrowUpDown size={14} className="text-gray-400" />
+            return <Icon name="ArrowUpDown" size={14} className="text-gray-400" />
         }
         return sortDirection === 'asc'
-            ? <ChevronUp size={14} className="text-blue-600" />
-            : <ChevronDown size={14} className="text-blue-600" />
+            ? <Icon name="ChevronUp" size={14} className="text-blue-600" />
+            : <Icon name="ChevronDown" size={14} className="text-blue-600" />
     }
 
     const formatCurrency = (value: number) => {
@@ -517,46 +519,66 @@ export const MatchingTable = ({
                                                 <div className="flex items-center justify-center gap-1">
                                                     {/* Expand/Collapse button */}
                                                     {hasSystemMovement && (
-                                                        <button
-                                                            onClick={() => toggleRow(match.id)}
-                                                            className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                toggleRow(match.id)
+                                                            }}
+                                                            className="!p-1 text-gray-400 hover:text-gray-600"
                                                             title={isExpanded ? "Ocultar detalles" : "Ver detalles"}
                                                         >
-                                                            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                                        </button>
+                                                            {isExpanded ? <Icon name="ChevronUp" size={15} /> : <Icon name="ChevronDown" size={15} />}
+                                                        </Button>
                                                     )}
 
                                                     {/* Aprobar (Probable -> OK) */}
                                                     {match.estado === MatchEstado.PROBABLE && onAprobar && (
-                                                        <button
-                                                            onClick={() => onAprobar(match)}
-                                                            className="p-1 text-green-600 hover:text-green-700 rounded transition-colors"
+                                                        <Button
+                                                            variant="secondary"
+                                                            size="sm"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                onAprobar(match)
+                                                            }}
+                                                            className="!p-1 text-green-600 hover:text-green-700 bg-green-50 border-green-100"
                                                             title="Aprobar vinculación"
                                                         >
-                                                            <Check size={16} />
-                                                        </button>
+                                                            <Icon name="Check" size={15} />
+                                                        </Button>
                                                     )}
 
                                                     {/* Crear (Sin Match -> Nuevo Movimiento) */}
                                                     {match.estado === MatchEstado.SIN_MATCH && onCrear && (
-                                                        <button
-                                                            onClick={() => onCrear(match)}
-                                                            className="p-1 text-blue-600 hover:text-blue-700 rounded transition-colors"
+                                                        <Button
+                                                            variant="secondary"
+                                                            size="sm"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                onCrear(match)
+                                                            }}
+                                                            className="!p-1 text-blue-600 hover:text-blue-700 bg-blue-50 border-blue-100"
                                                             title="Crear movimiento en sistema"
                                                         >
-                                                            <Check size={16} />
-                                                        </button>
+                                                            <Icon name="Plus" size={15} />
+                                                        </Button>
                                                     )}
 
                                                     {/* Desvincular */}
                                                     {hasSystemMovement && onDesvincular && (
-                                                        <button
-                                                            onClick={() => onDesvincular(match)}
-                                                            className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                                                        <Button
+                                                            variant="ghost-danger"
+                                                            size="sm"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                onDesvincular(match)
+                                                            }}
+                                                            className="!p-1"
                                                             title="Desvincular (Eliminar vinculación)"
                                                         >
-                                                            <Unlink size={16} />
-                                                        </button>
+                                                            <Icon name="Unlink" size={15} />
+                                                        </Button>
                                                     )}
                                                 </div>
                                             </td>

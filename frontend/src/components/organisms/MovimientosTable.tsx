@@ -1,4 +1,5 @@
 import { Edit2, LayoutList } from 'lucide-react'
+import { Button } from '../atoms/Button'
 import { DataTable } from '../molecules/DataTable'
 import type { Column } from '../molecules/DataTable'
 import { useMemo } from 'react'
@@ -137,13 +138,15 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, totales }: Movi
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
             cellClassName: '!py-0.5 !px-0.5',
             accessor: (row) => (
-                <button
+                <Button
+                    variant="ghost-warning"
+                    size="sm"
                     onClick={() => onEdit(row)}
-                    className="p-1 text-orange-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors border border-transparent"
+                    className="!p-1.5"
                     title="Editar Movimiento"
                 >
-                    <Edit2 size={16} />
-                </button>
+                    <Edit2 size={15} />
+                </Button>
             )
         }
     ], [onEdit])

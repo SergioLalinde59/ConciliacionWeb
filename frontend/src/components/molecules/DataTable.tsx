@@ -271,24 +271,24 @@ export function DataTable<T extends Record<string, any>>({
                                     <div className="flex justify-end gap-2">
                                         {onEdit && (
                                             <Button
-                                                variant="secondary"
+                                                variant="ghost-warning"
                                                 size="sm"
                                                 onClick={() => onEdit(row)}
-                                                className="!p-1.5 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border-blue-100"
+                                                className="!p-1.5"
                                                 title="Editar"
                                             >
-                                                <Pencil size={16} />
+                                                <Pencil size={15} />
                                             </Button>
                                         )}
                                         {onDelete && (
                                             <Button
-                                                variant="danger"
+                                                variant="ghost-danger"
                                                 size="sm"
                                                 onClick={() => handleDelete(row)}
                                                 className="!p-1.5"
                                                 title="Eliminar"
                                             >
-                                                <Trash2 size={16} />
+                                                <Trash2 size={15} />
                                             </Button>
                                         )}
                                     </div>

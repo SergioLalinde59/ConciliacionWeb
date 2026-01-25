@@ -1,4 +1,5 @@
 import { Pencil, Trash2 } from 'lucide-react'
+import { Button } from '../../atoms/Button'
 import type { TipoMovimiento } from '../../../types'
 
 interface Props {
@@ -29,8 +30,24 @@ export const TiposMovimientoTable = ({ tipos, loading, onEdit, onDelete }: Props
                             <td className="py-3 px-4 text-sm font-medium text-gray-900">{tipo.nombre}</td>
                             <td className="py-3 px-4 text-right">
                                 <div className="flex justify-end gap-2">
-                                    <button onClick={() => onEdit(tipo)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"><Pencil size={16} /></button>
-                                    <button onClick={() => { if (confirm('¿Eliminar?')) onDelete(tipo.id) }} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors"><Trash2 size={16} /></button>
+                                    <Button
+                                        variant="ghost-warning"
+                                        size="sm"
+                                        onClick={() => onEdit(tipo)}
+                                        className="!p-1.5"
+                                        title="Editar"
+                                    >
+                                        <Pencil size={15} />
+                                    </Button>
+                                    <Button
+                                        variant="ghost-danger"
+                                        size="sm"
+                                        onClick={() => { if (confirm('¿Eliminar?')) onDelete(tipo.id) }}
+                                        className="!p-1.5"
+                                        title="Eliminar"
+                                    >
+                                        <Trash2 size={15} />
+                                    </Button>
                                 </div>
                             </td>
                         </tr>

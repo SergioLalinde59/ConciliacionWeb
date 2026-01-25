@@ -1,4 +1,5 @@
 import { Edit2, Trash2, AlertCircle } from 'lucide-react'
+import { Button } from '../atoms/Button'
 import { DataTable } from '../molecules/DataTable'
 import type { Column } from '../molecules/DataTable'
 import { useMemo } from 'react'
@@ -77,22 +78,26 @@ export const UnmatchedSystemTable = ({ records, onEdit, onDelete }: UnmatchedSys
             accessor: (row) => (
                 <div className="flex justify-center gap-2">
                     {onEdit && (
-                        <button
+                        <Button
+                            variant="ghost-warning"
+                            size="sm"
                             onClick={() => onEdit(row)}
-                            className="p-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="!p-1.5"
                             title="Modificar"
                         >
-                            <Edit2 size={16} />
-                        </button>
+                            <Edit2 size={15} />
+                        </Button>
                     )}
                     {onDelete && (
-                        <button
+                        <Button
+                            variant="ghost-danger"
+                            size="sm"
                             onClick={() => onDelete(row.id)}
-                            className="p-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="!p-1.5"
                             title="Eliminar (Es un error)"
                         >
-                            <Trash2 size={16} />
-                        </button>
+                            <Trash2 size={15} />
+                        </Button>
                     )}
                 </div>
             )

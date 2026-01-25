@@ -1,4 +1,5 @@
 import { Pencil, Trash2 } from 'lucide-react'
+import { Button } from '../../atoms/Button'
 import type { Moneda } from '../../../types'
 
 interface Props {
@@ -35,26 +36,28 @@ export const MonedasTable = ({ monedas, loading, onEdit, onDelete }: Props) => {
                             <td className="py-3 px-4 text-sm font-bold text-gray-700">{moneda.isocode}</td>
                             <td className="py-3 px-4 text-sm font-medium text-gray-900">{moneda.nombre}</td>
                             <td className="py-3 px-4 text-right">
-                                <div className="flex justify-end gap-2">
-                                    <button
-                                        onClick={() => onEdit(moneda)}
-                                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                                        title="Editar"
-                                    >
-                                        <Pencil size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (confirm('¿Estás seguro de eliminar esta moneda?')) {
-                                                onDelete(moneda.id)
-                                            }
-                                        }}
-                                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                                        title="Eliminar"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
+                                <Button
+                                    variant="ghost-warning"
+                                    size="sm"
+                                    onClick={() => onEdit(moneda)}
+                                    className="!p-1.5"
+                                    title="Editar"
+                                >
+                                    <Pencil size={15} />
+                                </Button>
+                                <Button
+                                    variant="ghost-danger"
+                                    size="sm"
+                                    onClick={() => {
+                                        if (confirm('¿Estás seguro de eliminar esta moneda?')) {
+                                            onDelete(moneda.id)
+                                        }
+                                    }}
+                                    className="!p-1.5"
+                                    title="Eliminar"
+                                >
+                                    <Trash2 size={15} />
+                                </Button>
                             </td>
                         </tr>
                     ))}

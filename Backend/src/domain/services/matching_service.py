@@ -131,8 +131,9 @@ class MatchingService:
                     score_descripcion=score_descripcion
                 )
                 
-                # Remover de disponibles si es OK (auto-vincular)
-                if estado == MatchEstado.OK:
+                # Remover de disponibles si ya fue vinculado (auto-vincular OK o Sugerencia PROBABLE)
+                # Esto garantiza la integridad 1-a-1 desde el algoritmo
+                if estado in [MatchEstado.OK, MatchEstado.PROBABLE]:
                     movs_sistema_disponibles.remove(mov_sistema)
                 
                 resultados.append(match)

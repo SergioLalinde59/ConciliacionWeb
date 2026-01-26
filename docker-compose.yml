@@ -29,8 +29,9 @@ services:
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=SLB
       - ENVIRONMENT=production
-      - DIRECTORIO_MOVIMIENTOS=/app/media/movimientos
+      - DIRECTORY_MOVIMIENTOS=/app/media/movimientos
       - DIRECTORIO_EXTRACTOS=/app/media/extractos
+      - BACKUP_PATH=/app/backups
     depends_on:
       db:
         condition: service_healthy
@@ -40,6 +41,7 @@ services:
       - ./Backend:/app
       - ${HOST_MOVIMIENTOS}:/app/media/movimientos
       - ${HOST_EXTRACTOS}:/app/media/extractos
+      - ${HOST_BACKUPS}:/app/backups
 
   frontend:
     build:

@@ -195,19 +195,19 @@ class PostgresConciliacionRepository(ConciliacionRepository):
                 fecha_fin = date(year, month, ultimo_dia)
             
             # 1. Calcular sumas desde movimientos vinculados (Consolidado Bancario)
-            # Regla de Negocio: Sumar solo lo que ya tiene pareja en el banco para este mes.
+            # 1. Calcular sumas desde movimientos del sistema (Total Libro)
+            # Regla de Negocio ACTUALIZADA: Sumar TODOS los movimientos del periodo.
+            # No solo los vinculados. Esto refleja el saldo real en libros.
             query_sumas = """
                 SELECT 
                     COALESCE(SUM(CASE WHEN m.Valor > 0 THEN m.Valor ELSE 0 END), 0) as entradas,
                     COALESCE(SUM(CASE WHEN m.Valor < 0 THEN ABS(m.Valor) ELSE 0 END), 0) as salidas
                 FROM movimientos_encabezado m
-                JOIN movimiento_vinculaciones mv ON m.id = mv.movimiento_sistema_id
-                JOIN movimientos_extracto me ON mv.movimiento_extracto_id = me.id
-                WHERE me.cuenta_id = %s 
-                  AND me.year = %s 
-                  AND me.month = %s
+                WHERE m.cuentaid = %s 
+                  AND m.fecha >= %s 
+                  AND m.fecha <= %s
             """
-            cursor.execute(query_sumas, (cuenta_id, year, month))
+            cursor.execute(query_sumas, (cuenta_id, fecha_inicio, fecha_fin))
             entradas_sys, salidas_sys = cursor.fetchone()
             
             # 2. Actualizar la tabla conciliaciones

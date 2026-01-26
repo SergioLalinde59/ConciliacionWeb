@@ -196,21 +196,15 @@ def _extraer_resumen_desde_texto_full(texto: str) -> Optional[Dict[str, Any]]:
         saldo_final = valores_fila2[2] if len(valores_fila2) > 2 else Decimal(0)
 
     
-    # Calcular entradas y salidas
-    entradas = adiciones
-    salidas = retiros + retenciones
+    # Calcular entradas y salidas puras (sin mezclar rendimientos/retenciones)
+    # Según Img2: Nuevo Saldo = Saldo Ant + Adiciones - Retiros + Rend Netos - Retenciones
     
-    if rendimientos >= 0:
-        entradas += rendimientos
-    else:
-        salidas += abs(rendimientos)
-
     data['saldo_anterior'] = saldo_anterior
-    data['entradas'] = entradas
-    data['salidas'] = salidas
+    data['entradas'] = adiciones
+    data['salidas'] = retiros
     data['saldo_final'] = saldo_final
     
-    # NUEVO: Devolver datos detallados
+    # Devolver datos detallados para la tabla de 6 filas
     data['rendimientos'] = rendimientos
     data['retenciones'] = retenciones
     

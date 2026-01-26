@@ -450,3 +450,27 @@ class PostgresMovimientoVinculacionRepository(MovimientoVinculacionRepository):
             
         finally:
             cursor.close()
+
+    def desvincular_por_periodo(self, cuenta_id: int, year: int, month: int) -> int:
+        """
+        Elimina físicamente todas las vinculaciones de un periodo.
+        Se usa para 'reiniciar' el matching del periodo.
+        """
+        cursor = self.conn.cursor()
+        try:
+            query = """
+                DELETE FROM movimiento_vinculaciones 
+                WHERE movimiento_extracto_id IN (
+                    SELECT id FROM movimientos_extracto 
+                    WHERE cuenta_id = %s AND year = %s AND month = %s
+                )
+            """
+            cursor.execute(query, (cuenta_id, year, month))
+            count = cursor.rowcount
+            self.conn.commit()
+            return count
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+        finally:
+            cursor.close()

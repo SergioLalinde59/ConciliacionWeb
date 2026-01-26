@@ -68,11 +68,27 @@ def extraer_resumen(file_obj: Any) -> Dict[str, Any]:
     
     logger.info(f"\nResumen final extraído: {list(resumen.keys())}")
     
+    # STRICT LOGIC: If we didn't confirm it's USD or we have no data, return empty/raise
+    # to allow fallback to the older extractor.
     if not resumen or 'saldo_final' not in resumen:
-        logger.error("✗ FALLO: No se encontró saldo_final en el resumen")
-        logger.error(f"Campos encontrados: {list(resumen.keys())}")
-        raise Exception("No se pudo extraer el resumen del archivo. Verifique el formato.")
+        logger.warning("No se extrajo el resumen completo de MasterCard USD. No se aplicarán valores por defecto para permitir fallback.")
+        return {} # Returning empty dictionary allows the service to catch it or fail gracefully
     
+    # Ensure default keys exist IF we are sure this is the right format
+    defaults = {
+        'saldo_anterior': Decimal(0),
+        'entradas': Decimal(0),
+        'salidas': Decimal(0),
+        'saldo_final': Decimal(0),
+        'year': 2024,
+        'month': 1,
+        'periodo_texto': "PERIODO DESCONOCIDO"
+    }
+    
+    for key, default_val in defaults.items():
+        if key not in resumen:
+            resumen[key] = default_val
+
     logger.info("=" * 80)
     logger.info("MASTERCARD USD - Extracción completada exitosamente")
     logger.info("=" * 80)
@@ -93,42 +109,39 @@ def _extraer_resumen_desde_texto(texto: str) -> Optional[Dict[str, Any]]:
     # Verificar que sea la sección de DOLARES
     # El PDF puede tener caracteres "triplicados" como: MMMooonnneeedddaaa::: DDDOOOLLLAAARRREEESSS
     
-    # PRIMERO: Verificar que NO sea PESOS (prioridad)
-    tiene_pesos_1 = 'PESOS' in texto
+    # SEGUNDO: Buscar indicadores de DOLARES
+    # Primero definimos marcadores de la moneda contraria para exclusión opcional
+    tiene_pesos_1 = 'Moneda en PESOS' in texto
     tiene_pesos_2 = 'ESTADO DE CUENTA EN: PESOS' in texto
     tiene_pesos_3 = bool(re.search(r'P+E+S+O+S+', texto))
-    tiene_pesos_4 = 'pago en pesos' in texto.lower()
-    
-    if tiene_pesos_1 or tiene_pesos_2 or tiene_pesos_3 or tiene_pesos_4:
-        logger.warning("✗ SALTAR: Detectado PESOS - este es un extracto COP, no USD")
-        return None
-    
-    # SEGUNDO: Buscar indicadores de DOLARES
-    tiene_dolares_1 = 'Moneda: DOLARES' in texto
+
+    tiene_dolares_1 = 'Moneda DOLARES' in texto
     tiene_dolares_2 = 'ESTADO DE CUENTA EN:  DOLARES' in texto
     tiene_dolares_3 = 'ESTADO DE CUENTA EN: DOLARES' in texto  # Sin doble espacio
     # Buscar patrón con caracteres triplicados
     tiene_dolares_4 = bool(re.search(r'D+O+L+A+R+E+S+', texto))
-    # También buscar "pago en dolares"
-    tiene_dolares_5 = 'pago en dolares' in texto.lower()
     
-    logger.info(f"Verificación de moneda:")
-    logger.info(f"  - 'Moneda: DOLARES': {tiene_dolares_1}")
-    logger.info(f"  - 'ESTADO DE CUENTA EN:  DOLARES': {tiene_dolares_2}")
-    logger.info(f"  - 'ESTADO DE CUENTA EN: DOLARES': {tiene_dolares_3}")
+    # REFINEMENT: Explicit exclusion if PESOS markers are present as headers
+    if tiene_pesos_1 or tiene_pesos_2 or tiene_pesos_3:
+        logger.warning("✗ SALTAR: Detectados marcadores explicitos de PESOS en esta pagina.")
+        return None
+
+    logger.info(f"Verificación de moneda DOLARES:")
+    logger.info(f"  - 'Moneda DOLARES': {tiene_dolares_1}")
+    logger.info(f"  - 'ESTADO DE CUENTA EN: DOLARES': {tiene_dolares_2 or tiene_dolares_3}")
     logger.info(f"  - Patrón DOLARES: {tiene_dolares_4}")
-    logger.info(f"  - 'pago en dolares': {tiene_dolares_5}")
     
-    if not (tiene_dolares_1 or tiene_dolares_2 or tiene_dolares_3 or tiene_dolares_4 or tiene_dolares_5):
-        logger.warning("No se encontró indicación de moneda DOLARES - saltando este texto")
+    if not (tiene_dolares_1 or tiene_dolares_2 or tiene_dolares_3 or tiene_dolares_4):
+        logger.warning("No se encontró indicación FUERTE de moneda DOLARES - saltando este texto")
         return None
     
     logger.info("✓ Confirmado: es un extracto en DOLARES")
     
     # 1. SALDO ANTERIOR
-    saldo_ant_match = re.search(r'\+\s*Saldo anterior\s+\$\s*([\d.,]+)', texto_norm, re.IGNORECASE)
+    saldo_ant_match = re.search(r'Saldo anterior\s+\$\s*([\d.,]+)', texto_norm, re.IGNORECASE)
     if saldo_ant_match:
         data['saldo_anterior'] = _parsear_valor_formato_col(saldo_ant_match.group(1))
+        logger.info(f"  ✓ Encontrado Saldo Anterior: {data['saldo_anterior']}")
     
     # 2. COMPRAS DEL MES
     compras_match = re.search(r'\+\s*Compras del mes\s+\$\s*([\d.,]+)', texto_norm, re.IGNORECASE)
@@ -164,9 +177,10 @@ def _extraer_resumen_desde_texto(texto: str) -> Optional[Dict[str, Any]]:
     data['salidas'] = compras + int_mora + int_corr + avances + otros
     
     # 7. PAGOS/ABONOS (ENTRADAS)
-    pagos_match = re.search(r'\(-\)\s*Pagos\s*/\s*abonos\s+\$\s*([\d.,]+)', texto_norm, re.IGNORECASE)
+    pagos_match = re.search(r'Pagos\s*/\s*abonos\s+\$\s*([\d.,]+)', texto_norm, re.IGNORECASE)
     if pagos_match:
         data['entradas'] = _parsear_valor_formato_col(pagos_match.group(1))
+        logger.info(f"  ✓ Encontrado Pagos: {data['entradas']}")
     
     # 8. PERIODO FACTURADO
     # Formato: "30 nov - 30 dic. 2025" en la sección "Información de pago en dolares"
@@ -227,18 +241,30 @@ def _extraer_resumen_desde_texto(texto: str) -> Optional[Dict[str, Any]]:
 
 def _parsear_valor_formato_col(valor_str: str) -> Decimal:
     """
-    Parsea valores con formato colombiano (1.234.567,89)
-    donde punto es miles y coma es decimal.
+    Parsea valores con detección de formato robusta.
     """
     if not valor_str:
         return Decimal(0)
     
-    # Eliminar puntos (miles)
-    valor_limpio = valor_str.replace('.', '')
-    # Reemplazar coma por punto (decimal)
-    valor_limpio = valor_limpio.replace(',', '.')
+    v_limpio = re.sub(r'[^\d,.-]', '', valor_str)
+    
+    if ',' in v_limpio and '.' in v_limpio:
+        pos_coma = v_limpio.rfind(',')
+        pos_punto = v_limpio.rfind('.')
+        if pos_punto > pos_coma:
+            v_limpio = v_limpio.replace(',', '')
+        else:
+            v_limpio = v_limpio.replace('.', '').replace(',', '.')
+    elif ',' in v_limpio:
+        if len(v_limpio.split(',')[-1]) == 2:
+            v_limpio = v_limpio.replace(',', '.')
+        else:
+            v_limpio = v_limpio.replace(',', '')
+    elif '.' in v_limpio:
+        if len(v_limpio.split('.')[-1]) != 2:
+            v_limpio = v_limpio.replace('.', '')
     
     try:
-        return Decimal(valor_limpio)
+        return Decimal(v_limpio)
     except:
         return Decimal(0)

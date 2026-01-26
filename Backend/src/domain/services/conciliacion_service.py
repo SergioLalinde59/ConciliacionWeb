@@ -3,16 +3,19 @@ from src.domain.models.movimiento import Movimiento
 from src.domain.ports.movimiento_repository import MovimientoRepository
 from src.domain.ports.movimiento_vinculacion_repository import MovimientoVinculacionRepository
 from src.domain.services.date_range_service import DateRangeService
+from src.domain.ports.conciliacion_repository import ConciliacionRepository
 
 class ConciliacionService:
     def __init__(
         self, 
         movimiento_repo: MovimientoRepository,
         vinculacion_repo: MovimientoVinculacionRepository,
+        conciliacion_repo: ConciliacionRepository,
         date_service: DateRangeService
     ):
         self.movimiento_repo = movimiento_repo
         self.vinculacion_repo = vinculacion_repo
+        self.conciliacion_repo = conciliacion_repo
         self.date_service = date_service
 
     def obtener_universo_sistema(self, cuenta_id: int, year: int, month: int) -> List[Movimiento]:
@@ -63,3 +66,20 @@ class ConciliacionService:
         
         # Retornar lista plana
         return list(universo.values())
+
+    def resetear_periodo(self, cuenta_id: int, year: int, month: int) -> int:
+        """
+        Elimina todas las vinculaciones del periodo y recalcula el resumen del sistema.
+        
+        IMPORTANTE: Mantiene intactos los datos del extracto y los movimientos del sistema,
+        solo elimina las relaciones (vinculaciones) y actualiza los saldos en la tabla conciliaciones.
+        """
+        # 1. Eliminar vinculaciones
+        eliminados = self.vinculacion_repo.desvincular_por_periodo(cuenta_id, year, month)
+        
+        # 2. Recalcular saldos del sistema en conciliación (volverán a ser saldos totales en libros)
+        # Se requieren fechas para el recálculo
+        fecha_inicio, fecha_fin = self.date_service.get_range_for_period(cuenta_id, year, month)
+        self.conciliacion_repo.recalcular_sistema(cuenta_id, year, month, fecha_inicio, fecha_fin)
+        
+        return eliminados

@@ -276,5 +276,18 @@ export const matchingService = {
             }
         )
         return handleResponse(response)
+    },
+
+    /**
+     * Elimina TODAS las vinculaciones de un periodo
+     */
+    async desvincularTodo(cuentaId: number, year: number, month: number): Promise<{ mensaje: string, eliminados: number }> {
+        const response = await fetch(
+            `${API_BASE_URL}${BASE_URL}/desvincular-todo/${cuentaId}/${year}/${month}`,
+            {
+                method: 'POST'
+            }
+        )
+        return handleResponse(response)
     }
 }

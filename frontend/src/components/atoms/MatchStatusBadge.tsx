@@ -39,9 +39,9 @@ export const MatchStatusBadge = ({
                 }
             case MatchEstado.SIN_MATCH:
                 return {
-                    variant: 'neutral' as const,
+                    variant: 'info' as const,
                     text: 'Sin Match',
-                    icon: '○'
+                    icon: '✓'
                 }
             case MatchEstado.MANUAL:
                 return {

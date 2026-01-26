@@ -18,11 +18,12 @@ export type { PaginatedResponse } from './httpClient'
 import { movimientosService, clasificacionService } from './movements.service'
 import { catalogosService, centrosCostosService, cuentasService, tercerosService, conceptosService } from './catalogs.service'
 import { archivosService } from './files.service'
-import { reglasService, configFiltrosCentrosCostosService } from './config.service'
+import { reglasService, configFiltrosCentrosCostosService, configValoresPendientesService } from './config.service'
 import { conciliacionService } from './conciliacionService'
 import { extractoresService } from './extractores.service'
 import { matchingService } from './matching.service'
 import { dashboardService } from './dashboard.service'
+import { adminService } from './admin.service'
 
 /**
  * Objeto apiService unificado para compatibilidad con código existente
@@ -49,6 +50,7 @@ export const apiService = {
     // Configuración
     reglas: reglasService,
     configFiltrosCentrosCostos: configFiltrosCentrosCostosService,
+    configValoresPendientes: configValoresPendientesService,
 
     // New Terceros methods
     getTerceros: tercerosService.listar,
@@ -65,7 +67,10 @@ export const apiService = {
     matching: matchingService,
 
     // Dashboard
-    dashboard: dashboardService
+    dashboard: dashboardService,
+
+    // Admin
+    admin: adminService
 }
 
 // Exportar servicios individuales para uso directo
@@ -80,8 +85,10 @@ export {
     archivosService,
     reglasService,
     configFiltrosCentrosCostosService,
+    configValoresPendientesService,
     conciliacionService,
     extractoresService,
     matchingService,
-    dashboardService
+    dashboardService,
+    adminService
 }

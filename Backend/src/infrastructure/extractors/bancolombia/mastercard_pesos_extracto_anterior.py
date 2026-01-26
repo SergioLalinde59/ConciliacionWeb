@@ -80,13 +80,27 @@ def extraer_resumen(file_obj: Any) -> Dict[str, Any]:
     
     logger.info(f"\nResumen final extraído: {list(resumen.keys())}")
     
-    if not resumen or 'saldo_final' not in resumen:
-        logger.error("✗ FALLO: No se encontró saldo_final en el resumen")
-        logger.error(f"Campos encontrados: {list(resumen.keys())}")
-        raise Exception("No se pudo extraer el resumen del archivo. Verifique el formato.")
+    # RELAXED LOGIC: If we don't have saldo_final, we return what we have so the user can edit it manually.
+    if not resumen:
+        logger.warning("No se extrajo ningún dato del resumen. Se retornarán valores en cero.")
     
+    # Ensure default keys exist if missing
+    defaults = {
+        'saldo_anterior': Decimal(0),
+        'entradas': Decimal(0),
+        'salidas': Decimal(0),
+        'saldo_final': Decimal(0),
+        'year': 2024, # Default fallback if unknown
+        'month': 1,
+        'periodo_texto': "PERIODO DESCONOCIDO"
+    }
+    
+    for key, default_val in defaults.items():
+        if key not in resumen:
+            resumen[key] = default_val
+            
     logger.info("=" * 80)
-    logger.info("MASTERCARD PESOS ANTIGUO - Extracción completada exitosamente")
+    logger.info("MASTERCARD PESOS ANTIGUO - Extracción completada (puede ser parcial)")
     logger.info("=" * 80)
     
     return resumen
@@ -105,39 +119,29 @@ def _extraer_resumen_desde_texto(texto: str) -> Optional[Dict[str, Any]]:
     # Verificar que sea la sección de PESOS
     logger.info("Verificando moneda...")
     
-    # PRIMERO: Verificar que NO sea DOLARES
-    tiene_dolares = (
-        'DOLARES' in texto or
-        'ESTADO DE CUENTA EN: DOLARES' in texto or
-        bool(re.search(r'Estado de cuenta en:\s*DOLARES', texto, re.IGNORECASE))
-    )
+    # PRIMERO: Verificar que NO sea DOLARES (prioridad)
+    tiene_dolares_1 = 'Estado de cuenta en: DOLARES' in texto
+    tiene_dolares_2 = bool(re.search(r'D+O+L+A+R+E+S+', texto))
     
-    if tiene_dolares:
-        logger.warning("✗ SALTAR: Detectado DOLARES - este es un extracto USD, no PESOS")
+    if tiene_dolares_1 or tiene_dolares_2:
+        logger.warning("✗ SALTAR: Detectado DOLARES en formato antiguo - saltando para PESOS")
         return None
-    
-    # SEGUNDO: Buscar indicadores de PESOS
-    tiene_pesos = (
-        'PESOS' in texto or
-        'ESTADO DE CUENTA EN: PESOS' in texto or
-        bool(re.search(r'Estado de cuenta en:\s*PESOS', texto, re.IGNORECASE))
-    )
-    
-    logger.info(f"  - Tiene PESOS: {tiene_pesos}")
+        
+    # SEGUNDO: Buscar indicadores de PESOS (Exacto)
+    tiene_pesos = 'Estado de cuenta en: PESOS' in texto or bool(re.search(r'P+E+S+O+S+', texto))
     
     if not tiene_pesos:
-        logger.warning("No se encontró indicación de moneda PESOS - saltando este texto")
+        logger.warning("No se encontró 'Estado de cuenta en: PESOS' - saltando este texto")
         return None
     
     logger.info("✓ Confirmado: es un extracto en PESOS (formato antiguo)")
     
     # 1. SALDO ANTERIOR
     logger.info("\nBuscando: Saldo anterior")
-    # Formato antiguo: "Saldo anterior + Compras del mes 15,107,211.00"
-    # O también puede ser línea separada
+    # Formato antiguo: "Saldo anterior 16.850.704,46"
     saldo_ant_match = re.search(
-        r'Saldo anterior\s*\+?\s*(?:Compras del mes)?\s*\$?\s*([0-9,.]+)',
-        texto,
+        r'Saldo anterior\s*\+?\s*\$?\s*([0-9,.]+)',
+        texto_norm,
         re.IGNORECASE
     )
     if saldo_ant_match:
@@ -149,11 +153,9 @@ def _extraer_resumen_desde_texto(texto: str) -> Optional[Dict[str, Any]]:
     
     # 2. COMPRAS DEL MES
     logger.info("\nBuscando: Compras del mes")
-    # Puede estar en la misma línea que "Saldo anterior + Compras del mes"
-    # o en línea separada: "+ Compras del mes 1,857,246.00"
     compras_match = re.search(
         r'\+\s*Compras del mes\s*\$?\s*([0-9,.]+)',
-        texto,
+        texto_norm,
         re.IGNORECASE
     )
     compras = Decimal(0)
@@ -161,50 +163,56 @@ def _extraer_resumen_desde_texto(texto: str) -> Optional[Dict[str, Any]]:
         valor_str = compras_match.group(1)
         compras = _parsear_valor_formato_col(valor_str)
         logger.info(f"  ✓ Encontrado: ${valor_str} -> {compras}")
-    else:
-        logger.info("  - No encontrado: Compras del mes (puede ser 0)")
     
-    # 3. INTERESES CORRIENTES
-    logger.info("\nBuscando: Intereses corrientes")
+    # 3. INTERESES DE MORA
+    int_mora_match = re.search(
+        r'\+\s*Intereses de mora\s*\$?\s*([0-9,.]+)',
+        texto_norm,
+        re.IGNORECASE
+    )
+    int_mora = Decimal(0)
+    if int_mora_match:
+        int_mora = _parsear_valor_formato_col(int_mora_match.group(1))
+    
+    # 4. INTERESES CORRIENTES
     int_corr_match = re.search(
         r'\+\s*Intereses corrientes\s*\$?\s*([0-9,.]+)',
-        texto,
+        texto_norm,
         re.IGNORECASE
     )
     int_corr = Decimal(0)
     if int_corr_match:
-        valor_str = int_corr_match.group(1)
-        int_corr = _parsear_valor_formato_col(valor_str)
-        logger.info(f"  ✓ Encontrado: ${valor_str} -> {int_corr}")
-    else:
-        logger.info("  - No encontrado: Intereses corrientes (puede ser 0)")
+        int_corr = _parsear_valor_formato_col(int_corr_match.group(1))
     
-    # 4. AVANCES
-    logger.info("\nBuscando: Avances")
+    # 5. AVANCES
     avances_match = re.search(
         r'\+\s*Avances\s*\$?\s*([0-9,.]+)',
-        texto,
+        texto_norm,
         re.IGNORECASE
     )
     avances = Decimal(0)
     if avances_match:
-        valor_str = avances_match.group(1)
-        avances = _parsear_valor_formato_col(valor_str)
-        logger.info(f"  ✓ Encontrado: ${valor_str} -> {avances}")
-    else:
-        logger.info("  - No encontrado: Avances (puede ser 0)")
+        avances = _parsear_valor_formato_col(avances_match.group(1))
     
-    # TOTAL SALIDAS = Compras + Intereses + Avances
-    data['salidas'] = compras + int_corr + avances
+    # 6. OTROS CARGOS
+    otros_match = re.search(
+        r'\+\s*Otros cargos\s*\$?\s*([0-9,.]+)',
+        texto_norm,
+        re.IGNORECASE
+    )
+    otros = Decimal(0)
+    if otros_match:
+        otros = _parsear_valor_formato_col(otros_match.group(1))
+        
+    # TOTAL SALIDAS
+    data['salidas'] = compras + int_mora + int_corr + avances + otros
     logger.info(f"\nSalidas totales calculadas: {data['salidas']}")
     
-    # 5. PAGOS/ABONOS (ENTRADAS)
+    # 7. PAGOS/ABONOS (ENTRADAS)
     logger.info("\nBuscando: - Pagos / abonos")
-    # Formato antiguo: "- Pagos / abonos 10,429,042.00" (con GUIÓN y espacios)
-    # El patrón \s* permite 0 o más espacios alrededor de la barra
     pagos_match = re.search(
         r'-\s*[Pp]agos\s*/\s*abonos\s*\$?\s*([0-9,.]+)',
-        texto,
+        texto_norm,
         re.IGNORECASE
     )
     if pagos_match:
@@ -213,141 +221,93 @@ def _extraer_resumen_desde_texto(texto: str) -> Optional[Dict[str, Any]]:
         logger.info(f"  ✓ Encontrado: ${valor_str} -> {data['entradas']}")
     else:
         logger.warning("  ✗ No encontrado: - Pagos / abonos")
-    
-    # 6. PAGOS TOTAL (SALDO FINAL)
-    logger.info("\nBuscando: = Pagos total")
-    # Formato antiguo: "= Pagos total 11,917,143.00" (con IGUAL antes)
-    # También intentamos variaciones sin el símbolo =
+        
+    # 8. SALDO FINAL (Pagos total o Saldo a pagar)
+    logger.info("\nBuscando: Saldo final")
+    # Formato antiguo: "= Pagos total 9.211.223,00" o "Saldo a pagar"
     pago_total_match = re.search(
         r'=\s*Pagos\s+total\s*\$?\s*([0-9,.]+)',
-        texto,
+        texto_norm,
         re.IGNORECASE
     )
-    
     if not pago_total_match:
-        # Intentar sin el símbolo = como fallback
-        pago_total_match = re.search(
-            r'Pagos?\s+total\s*\$?\s*([0-9,.]+)',
-            texto,
-            re.IGNORECASE
-        )
-    
-    if not pago_total_match:
-        # Intentar con "Saldo a pagar" como fallback adicional
         pago_total_match = re.search(
             r'Saldo\s+a\s+pagar\s*\$?\s*([0-9,.]+)',
-            texto,
+            texto_norm,
             re.IGNORECASE
         )
-    
+        
     if pago_total_match:
         valor_str = pago_total_match.group(1)
         data['saldo_final'] = _parsear_valor_formato_col(valor_str)
         logger.info(f"  ✓ Encontrado: ${valor_str} -> {data['saldo_final']}")
     else:
-        logger.warning("  ✗ No encontrado: = Pagos total")
-        # Si no encontramos el saldo final explícito, intentamos calcularlo
-        logger.info("  Intentando calcular saldo final...")
+        logger.warning("  ✗ No encontrado: Saldo final explícito")
+        # Calcular como fallback
         if 'saldo_anterior' in data and 'salidas' in data and 'entradas' in data:
             data['saldo_final'] = data['saldo_anterior'] + data['salidas'] - data['entradas']
             logger.info(f"  ✓ Saldo final calculado: {data['saldo_final']}")
-    
-    # 7. PERIODO FACTURADO
+
+    # 9. PERIODO FACTURADO
     logger.info("\nBuscando: Periodo facturado")
     # Formato antiguo: "Desde: 30/01/2025 Hasta: 28/02/2025"
     periodo_match = re.search(
         r'Desde:\s*(\d{1,2})/(\d{1,2})/(\d{4})\s+Hasta:\s*(\d{1,2})/(\d{1,2})/(\d{4})',
-        texto,
+        texto_norm,
         re.IGNORECASE
     )
     
     if periodo_match:
         logger.info(f"  ✓ Encontrado periodo: {periodo_match.group(0)}")
-        # Tomamos la fecha final (hasta)
-        # grupos: (dia_inicio, mes_inicio, año_inicio, dia_fin, mes_fin, año_fin)
         month = int(periodo_match.group(5))  # mes final
         year = int(periodo_match.group(6))   # año final
         
         if year > 2000 and 1 <= month <= 12:
             data['year'] = year
             data['month'] = month
-            
-            # Nombres completos de meses
-            meses_es = [
-                "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-            ]
-            mes_nombre = meses_es[month]
-            data['periodo_texto'] = f"{year} - {mes_nombre}"
-            logger.info(f"  ✓ Periodo extraído: {data['periodo_texto']} (año={year}, mes={month})")
-        else:
-            logger.warning(f"  ✗ Periodo inválido: year={year}, month={month}")
-    else:
-        logger.warning("  ✗ No se encontró el periodo facturado en formato antiguo")
+            meses_es = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+            data['periodo_texto'] = f"{year} - {meses_es[month]}"
+            logger.info(f"  ✓ Periodo extraído: {data['periodo_texto']}")
     
-    # Si encontramos los datos principales, retornamos
-    if 'saldo_anterior' in data and 'saldo_final' in data:
-        logger.info("\n✓ Parsing exitoso - retornando datos")
+    if data:
         return data
-    
-    logger.warning(f"\n✗ Parsing incompleto - campos encontrados: {list(data.keys())}")
     return None
 
 
 def _parsear_valor_formato_col(valor_str: str) -> Decimal:
     """
-    Parsea valores con detección automática de formato.
-    
-    El PDF antiguo puede usar formato USA (1,234.56) o colombiano (1.234,56)
-    Detecta automáticamente basándose en la posición de coma y punto.
+    Parsea valores con detección automática de formato y limpieza de símbolos.
     """
     if not valor_str:
         return Decimal(0)
     
-    # Eliminar espacios
-    valor_limpio = valor_str.strip()
+    # Limpieza: eliminar símbolos de moneda, espacios y otros caracteres no numéricos excepto , y .
+    v_limpio = re.sub(r'[^\d,.-]', '', valor_str)
     
-    # Detectar formato: Si tiene coma Y punto, determinar cuál es decimal
-    tiene_coma = ',' in valor_limpio
-    tiene_punto = '.' in valor_limpio
-    
-    if tiene_coma and tiene_punto:
-        # Determinar cuál viene último (ese es el decimal)
-        pos_coma = valor_limpio.rfind(',')
-        pos_punto = valor_limpio.rfind('.')
-        
-        if pos_punto > pos_coma:
-            # Formato USA: 1,234.56 (punto es decimal)
-            valor_limpio = valor_limpio.replace(',', '')  # Eliminar comas (miles)
-        else:
-            # Formato colombiano: 1.234,56 (coma es decimal)
-            valor_limpio = valor_limpio.replace('.', '')  # Eliminar puntos (miles)
-            valor_limpio = valor_limpio.replace(',', '.')  # Coma -> punto
-    elif tiene_coma:
-        # Solo tiene coma - podría ser:
-        # - Formato colombiano decimal: 123,45
-        # - Formato USA miles: 1,234
-        # Si tiene más de 3 dígitos después de la coma, es miles USA
-        partes = valor_limpio.split(',')
-        if len(partes) == 2 and len(partes[1]) <= 2:
-            # Probablemente decimal colombiano: 123,45
-            valor_limpio = valor_limpio.replace(',', '.')
-        else:
-            # Probablemente miles USA: 1,234
-            valor_limpio = valor_limpio.replace(',', '')
-    elif tiene_punto:
-        # Solo tiene punto - podría ser:
-        # - Formato USA decimal: 123.45
-        # - Formato colombiano miles: 1.234
-        # Si tiene más de 3 dígitos después del punto, es miles colombiano
-        partes = valor_limpio.split('.')
-        if len(partes[-1]) > 2:
-            # Probablemente miles colombiano: 1.234
-            valor_limpio = valor_limpio.replace('.', '')
-        # else: es decimal USA, lo dejamos como está
+    # Si tiene comas y puntos, el último es el decimal
+    if ',' in v_limpio and '.' in v_limpio:
+        pos_coma = v_limpio.rfind(',')
+        pos_punto = v_limpio.rfind('.')
+        if pos_punto > pos_coma: # US: 1,234.56
+            v_limpio = v_limpio.replace(',', '')
+        else: # COL: 1.234,56
+            v_limpio = v_limpio.replace('.', '').replace(',', '.')
+    elif ',' in v_limpio:
+        # Si solo tiene coma, asumimos decimal si hay 2 dígitos al final
+        partes = v_limpio.split(',')
+        if len(partes[-1]) == 2:
+            v_limpio = v_limpio.replace('.', '').replace(',', '.')
+        else: # Miles
+            v_limpio = v_limpio.replace(',', '')
+    elif '.' in v_limpio:
+        partes = v_limpio.split('.')
+        if len(partes[-1]) == 2: # US decimal
+            pass
+        else: # Miles
+            v_limpio = v_limpio.replace('.', '')
     
     try:
-        return Decimal(valor_limpio)
-    except Exception as e:
-        logger.warning(f"No se pudo parsear valor: '{valor_str}' (error: {e}), retornando 0")
+        return Decimal(v_limpio)
+    except:
         return Decimal(0)

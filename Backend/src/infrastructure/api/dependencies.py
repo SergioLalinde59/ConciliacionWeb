@@ -127,6 +127,7 @@ from src.domain.services.conciliacion_service import ConciliacionService
 def get_conciliacion_service(
     mov_repo: MovimientoRepository = Depends(get_movimiento_repository),
     vinc_repo: MovimientoVinculacionRepository = Depends(get_movimiento_vinculacion_repository),
+    conciliacion_repo: ConciliacionRepository = Depends(get_conciliacion_repository),
     date_service: DateRangeService = Depends(get_date_range_service)
 ) -> ConciliacionService:
-    return ConciliacionService(mov_repo, vinc_repo, date_service)
+    return ConciliacionService(mov_repo, vinc_repo, conciliacion_repo, date_service)

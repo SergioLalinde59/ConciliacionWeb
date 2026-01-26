@@ -1,5 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
 from typing import Dict, Any, Optional, List
+from decimal import Decimal
 import os
 
 from src.application.services.procesador_archivos_service import ProcesadorArchivosService
@@ -109,6 +110,13 @@ async def procesar_archivo_local(
     year: Optional[int] = Form(None),
     month: Optional[int] = Form(None),
     accion: str = Form("analizar"), # 'analizar' o 'cargar'
+    # Optional overrides
+    saldo_anterior: Optional[Decimal] = Form(None),
+    entradas: Optional[Decimal] = Form(None),
+    salidas: Optional[Decimal] = Form(None),
+    saldo_final: Optional[Decimal] = Form(None),
+    rendimientos: Optional[Decimal] = Form(None),
+    retenciones: Optional[Decimal] = Form(None),
     service: ProcesadorArchivosService = Depends(get_procesador_service)
 ) -> Dict[str, Any]:
     """
@@ -141,7 +149,16 @@ async def procesar_archivo_local(
                 if tipo == "movimientos":
                     return service.procesar_archivo(f, filename, tipo_cuenta, cuenta_id, actualizar_descripciones)
                 elif tipo == "extractos":
-                    return await service.procesar_extracto(f, filename, tipo_cuenta, cuenta_id, year, month)
+                    # Prepare overrides
+                    overrides = {}
+                    if saldo_anterior is not None: overrides['saldo_anterior'] = saldo_anterior
+                    if entradas is not None: overrides['entradas'] = entradas
+                    if salidas is not None: overrides['salidas'] = salidas
+                    if saldo_final is not None: overrides['saldo_final'] = saldo_final
+                    if rendimientos is not None: overrides['rendimientos'] = rendimientos
+                    if retenciones is not None: overrides['retenciones'] = retenciones
+                    
+                    return await service.procesar_extracto(f, filename, tipo_cuenta, cuenta_id, year, month, overrides=overrides)
 
     except Exception as e:
         import traceback

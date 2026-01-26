@@ -30,14 +30,15 @@ def detectar_matches_1_a_muchos(cuenta_id: int, year: int, month: int) -> Dict[s
                 m.fecha,
                 COUNT(mv_all.id) as num_vinculaciones_total,
                 ARRAY_AGG(DISTINCT mv_all.movimiento_extracto_id) as all_extracto_ids,
-                ARRAY_AGG(DISTINCT me_curr.descripcion) as current_extracto_descripciones,
-                ARRAY_AGG(DISTINCT me_curr.valor) as current_extracto_valores,
-                ARRAY_AGG(DISTINCT me_curr.fecha) as current_extracto_fechas
+                ARRAY_AGG(DISTINCT me_all.descripcion) as all_extracto_descripciones,
+                ARRAY_AGG(DISTINCT me_all.valor) as all_extracto_valores,
+                ARRAY_AGG(DISTINCT me_all.fecha) as all_extracto_fechas
             FROM movimientos_extracto me_curr
             JOIN movimiento_vinculaciones mv_curr ON me_curr.id = mv_curr.movimiento_extracto_id
             JOIN movimientos m ON mv_curr.movimiento_sistema_id = m.id
-            -- Join global para contar todas las veces que este sistema_id ha sido usado
+            -- Join global para detectar si el mismo 'm.id' está en otras vinculaciones (fuera del mes o en el mes)
             JOIN movimiento_vinculaciones mv_all ON m.id = mv_all.movimiento_sistema_id
+            JOIN movimientos_extracto me_all ON mv_all.movimiento_extracto_id = me_all.id
             WHERE me_curr.cuenta_id = %s
               AND me_curr.year = %s
               AND me_curr.month = %s

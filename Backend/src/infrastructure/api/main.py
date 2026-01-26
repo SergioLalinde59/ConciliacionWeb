@@ -27,7 +27,9 @@ from src.infrastructure.api.routers import (
     conciliaciones,
     extractores,
     matching,
-    dashboard
+    dashboard,
+    admin,
+    config_valores_pendientes
 )
 
 
@@ -107,6 +109,8 @@ app.include_router(conciliaciones.router)
 app.include_router(extractores.router)
 app.include_router(matching.router)
 app.include_router(dashboard.router)
+app.include_router(admin.router)
+app.include_router(config_valores_pendientes.router)
 
 logger.info("Todos los routers registrados")
 

@@ -11,7 +11,7 @@ export interface Column<T> {
     /** Título que se muestra en el header */
     header: React.ReactNode
     /** Función para extraer el valor a mostrar */
-    accessor?: (row: T) => React.ReactNode
+    accessor?: (row: T, index?: number) => React.ReactNode
     /** Campo del objeto para ordenar (si es diferente de key) */
     sortKey?: keyof T
     /** Si la columna es ordenable */
@@ -55,7 +55,7 @@ export interface DataTableProps<T> {
     /** Mensaje cuando no hay datos */
     emptyMessage?: string
     /** Función para obtener la key única de cada fila */
-    getRowKey: (row: T) => string | number
+    getRowKey: (row: T, index: number) => string | number
     /** Callback al hacer clic en editar */
     onEdit?: (row: T) => void
     /** Callback al hacer clic en eliminar */
@@ -176,9 +176,9 @@ export function DataTable<T extends Record<string, any>>({
     }
 
     // Renderizar celda
-    const renderCell = (row: T, column: Column<T>) => {
+    const renderCell = (row: T, column: Column<T>, index: number) => {
         if (column.accessor) {
-            return column.accessor(row)
+            return column.accessor(row, index)
         }
         return row[column.key as keyof T] as React.ReactNode
     }
@@ -252,8 +252,8 @@ export function DataTable<T extends Record<string, any>>({
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                    {sortedData.map((row) => (
-                        <tr key={getRowKey(row)} className="hover:bg-gray-50 transition-colors">
+                    {sortedData.map((row, index) => (
+                        <tr key={getRowKey(row, index)} className="hover:bg-gray-50 transition-colors">
                             {columns.map((column) => (
                                 <td
                                     key={column.key}
@@ -263,7 +263,7 @@ export function DataTable<T extends Record<string, any>>({
                                         ${column.cellClassName ?? ''}
                                     `}
                                 >
-                                    {renderCell(row, column)}
+                                    {renderCell(row, column, index)}
                                 </td>
                             ))}
                             {showActionsColumn && (

@@ -157,15 +157,6 @@ class MovimientoVinculacionRepository(ABC):
         pass
     
     @abstractmethod
-    def desvincular_por_sistema_id(self, sistema_id: int) -> None:
-        """
-        Desvincula cualquier match asociado a un movimiento del sistema.
-        Pone el estado en 'SIN_MATCH' y el movimiento_sistema_id en NULL.
-        
-        Args:
-            sistema_id: ID del movimiento del sistema
-        """
-    @abstractmethod
     def obtener_por_sistema_id(self, sistema_id: int) -> Optional[MovimientoMatch]:
         """
         Busca una vinculación por ID del movimiento del sistema.
@@ -175,6 +166,21 @@ class MovimientoVinculacionRepository(ABC):
         
         Returns:
             MovimientoMatch si existe, None si no
+        """
+        pass
+
+    @abstractmethod
+    def desvincular_por_periodo(self, cuenta_id: int, year: int, month: int) -> int:
+        """
+        Elimina todas las vinculaciones de un periodo específico para una cuenta.
+        
+        Args:
+            cuenta_id: ID de la cuenta
+            year: Año del periodo
+            month: Mes del periodo
+            
+        Returns:
+            Cantidad de vinculaciones eliminadas
         """
         pass
 

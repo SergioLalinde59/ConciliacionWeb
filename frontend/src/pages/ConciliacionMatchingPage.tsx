@@ -1,12 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Settings, AlertCircle, CheckCircle, Check, CheckCheck } from 'lucide-react'
+import { AlertCircle, CheckCircle, Check, CheckCheck } from 'lucide-react'
 import { MatchingTable } from '../components/organisms/MatchingTable'
 import { MatchingStatsCard } from '../components/organisms/MatchingStatsCard'
 import { MatchEstado } from '../types/Matching'
-import type { ConfiguracionMatchingUpdate } from '../types/Matching'
 import type { Cuenta, Movimiento } from '../types'
-import { ConfiguracionMatchingForm } from '../components/organisms/ConfiguracionMatchingForm'
 import { MatchesIncorrectosModal } from '../components/organisms/MatchesIncorrectosModal'
 import { MovimientoModal } from '../components/organisms/modals/MovimientoModal'
 import { matchingService } from '../services/matching.service'
@@ -24,7 +22,6 @@ export const ConciliacionMatchingPage = () => {
     const [selectedEstados, setSelectedEstados] = useState<MatchEstado[]>([MatchEstado.SIN_MATCH])
 
     // State para UI
-    const [showConfigModal, setShowConfigModal] = useState(false)
     const [showMatchesIncorrectosModal, setShowMatchesIncorrectosModal] = useState(false)
 
     // State para edición de movimiento de sistema (desde popover)
@@ -138,11 +135,7 @@ export const ConciliacionMatchingPage = () => {
     //     enabled: cuentaId !== null
     // })
 
-    // Cargar configuración
-    const { data: configuracion } = useQuery({
-        queryKey: ['matching-config'],
-        queryFn: matchingService.obtenerConfiguracion
-    })
+    // Cargar configuración (Removed - now in separate page)
 
     // Mutations
     const vincularMutation = useMutation({
@@ -169,13 +162,18 @@ export const ConciliacionMatchingPage = () => {
         }
     })
 
-    const actualizarConfigMutation = useMutation({
-        mutationFn: (config: ConfiguracionMatchingUpdate) => matchingService.actualizarConfiguracion(config),
+    const desvincularTodoMutation = useMutation({
+        mutationFn: () => matchingService.desvincularTodo(cuentaId!, year, month),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['matching-config'] })
-            setShowConfigModal(false)
+            queryClient.invalidateQueries({ queryKey: ['matching', cuentaId, year, month] })
+        },
+        onError: (error) => {
+            console.error(error)
+            alert('Error al desvincular todo el periodo')
         }
     })
+
+    // actualizarConfigMutation (Removed - now in separate page)
 
     const createMovementsMutation = useMutation({
         mutationFn: (items: { movimiento_extracto_id: number, descripcion?: string }[]) =>
@@ -280,7 +278,7 @@ export const ConciliacionMatchingPage = () => {
 
 
     return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
             {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
@@ -290,15 +288,6 @@ export const ConciliacionMatchingPage = () => {
                     </p>
                 </div>
                 <div className="flex gap-3">
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => setShowConfigModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-                        >
-                            <Settings size={18} />
-                            Configuración
-                        </button>
-                    </div>
                 </div>
             </div>
 
@@ -358,7 +347,7 @@ export const ConciliacionMatchingPage = () => {
 
             {/* Error State */}
             {isError && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center text-red-700 mb-6">
+                <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center text-red-700">
                     <AlertCircle className="w-10 h-10 mx-auto mb-2 text-red-500" />
                     <h3 className="text-lg font-semibold mb-1">Error al cargar datos</h3>
                     <p className="text-sm opacity-80 mb-4">{error instanceof Error ? error.message : 'Ocurrió un error desconocido'}</p>
@@ -373,7 +362,7 @@ export const ConciliacionMatchingPage = () => {
 
             {/* Banner de Bloqueo */}
             {isLocked && (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 mb-6">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6">
                     <div className="flex items-start gap-4">
                         <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
                             <CheckCircle className="w-6 h-6 text-emerald-600" />
@@ -392,7 +381,7 @@ export const ConciliacionMatchingPage = () => {
 
             {/* Checklist de Cuadre Estricto */}
             {matchingResult && !isLocked && (
-                <div className={`bg-white rounded-xl border p-5 mb-6 shadow-sm transition-colors ${matchingResult.integridad.es_cuadrado ? 'border-emerald-200 bg-emerald-50/10' : 'border-amber-200 bg-amber-50/10'}`}>
+                <div className={`bg-white rounded-xl border p-5 shadow-sm transition-colors ${matchingResult.integridad.es_cuadrado ? 'border-emerald-200 bg-emerald-50/10' : 'border-amber-200 bg-amber-50/10'}`}>
                     <div className="flex flex-col md:flex-row gap-6 items-center">
                         <div className="flex-1">
                             <div className="flex items-center gap-2 mb-3">
@@ -456,7 +445,7 @@ export const ConciliacionMatchingPage = () => {
 
             {/* Alerta de Matches Incorrectos */}
             {matches1aMuchosData && matches1aMuchosData.total_movimientos_sistema_afectados > 0 && !isLocked && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
                     <div className="flex items-start gap-4">
                         <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
                             <AlertCircle className="w-6 h-6 text-yellow-600" />
@@ -545,6 +534,11 @@ export const ConciliacionMatchingPage = () => {
                                         }))
                                         createMovementsMutation.mutate(itemsToCreate)
                                     }}
+                                    onDesvincularTodo={isLocked ? undefined : () => {
+                                        if (confirm('¿Estás seguro de desvincular TODOS los movimientos de este periodo? Se borrarán todas las vinculaciones para volver a comenzar.')) {
+                                            desvincularTodoMutation.mutate()
+                                        }
+                                    }}
                                     loading={isLoading}
                                 />
                             </div>
@@ -552,7 +546,7 @@ export const ConciliacionMatchingPage = () => {
 
                         {/* Tabla de Registros en Tránsito / Sin Match */}
                         {matchingResult.movimientos_sistema_sin_match && matchingResult.movimientos_sistema_sin_match.length > 0 && (
-                            <div className="mt-4">
+                            <div>
                                 <UnmatchedSystemTable
                                     records={matchingResult.movimientos_sistema_sin_match}
                                     onDelete={isLocked ? undefined : (id) => {
@@ -603,18 +597,7 @@ export const ConciliacionMatchingPage = () => {
                 </div>
             )}
 
-            {/* Modal de Configuración */}
-            {showConfigModal && configuracion && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                        <ConfiguracionMatchingForm
-                            configuracion={configuracion}
-                            onSave={async (config) => { await actualizarConfigMutation.mutateAsync(config) }}
-                            onCancel={() => setShowConfigModal(false)}
-                        />
-                    </div>
-                </div>
-            )}
+            {/* Modal de Configuración (Removed) */}
 
             {/* Modal de Matches Incorrectos */}
             {showMatchesIncorrectosModal && matches1aMuchosData && matches1aMuchosData.casos_problematicos.length > 0 && (

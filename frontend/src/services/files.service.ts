@@ -42,7 +42,16 @@ export const archivosService = {
         actualizar_descripciones: boolean = false,
         year?: number,
         month?: number,
-        accion: 'analizar' | 'cargar' = 'analizar'
+        accion: 'analizar' | 'cargar' = 'analizar',
+        overrides?: {
+            saldo_anterior?: number
+            entradas?: number
+            rendimientos?: number
+            salidas?: number
+            retenciones?: number
+            saldo_final?: number
+        },
+        movimientos?: any[] // New: Confirmed movements
     ): Promise<any> => {
         const formData = new FormData()
         formData.append('filename', filename)
@@ -54,9 +63,25 @@ export const archivosService = {
         if (month) formData.append('month', month.toString())
         formData.append('accion', accion)
 
+        // Append overrides if present
+        if (overrides) {
+            if (overrides.saldo_anterior !== undefined) formData.append('saldo_anterior', overrides.saldo_anterior.toString())
+            if (overrides.entradas !== undefined) formData.append('entradas', overrides.entradas.toString())
+            if (overrides.rendimientos !== undefined) formData.append('rendimientos', overrides.rendimientos.toString())
+            if (overrides.salidas !== undefined) formData.append('salidas', overrides.salidas.toString())
+            if (overrides.retenciones !== undefined) formData.append('retenciones', overrides.retenciones.toString())
+            if (overrides.saldo_final !== undefined) formData.append('saldo_final', overrides.saldo_final.toString())
+        }
+
+        // Append movements JSON if present
+        if (movimientos) {
+            formData.append('movimientos_json', JSON.stringify(movimientos))
+        }
+
         return fetch(`${API_BASE_URL}/api/archivos/procesar-local`, {
             method: 'POST',
             body: formData
         }).then(handleResponse)
     }
 }
+

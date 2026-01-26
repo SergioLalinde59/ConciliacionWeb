@@ -1,0 +1,190 @@
+ID,Fecha,Cuenta ID,Cuenta,Tercero ID,Tercero,Centro Costo ID,Centro Costo,Concepto ID,Concepto,Valor,Moneda ID,Moneda,Valor USD,TRM,Detalle,Descripción,Referencia,Creación
+2111,2025-12-31,1,Ahorros,86,Fuente Clara,46,Tita,371,Fuente Clara,-812629,1,Pesos,,,Creado desde conciliación,TRANSFERENCIA CTA SUC VIRTUAL,02902749,2026-01-23T11:09:39
+41,2025-12-31,1,Ahorros,53,Dian,22,Impuestos,119,4xMil,-5926.98,1,Pesos,,,,Impto Gobierno 4X1000,,2026-01-22T20:49:08
+38,2025-12-31,1,Ahorros,186,Parcelación Montemadero,24,Komorebi,129,Administración,-669118,1,Pesos,,,,Transferencia Cta Suc,37594048360,2026-01-22T20:49:08
+40,2025-12-31,6,MasterCardPesos,77,Éxito,29,Mercado,177,Mercado,-47238,1,Pesos,,,,Exito La Ceja,,2026-01-22T20:49:08
+39,2025-12-31,1,Ahorros,255,Ventas Bosques,9,Bosques.Terrarios,69,Ventas,500000,1,Pesos,,,,Transferencia Desde Luis Londono 6834,,2026-01-22T20:49:08
+43,2025-12-31,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,0.18,1,Pesos,,,,Abono Intereses Ahorros,,2026-01-22T20:49:08
+47,2025-12-30,6,MasterCardPesos,197,PriceSmart,29,Mercado,177,Mercado,-194555,1,Pesos,,,,Pricesmart,,2026-01-22T20:49:08
+2112,2025-12-30,1,Ahorros,85,Fondo Renta,47,Traslado,411,Traslado - Ahorros,-6500000,1,Pesos,,,Creado desde conciliación,TRASLADO A FONDO DE INVERSION,,2026-01-23T11:09:39
+46,2025-12-30,6,MasterCardPesos,106,Ikea,9,Bosques.Terrarios,58,Frascos,-249950,1,Pesos,,,,Ikea Envigado,,2026-01-22T20:49:08
+48,2025-12-30,6,MasterCardPesos,46,D1,29,Mercado,177,Mercado,-86720,1,Pesos,,,,Tienda D1 Cantarrana,,2026-01-22T20:49:08
+2113,2025-12-30,1,Ahorros,55,Diego Lalinde,46,Tita,374,Inversiones,2500000,1,Pesos,,,Creado desde conciliación,TRANSFERENCIA CTA SUC VIRTUAL,,2026-01-23T11:09:39
+2148,2025-12-30,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,1.54,1,Pesos,,,Creado desde conciliación,ABONO INTERESES AHORROS,,2026-01-23T18:31:07
+45,2025-12-30,6,MasterCardPesos,197,PriceSmart,46,Tita,378,Mercado,-313200,1,Pesos,,,,Pricesmart,,2026-01-22T20:49:08
+44,2025-12-30,3,FondoRenta,85,Fondo Renta,47,Traslado,402,Traslado,6500000,1,Pesos,,,,"162,",960001,2026-01-22T20:49:08
+51,2025-12-29,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,6.38,1,Pesos,,,,Abono Intereses Ahorros,,2026-01-22T20:49:08
+50,2025-12-29,1,Ahorros,22,Bancolombia,4,Bancolombia,17,Ajustes,574.19,1,Pesos,,,,Dev Cuota Manejo Tarj,,2026-01-22T20:49:08
+2143,2025-12-29,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,7.02,1,Pesos,,,Creado desde conciliación,ABONO INTERESES AHORROS,,2026-01-23T18:29:12
+2114,2025-12-29,1,Ahorros,55,Diego Lalinde,46,Tita,374,Inversiones,2792500,1,Pesos,,,Creado desde conciliación,TRANSFERENCIA CTA SUC VIRTUAL,,2026-01-23T11:09:39
+52,2025-12-29,1,Ahorros,53,Dian,22,Impuestos,121,Impuestos,2.3,1,Pesos,,,ajuste,Rev Impto Gobierno,,2026-01-22T20:49:08
+55,2025-12-27,2,Efectivo,246,Yolima Baquero,24,Komorebi,130,Aseo,-105000,1,Pesos,,,,,,2026-01-22T20:49:08
+53,2025-12-27,7,MasterCardUSD,18,Apple,24,Komorebi,131,Celular,-12647.51,1,Pesos,-3.43,3687.32,,Apple.Com/Bill,,2026-01-22T20:49:08
+54,2025-12-27,1,Ahorros,129,Juan Fernando Mejía,9,Bosques.Terrarios,69,Ventas,150000,1,Pesos,,,,Transferencia Cta Suc,10282163178,2026-01-22T20:49:08
+2115,2025-12-27,1,Ahorros,228,Tere Granda,46,Tita,393,Salarios - Tere,-1080000,1,Pesos,,,Creado desde conciliación,TRANSFERENCIAS A NEQUI,,2026-01-23T11:09:39
+56,2025-12-27,1,Ahorros,176,Natalia Villa Martin,40,Restaurantes,330,Restaurantes,-34400,1,Pesos,,,,Transf Qr Rossther Ambrosia Viva Ceja,,2026-01-22T20:49:08
+57,2025-12-27,1,Ahorros,194,Pollo al Carbón,40,Restaurantes,330,Restaurantes,-28000,1,Pesos,,,,Pago Qr Pollo Al Carb,987331222,2026-01-22T20:49:08
+58,2025-12-27,1,Ahorros,53,Dian,22,Impuestos,119,4xMil,-4569.6,1,Pesos,,,,Impto Gobierno 4X1000,,2026-01-22T20:49:08
+61,2025-12-26,6,MasterCardPesos,197,PriceSmart,29,Mercado,177,Mercado,-576864,1,Pesos,,,,Pricesmart,,2026-01-22T20:49:08
+60,2025-12-26,3,FondoRenta,85,Fondo Renta,47,Traslado,402,Traslado,-1000000,1,Pesos,,,,"24,",924070,2026-01-22T20:49:08
+62,2025-12-26,6,MasterCardPesos,12,Amazon,9,Bosques.Terrarios,55,Equipos,-80220,1,Pesos,,,,Amazon.Com,,2026-01-22T20:49:08
+63,2025-12-26,6,MasterCardPesos,188,Pasteur,43,Salud,345,Drogas,-61856,1,Pesos,,,,Drogueria Pasteur Terp,,2026-01-22T20:49:08
+64,2025-12-26,6,MasterCardPesos,46,D1,29,Mercado,177,Mercado,-35640,1,Pesos,,,,Tienda D1 Cantarrana,,2026-01-22T20:49:08
+65,2025-12-26,1,Ahorros,53,Dian,22,Impuestos,119,4xMil,-800,1,Pesos,,,,Impto Gobierno 4X1000,,2026-01-22T20:49:08
+66,2025-12-26,3,FondoRenta,85,Fondo Renta,22,Impuestos,123,Rte Fuente,-230.13,1,Pesos,,,,"0,",005736,2026-01-22T20:49:08
+2116,2025-12-26,1,Ahorros,85,Fondo Renta,47,Traslado,411,Traslado - Ahorros,1000000,1,Pesos,,,Creado desde conciliación,TRASLADO DE FONDO DE INVERS,,2026-01-23T11:09:39
+2117,2025-12-26,1,Ahorros,22,Bancolombia,47,Traslado,413,Traslado - Efectivo,-200000,1,Pesos,,,Creado desde conciliación,RETIRO CAJERO,,2026-01-23T11:09:39
+2144,2025-12-26,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,4.55,1,Pesos,,,Creado desde conciliación,ABONO INTERESES AHORROS,,2026-01-23T18:29:12
+71,2025-12-25,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,1.44,1,Pesos,,,,Abono Intereses Ahorros,,2026-01-22T20:49:08
+2145,2025-12-25,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,3.46,1,Pesos,,,Creado desde conciliación,ABONO INTERESES AHORROS,,2026-01-23T18:29:12
+69,2025-12-25,1,Ahorros,255,Ventas Bosques,9,Bosques.Terrarios,69,Ventas,2000000,1,Pesos,,,,Transferencia Desde Luis Londono 6834,,2026-01-22T20:49:08
+70,2025-12-25,6,MasterCardPesos,84,FlyPass,10,Carro,82,Peajes,-100000,1,Pesos,,,,Flypass,,2026-01-22T20:49:08
+79,2025-12-24,6,MasterCardPesos,46,D1,29,Mercado,177,Mercado,-1700,1,Pesos,,,,Tienda D1 Cantarrana,,2026-01-22T20:49:08
+75,2025-12-24,6,MasterCardPesos,230,Tigo,24,Komorebi,132,Celular e Internet,-109900,1,Pesos,,,,Tigo Servicios Hogar Y,,2026-01-22T20:49:08
+74,2025-12-24,6,MasterCardPesos,77,Éxito,29,Mercado,177,Mercado,-121276,1,Pesos,,,,Exito La Ceja,,2026-01-22T20:49:08
+73,2025-12-24,6,MasterCardPesos,20,Autoland,10,Carro,76,ICar 03,-1117000,1,Pesos,,,Tapetes,Autoland,,2026-01-22T20:49:08
+72,2025-12-24,6,MasterCardPesos,20,Autoland,10,Carro,76,ICar 03,-1561890,1,Pesos,,,,Autoland,,2026-01-22T20:49:08
+76,2025-12-24,6,MasterCardPesos,59,DollarCity,29,Mercado,177,Mercado,-66000,1,Pesos,,,,Dollarcity Viva La Cej,,2026-01-22T20:49:08
+77,2025-12-24,6,MasterCardPesos,239,Vivero Chuscalito,40,Restaurantes,330,Restaurantes,-32200,1,Pesos,,,,Vivero Chuscalito,,2026-01-22T20:49:08
+78,2025-12-24,6,MasterCardPesos,217,SmartFit,13,Deporte,91,Gym,-19900,1,Pesos,,,,Smart Fit 20 De Julio,,2026-01-22T20:49:08
+83,2025-12-23,1,Ahorros,53,Dian,22,Impuestos,119,4xMil,-31312,1,Pesos,,,,Impto Gobierno 4X1000,,2026-01-22T20:49:08
+82,2025-12-23,1,Ahorros,152,Margarita Lalinde,39,Regalos,326,Familia,-400000,1,Pesos,,,aguinaldos,Transferencia Cta Suc,20455805909,2026-01-22T20:49:08
+81,2025-12-23,1,Ahorros,113,Jackson Mosquera,33,PH360,306,Desarrollo,-3500000,1,Pesos,,,arriendo,Transferencia Cta Suc,1512988021,2026-01-22T20:49:08
+80,2025-12-23,1,Ahorros,145,Luis Fernando Londoño,9,Bosques.Terrarios,50,Luis Fernando Londoño,-3928000,1,Pesos,,,compra celular,Transferencia Cta Suc,1661951733,2026-01-22T20:49:08
+91,2025-12-22,1,Ahorros,53,Dian,22,Impuestos,119,4xMil,-896,1,Pesos,,,,Impto Gobierno 4X1000,,2026-01-22T20:49:08
+86,2025-12-22,1,Ahorros,49,Deacua Sas,9,Bosques.Terrarios,69,Ventas,2500000,1,Pesos,,,,Transferencia Cta Suc,17753699252,2026-01-22T20:49:08
+87,2025-12-22,6,MasterCardPesos,39,Comodisimos,24,Komorebi,142,Menaje,-385700,1,Pesos,,,,Comodisimos Viva La Ce,,2026-01-22T20:49:08
+88,2025-12-22,1,Ahorros,131,Juan José Jaramillo,29,Mercado,177,Mercado,-140000,1,Pesos,,,Proteina,Transf A Juan Jose Ja,,2026-01-22T20:49:08
+89,2025-12-22,1,Ahorros,2,A la brasa con sabor caleño,40,Restaurantes,330,Restaurantes,-84000,1,Pesos,,,,Pago Qr A La Brasa Co,935247832,2026-01-22T20:49:08
+90,2025-12-22,6,MasterCardPesos,59,DollarCity,29,Mercado,177,Mercado,-40000,1,Pesos,,,,Dollarcity Viva La Cej,,2026-01-22T20:49:08
+92,2025-12-22,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,1.74,1,Pesos,,,,Abono Intereses Ahorros,,2026-01-22T20:49:08
+2146,2025-12-22,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,11.49,1,Pesos,,,Creado desde conciliación,ABONO INTERESES AHORROS,,2026-01-23T18:29:12
+85,2025-12-22,1,Ahorros,198,Protección,31,Pensión,300,Mesada,5478230,1,Pesos,,,,Pago De Nomi Proteccion,900379921,2026-01-22T20:49:08
+94,2025-12-21,6,MasterCardPesos,248,YouTube,16,Educación,107,YouTube,-41900,1,Pesos,,,,Dlo*Google Youtubeprem,,2026-01-22T20:49:08
+93,2025-12-21,6,MasterCardPesos,46,D1,29,Mercado,177,Mercado,-105010,1,Pesos,,,,Tienda D1 Cantarrana,,2026-01-22T20:49:08
+97,2025-12-20,6,MasterCardPesos,46,D1,29,Mercado,177,Mercado,-69960,1,Pesos,,,,Tienda D1 Carmen Tezen,,2026-01-22T20:49:08
+98,2025-12-20,1,Ahorros,53,Dian,22,Impuestos,119,4xMil,-600,1,Pesos,,,,Impto Gobierno 4X1000,,2026-01-22T20:49:08
+96,2025-12-20,1,Ahorros,47,David,9,Bosques.Terrarios,64,Musgos,-150000,1,Pesos,,,musgos y orquideas,Transferencias A Nequi,,2026-01-22T20:49:08
+95,2025-12-20,1,Ahorros,255,Ventas Bosques,9,Bosques.Terrarios,69,Ventas,600000,1,Pesos,,,,Transferencia Desde Luis Londono 6834,,2026-01-22T20:49:08
+104,2025-12-19,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,1.18,1,Pesos,,,,Abono Intereses Ahorros,,2026-01-22T20:49:08
+100,2025-12-19,1,Ahorros,98,Halis León Galindo,9,Bosques.Terrarios,61,Lámparas,-145000,1,Pesos,,,,Transferencia Cta Suc,190644952,2026-01-22T20:49:08
+101,2025-12-19,1,Ahorros,145,Luis Fernando Londoño,37,RC Gastos,322,Personales,-100000,1,Pesos,,,,Transferencias A Nequi,,2026-01-22T20:49:08
+102,2025-12-19,6,MasterCardPesos,167,Mercolanta,40,Restaurantes,330,Restaurantes,-89100,1,Pesos,,,,Mercolanta Monte,,2026-01-22T20:49:08
+103,2025-12-19,1,Ahorros,53,Dian,22,Impuestos,119,4xMil,-980,1,Pesos,,,,Impto Gobierno 4X1000,,2026-01-22T20:49:08
+2210,2025-12-19,6,MasterCardPesos,73,EPM,46,Tita,396,Servicios Públicos,-849035,1,Pesos,,,Creado desde conciliación,EPM SERVICIOS PUBLICOS,,2026-01-24T14:42:45
+2149,2025-12-19,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,0.25,1,Pesos,,,Creado desde conciliación,ABONO INTERESES AHORROS,,2026-01-23T18:31:07
+106,2025-12-18,6,MasterCardPesos,188,Pasteur,32,Perros,302,Drogas,-34218,1,Pesos,,,,Drogueria Pasteur Terp,,2026-01-22T20:49:08
+105,2025-12-18,6,MasterCardPesos,230,Tigo,37,RC Gastos,314,Celular,-49900,1,Pesos,,,,Tigo Servicios Hogar Y,,2026-01-22T20:49:08
+107,2025-12-17,3,FondoRenta,85,Fondo Renta,47,Traslado,402,Traslado,1000000,1,Pesos,,,,"25,",037234,2026-01-22T20:49:08
+108,2025-12-17,6,MasterCardPesos,77,Éxito,29,Mercado,177,Mercado,-43530,1,Pesos,,,,Exito La Ceja,,2026-01-22T20:49:08
+109,2025-12-17,6,MasterCardPesos,46,D1,29,Mercado,177,Mercado,-40910,1,Pesos,,,,Tienda D1 Cantarrana,,2026-01-22T20:49:08
+2118,2025-12-17,1,Ahorros,198,Protección,47,Traslado,411,Traslado - Ahorros,2000000,1,Pesos,,,Creado desde conciliación,PAGO DE PROV F PENS PROTECCI,,2026-01-23T11:09:40
+2119,2025-12-17,1,Ahorros,85,Fondo Renta,47,Traslado,411,Traslado - Ahorros,-1000000,1,Pesos,,,Creado desde conciliación,TRASLADO A FONDO DE INVERSION,,2026-01-23T11:09:40
+2211,2025-12-17,6,MasterCardPesos,160,MasterCard COP,26,MasterCard COP,152,Pagos,999117,1,Pesos,,,Creado desde conciliación,ABONO SUCURSAL VIRTUAL,,2026-01-24T14:42:45
+111,2025-12-17,1,Ahorros,53,Dian,22,Impuestos,119,4xMil,-3996.46,1,Pesos,,,,Impto Gobierno 4X1000,,2026-01-22T20:49:08
+110,2025-12-17,6,MasterCardPesos,41,Cosechas,40,Restaurantes,330,Restaurantes,-10000,1,Pesos,,,,Bold*Cosechas,,2026-01-22T20:49:08
+2120,2025-12-17,1,Ahorros,161,MasterCard USD,47,Traslado,415,Traslado - MasterCard USD,-999117,1,Pesos,,,Creado desde conciliación,PAGO SUC VIRT TC MASTER PESOS,,2026-01-23T11:09:40
+119,2025-12-16,3,FondoRenta,85,Fondo Renta,22,Impuestos,123,Rte Fuente,-520.2,1,Pesos,,,,"0,",012996,2026-01-22T20:49:08
+117,2025-12-16,6,MasterCardPesos,12,Amazon,41,Ropa,333,Chaquetas,-158039,1,Pesos,,,Chaqueta amarilla,Amazon.Com,,2026-01-22T20:49:08
+116,2025-12-16,6,MasterCardPesos,73,EPM,24,Komorebi,149,Servicios Públicos,-188539,1,Pesos,,,,Epm Servicios Publicos,,2026-01-22T20:49:08
+115,2025-12-16,1,Ahorros,231,Tita,39,Regalos,326,Familia,350000,1,Pesos,,,aguinaldo,Transf A Sergio Lalin Null,,2026-01-22T20:49:08
+114,2025-12-16,6,MasterCardPesos,221,Suramericana,43,Salud,350,Prepagada,-1340957,1,Pesos,,,,Suramericana Seguros D,,2026-01-22T20:49:08
+113,2025-12-16,3,FondoRenta,85,Fondo Renta,47,Traslado,402,Traslado,-15700000,1,Pesos,,,,"392,",226439,2026-01-22T20:49:08
+2213,2025-12-16,6,MasterCardPesos,221,Suramericana,46,Tita,397,Sura,-2894928,1,Pesos,,,Creado desde conciliación,SURAMERICANA SEGUROS D,,2026-01-24T14:42:45
+2212,2025-12-16,6,MasterCardPesos,160,MasterCard COP,26,MasterCard COP,152,Pagos,16104000,1,Pesos,,,Creado desde conciliación,ABONO SUCURSAL VIRTUAL,,2026-01-24T14:42:45
+2150,2025-12-16,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,0.59,1,Pesos,,,Creado desde conciliación,ABONO INTERESES AHORROS,,2026-01-23T18:31:07
+2124,2025-12-16,1,Ahorros,161,MasterCard USD,47,Traslado,415,Traslado - MasterCard USD,-87804.57,1,Pesos,,,Creado desde conciliación,PAGO SUC VIRT TC MASTER DOLAR,,2026-01-23T11:09:40
+2123,2025-12-16,1,Ahorros,228,Tere Granda,46,Tita,393,Salarios - Tere,-1030000,1,Pesos,,,Creado desde conciliación,TRANSFERENCIAS A NEQUI,,2026-01-23T11:09:40
+2122,2025-12-16,1,Ahorros,85,Fondo Renta,47,Traslado,411,Traslado - Ahorros,15700000,1,Pesos,,,Creado desde conciliación,TRASLADO DE FONDO DE INVERS,,2026-01-23T11:09:40
+2121,2025-12-16,1,Ahorros,161,MasterCard USD,47,Traslado,415,Traslado - MasterCard USD,-16104000,1,Pesos,,,Creado desde conciliación,PAGO SUC VIRT TC MASTER PESOS,,2026-01-23T11:09:40
+118,2025-12-16,1,Ahorros,53,Dian,22,Impuestos,119,4xMil,-16523.61,1,Pesos,,,,Impto Gobierno 4X1000,,2026-01-22T20:49:08
+123,2025-12-15,3,FondoRenta,85,Fondo Renta,47,Traslado,402,Traslado,-1000000,1,Pesos,,,,"24,",974706,2026-01-22T20:49:08
+2151,2025-12-15,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,2.22,1,Pesos,,,Creado desde conciliación,ABONO INTERESES AHORROS,,2026-01-23T18:31:07
+122,2025-12-15,2,Efectivo,20,Autoland,10,Carro,76,ICar 03,-20000000,1,Pesos,,,,,,2026-01-22T20:49:08
+129,2025-12-15,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,2.64,1,Pesos,,,,Abono Intereses Ahorros,,2026-01-22T20:49:08
+127,2025-12-15,3,FondoRenta,85,Fondo Renta,22,Impuestos,123,Rte Fuente,-206.18,1,Pesos,,,,"0,",005149,2026-01-22T20:49:08
+126,2025-12-15,6,MasterCardPesos,167,Mercolanta,40,Restaurantes,330,Restaurantes,-44200,1,Pesos,,,,Mercolanta Monte,,2026-01-22T20:49:08
+125,2025-12-15,6,MasterCardPesos,40,Corpaul,15,Donaciones,96,Corpaul,-100000,1,Pesos,,,,Corpaul,,2026-01-22T20:49:08
+124,2025-12-15,1,Ahorros,251,Zona 4,10,Carro,79,Mantenimiento,-341000,1,Pesos,,,cambio de aceite,Pago Qr Colegiatura D,939179189,2026-01-22T20:49:08
+2125,2025-12-15,1,Ahorros,85,Fondo Renta,47,Traslado,411,Traslado - Ahorros,1000000,1,Pesos,,,Creado desde conciliación,TRASLADO DE FONDO DE INVERS,,2026-01-23T11:09:40
+130,2025-12-14,6,MasterCardPesos,77,Éxito,29,Mercado,177,Mercado,-59230,1,Pesos,,,,Exito La Ceja,,2026-01-22T20:49:08
+2214,2025-12-14,6,MasterCardPesos,230,Tigo,46,Tita,400,Tigo,-207577,1,Pesos,,,Creado desde conciliación,TIGO SERVICIOS HOGAR Y,,2026-01-24T14:42:45
+132,2025-12-13,6,MasterCardPesos,46,D1,29,Mercado,177,Mercado,-119130,1,Pesos,,,,Tienda D1 Cantarrana,,2026-01-22T20:49:09
+131,2025-12-13,1,Ahorros,255,Ventas Bosques,9,Bosques.Terrarios,69,Ventas,500000,1,Pesos,,,,Transferencia Desde Luis Londono 6834,,2026-01-22T20:49:09
+134,2025-12-13,6,MasterCardPesos,3,Adobe,21,Fotografía,112,Adobe,-29374,1,Pesos,,,,Adobe,,2026-01-22T20:49:09
+135,2025-12-13,6,MasterCardPesos,134,Juan Valdez,40,Restaurantes,330,Restaurantes,-19200,1,Pesos,,,,Juan Valdez Viva La Ce,,2026-01-22T20:49:09
+137,2025-12-13,6,MasterCardPesos,46,D1,29,Mercado,177,Mercado,-11490,1,Pesos,,,,Tienda D1 Cantarrana,,2026-01-22T20:49:09
+139,2025-12-13,1,Ahorros,22,Bancolombia,4,Bancolombia,17,Ajustes,-0.03,1,Pesos,,,,Ajuste Interes Ahorros,,2026-01-22T20:49:09
+138,2025-12-13,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,1.32,1,Pesos,,,,Abono Intereses Ahorros,,2026-01-22T20:49:09
+133,2025-12-13,6,MasterCardPesos,167,Mercolanta,40,Restaurantes,330,Restaurantes,-44200,1,Pesos,,,,Mercolanta Monte,,2026-01-22T20:49:09
+144,2025-12-12,6,MasterCardPesos,12,Amazon,24,Komorebi,142,Menaje,-77684,1,Pesos,,,Hilo dental agua,Amazon.Com,,2026-01-22T20:49:09
+140,2025-12-12,7,MasterCardUSD,10,AliExpress,9,Bosques.Terrarios,61,Lámparas,-93104.83,1,Pesos,-25.25,3687.32,,Aliexpress,,2026-01-22T20:49:09
+141,2025-12-12,7,MasterCardUSD,10,AliExpress,9,Bosques.Terrarios,61,Lámparas,-224336.55,1,Pesos,-60.84,3687.32,,Aliexpress,,2026-01-22T20:49:09
+142,2025-12-12,6,MasterCardPesos,12,Amazon,41,Ropa,333,Chaquetas,-181751,1,Pesos,,,Chaqueta verde,Amazon.Com,,2026-01-22T20:49:09
+143,2025-12-12,6,MasterCardPesos,149,MacroDrogas,43,Salud,345,Drogas,-153700,1,Pesos,,,,Inversiones Ramej Sas,,2026-01-22T20:49:09
+145,2025-12-12,6,MasterCardPesos,149,MacroDrogas,43,Salud,345,Drogas,-58300,1,Pesos,,,,Inversiones Ramej Sas,,2026-01-22T20:49:09
+146,2025-12-12,6,MasterCardPesos,46,D1,29,Mercado,177,Mercado,-26950,1,Pesos,,,,Tienda D1 Cantarrana,,2026-01-22T20:49:09
+2126,2025-12-12,1,Ahorros,22,Bancolombia,4,Bancolombia,21,Cuota de manejo,-17800,1,Pesos,,,Creado desde conciliación,Cuota Manejo Trj Deb 12 Manejo Tarjeta Deb 12 25,25,2026-01-23T11:09:40
+149,2025-12-11,1,Ahorros,194,Pollo al Carbón,40,Restaurantes,330,Restaurantes,-48000,1,Pesos,,,,Pago Qr Pollo Al Carb,987331222,2026-01-22T20:49:09
+148,2025-12-11,1,Ahorros,95,Grupo Clinico,43,Salud,339,Odontologia,-120000,1,Pesos,,,limpieza,Pago Qr Grupo Clinico,945494911,2026-01-22T20:49:09
+147,2025-12-11,6,MasterCardPesos,173,Municipio de la Ceja,24,Komorebi,146,Predial,-4119180,1,Pesos,,,,Municipio De La Ceja,,2026-01-22T20:49:09
+2128,2025-12-10,1,Ahorros,85,Fondo Renta,47,Traslado,411,Traslado - Ahorros,-5000000,1,Pesos,,,Creado desde conciliación,TRASLADO A FONDO DE INVERSION,,2026-01-23T11:09:40
+2127,2025-12-10,1,Ahorros,70,El Tunal,46,Tita,361,Arriendo - El Tunal,5440365,1,Pesos,,,Creado desde conciliación,PAGO INTERBANC INVERSIONES VAN,,2026-01-23T11:09:40
+151,2025-12-10,1,Ahorros,121,John Jairo Arias Correa,8,Bosques.Cuadros,44,Insumos,-64000,1,Pesos,,,,Transferencia Cta Suc,10132956230,2026-01-22T20:49:09
+1701,2025-12-10,3,FondoRenta,85,Fondo Renta,47,Traslado,411,Traslado - Ahorros,5000000,1,Pesos,,,Creado desde conciliación,ADICION,,2026-01-23T07:08:03
+1702,2025-12-10,3,FondoRenta,85,Fondo Renta,47,Traslado,411,Traslado - Ahorros,-1000000,1,Pesos,,,Creado desde conciliación,RETIRO TRASLA,,2026-01-23T07:08:03
+1703,2025-12-10,3,FondoRenta,53,Dian,22,Impuestos,123,Rte Fuente,-130.87,1,Pesos,,,Creado desde conciliación,RETEFTE,,2026-01-23T07:08:03
+2147,2025-12-10,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,0.89,1,Pesos,,,Creado desde conciliación,ABONO INTERESES AHORROS,,2026-01-23T18:29:12
+2131,2025-12-10,1,Ahorros,70,El Tunal,46,Tita,395,Seguridad Social,-470300,1,Pesos,,,Creado desde conciliación,PAGO PSE ENLACE OPERATIVO S.A,,2026-01-23T11:09:40
+2130,2025-12-10,1,Ahorros,70,El Tunal,46,Tita,395,Seguridad Social,-475000,1,Pesos,,,Creado desde conciliación,PAGO PSE ENLACE OPERATIVO S.A,,2026-01-23T11:09:40
+2129,2025-12-10,1,Ahorros,85,Fondo Renta,47,Traslado,411,Traslado - Ahorros,1000000,1,Pesos,,,Creado desde conciliación,TRASLADO DE FONDO DE INVERS,,2026-01-23T11:09:40
+158,2025-12-09,6,MasterCardPesos,167,Mercolanta,29,Mercado,177,Mercado,-30900,1,Pesos,,,,Mercolanta Monte,,2026-01-22T20:49:09
+154,2025-12-09,1,Ahorros,145,Luis Fernando Londoño,9,Bosques.Terrarios,58,Frascos,-280000,1,Pesos,,,Cúpulas,Transferencias A Nequi,,2026-01-22T20:49:09
+2152,2025-12-09,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,0.3,1,Pesos,,,Creado desde conciliación,ABONO INTERESES AHORROS,,2026-01-23T18:31:07
+155,2025-12-09,6,MasterCardPesos,84,FlyPass,10,Carro,82,Peajes,-100000,1,Pesos,,,,Flypass,,2026-01-22T20:49:09
+159,2025-12-09,6,MasterCardPesos,88,Fundación Hospital San Vicente,43,Salud,343,Copagos,-22900,1,Pesos,,,,Fund Hosp S/Vicente Pa,,2026-01-22T20:49:09
+160,2025-12-09,6,MasterCardPesos,46,D1,29,Mercado,177,Mercado,-8250,1,Pesos,,,,Tienda D1 Carmen Tezen,,2026-01-22T20:49:09
+161,2025-12-09,6,MasterCardPesos,40,Corpaul,10,Carro,81,Parqueadero,-4300,1,Pesos,,,,Corpaul Husvf Rionegro,,2026-01-22T20:49:09
+156,2025-12-09,1,Ahorros,114,Jader Esteban Hernandez Lopez,29,Mercado,177,Mercado,-80000,1,Pesos,,,,Transferencia Cta Suc,2379110978,2026-01-22T20:49:09
+157,2025-12-09,1,Ahorros,220,Superoriente sas,40,Restaurantes,330,Restaurantes,-34000,1,Pesos,,,,Transferencia Cta Suc,24500000743,2026-01-22T20:49:09
+166,2025-12-08,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,0.83,1,Pesos,,,,Abono Intereses Ahorros,,2026-01-22T20:49:09
+163,2025-12-08,1,Ahorros,98,Halis León Galindo,8,Bosques.Cuadros,45,MO Halis,-200000,1,Pesos,,,,Transferencia Cta Suc,190644952,2026-01-22T20:49:09
+164,2025-12-08,1,Ahorros,156,Maria Paula Zuluaga,29,Mercado,177,Mercado,-60000,1,Pesos,,,Masa pizzas,Transferencias A Nequi,,2026-01-22T20:49:09
+165,2025-12-08,1,Ahorros,145,Luis Fernando Londoño,37,RC Gastos,322,Personales,-50000,1,Pesos,,,,Transferencias A Nequi,,2026-01-22T20:49:09
+167,2025-12-07,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,1.26,1,Pesos,,,,Abono Intereses Ahorros,,2026-01-22T20:49:09
+2132,2025-12-07,1,Ahorros,141,Lina María Gallón,46,Tita,377,Lina María Gallón,-40000,1,Pesos,,,Creado desde conciliación,TRANSFERENCIA CTA SUC VIRTUAL,10272707788,2026-01-23T11:09:40
+170,2025-12-06,1,Ahorros,98,Halis León Galindo,8,Bosques.Cuadros,45,MO Halis,-170000,1,Pesos,,,,Transferencia Cta Suc,190644952,2026-01-22T20:49:09
+2153,2025-12-06,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,1.31,1,Pesos,,,Creado desde conciliación,ABONO INTERESES AHORROS,,2026-01-23T18:31:07
+173,2025-12-06,1,Ahorros,17,Antonio Esteban Gomez Agnoli,9,Bosques.Terrarios,69,Ventas,30000,1,Pesos,,,,Transferencia Cta Suc,10070097034,2026-01-22T20:49:09
+175,2025-12-06,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,7.48,1,Pesos,,,,Abono Intereses Ahorros,,2026-01-22T20:49:09
+171,2025-12-06,1,Ahorros,159,Vivero San José - Maritza Milena Posada,9,Bosques.Terrarios,66,Plantas,-98000,1,Pesos,,,,Pago Qr Maritza Milen,950067842,2026-01-22T20:49:09
+172,2025-12-06,6,MasterCardPesos,12,Amazon,9,Bosques.Terrarios,61,Lámparas,-38316,1,Pesos,,,,Amazon.Com,,2026-01-22T20:49:09
+2155,2025-12-06,1,Ahorros,112,Iván Sankovich,9,Bosques.Terrarios,69,Ventas,30000,1,Pesos,,,Creado desde conciliación,TRANSFERENCIA CTA SUC VIRTUAL,10820877208,2026-01-23T22:24:00
+168,2025-12-06,6,MasterCardPesos,46,D1,29,Mercado,177,Mercado,-245150,1,Pesos,,,,Tienda D1 Cantarrana,,2026-01-22T20:49:09
+169,2025-12-06,1,Ahorros,240,William Vanegas,24,Komorebi,140,Jardín,-200000,1,Pesos,,,,Transferencia Cta Suc,2399359743,2026-01-22T20:49:09
+2216,2025-12-05,6,MasterCardPesos,230,Tigo,46,Tita,400,Tigo,-59900,1,Pesos,,,Creado desde conciliación,TIGO SERVICIOS HOGAR Y,,2026-01-24T14:42:45
+2215,2025-12-05,6,MasterCardPesos,12,Amazon,28,Menaje,160,Equipos,-292371,1,Pesos,,,Creado desde conciliación,AMAZON.COM - calentador,,2026-01-24T14:42:45
+180,2025-12-05,6,MasterCardPesos,40,Corpaul,10,Carro,81,Parqueadero,-4300,1,Pesos,,,,Corpaul Husvf Rionegro,,2026-01-22T20:49:09
+2217,2025-12-05,6,MasterCardPesos,180,Netflix,46,Tita,379,Netflix,-54800,1,Pesos,,,Creado desde conciliación,NETFLIX,,2026-01-24T14:42:45
+176,2025-12-05,7,MasterCardUSD,18,Apple,16,Educación,100,Gemini,-21238.96,1,Pesos,-5.76,3687.32,,Apple.Com/Bill,,2026-01-22T20:49:09
+177,2025-12-05,6,MasterCardPesos,12,Amazon,24,Komorebi,142,Menaje,-91245,1,Pesos,,,Colcha habitación principal,Amazon.Com,,2026-01-22T20:49:09
+178,2025-12-05,6,MasterCardPesos,50,Delolita,40,Restaurantes,330,Restaurantes,-42600,1,Pesos,,,,Delolita San Vicente R,,2026-01-22T20:49:09
+179,2025-12-05,6,MasterCardPesos,88,Fundación Hospital San Vicente,43,Salud,343,Copagos,-22900,1,Pesos,,,,Fund Hosp S/Vicente Pa,,2026-01-22T20:49:09
+2218,2025-12-04,6,MasterCardPesos,12,Amazon,41,Ropa,333,Chaquetas,-160920,1,Pesos,,,Creado desde conciliación,AMAZON.COM chaqueta amarilla,,2026-01-24T14:42:45
+181,2025-12-02,7,MasterCardUSD,18,Apple,16,Educación,100,Gemini,-77212.48,1,Pesos,-20.94,3687.32,,Apple.Com/Bill,,2026-01-22T20:49:09
+2133,2025-12-02,1,Ahorros,55,Diego Lalinde,46,Tita,374,Inversiones,2500000,1,Pesos,,,Creado desde conciliación,TRANSFERENCIA CTA SUC VIRTUAL,,2026-01-23T11:09:40
+2135,2025-12-02,1,Ahorros,164,Mauricio Estrada,35,Prestamos,311,Prestamos,300000,1,Pesos,,,Creado desde conciliación,TRANSFERENCIA CTA SUC VIRTUAL,10167252064,2026-01-23T11:09:40
+1706,2025-12-02,3,FondoRenta,85,Fondo Renta,47,Traslado,411,Traslado - Ahorros,2000000,1,Pesos,,,,,,2026-01-23T07:10:36
+2158,2025-12-02,1,Ahorros,85,Fondo Renta,47,Traslado,411,Traslado - Ahorros,-2000000,1,Pesos,,,Creado desde conciliación,TRASLADO A FONDO DE INVERSION,,2026-01-23T22:41:16
+2159,2025-12-02,1,Ahorros,85,Fondo Renta,47,Traslado,411,Traslado - Ahorros,-2000000,1,Pesos,,,Creado desde conciliación,TRASLADO A FONDO DE INVERSION,,2026-01-23T22:45:23
+184,2025-12-02,1,Ahorros,22,Bancolombia,4,Bancolombia,23,Intereses,4.92,1,Pesos,,,,Abono Intereses Ahorros,,2026-01-22T20:49:09
+183,2025-12-02,1,Ahorros,74,Esneider Gonzalez Caro,43,Salud,343,Copagos,-23000,1,Pesos,,,Reclamo y copago,Transferencia Cta Suc,23019875482,2026-01-22T20:49:09
+182,2025-12-02,1,Ahorros,229,Tidavi SAS,24,Komorebi,140,Jardín,-1000000,1,Pesos,,,,Transferencia Cta Suc,2300029020,2026-01-22T20:49:09
+1705,2025-12-01,3,FondoRenta,85,Fondo Renta,47,Traslado,411,Traslado - Ahorros,7000000,1,Pesos,,,Creado desde conciliación,ADICION,,2026-01-23T07:08:03
+2137,2025-12-01,1,Ahorros,55,Diego Lalinde,46,Tita,374,Inversiones,2825000,1,Pesos,,,Creado desde conciliación,TRANSFERENCIA CTA SUC VIRTUAL,,2026-01-23T11:09:40
+187,2025-12-01,1,Ahorros,98,Halis León Galindo,8,Bosques.Cuadros,45,MO Halis,-120000,1,Pesos,,,,Transferencia Cta Suc,190644952,2026-01-22T20:49:09
+2136,2025-12-01,1,Ahorros,85,Fondo Renta,47,Traslado,411,Traslado - Ahorros,-7000000,1,Pesos,,,Creado desde conciliación,TRASLADO A FONDO DE INVERSION,,2026-01-23T11:09:40
+188,2025-12-01,1,Ahorros,156,Maria Paula Zuluaga,29,Mercado,177,Mercado,-60000,1,Pesos,,,Masa Pizzas,Transferencias A Nequi,,2026-01-22T20:49:09
+186,2025-12-01,1,Ahorros,157,Maderas La Clarita - Maria Victoria Gomez,9,Bosques.Terrarios,63,Materiales,-182000,1,Pesos,,,,Transferencia Cta Suc,34441384353,2026-01-22T20:49:09
+185,2025-12-01,1,Ahorros,11,Almacen Agropecuario,24,Komorebi,140,Jardín,-206000,1,Pesos,,,,Pago Qr Almacen Agrop,,2026-01-22T20:49:09
+TOTAL,,,,,,,,,,-26380202.479999997,,,-116.22000000000001,,,,,

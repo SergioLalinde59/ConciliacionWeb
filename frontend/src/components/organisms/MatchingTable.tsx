@@ -16,6 +16,7 @@ interface MatchingTableProps {
     onCrear?: (match: MovimientoMatch) => void
     onCrearTodo?: () => void
     onDesvincular?: (match: MovimientoMatch) => void
+    onDesvincularTodo?: () => void
     loading?: boolean
     className?: string
 }
@@ -43,6 +44,7 @@ export const MatchingTable = ({
     onCrear,
     onCrearTodo,
     onDesvincular,
+    onDesvincularTodo,
     loading = false,
     className = ''
 }: MatchingTableProps) => {
@@ -308,26 +310,37 @@ export const MatchingTable = ({
                                     Diferencia
                                 </th>
                                 <th className="px-4 py-1.5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-l border-gray-200 w-32">
-                                    <div className="flex items-center justify-center gap-2">
-                                        Acciones
-                                        {onAprobarTodo && matches.some(m => m.estado === MatchEstado.PROBABLE) && (
-                                            <button
-                                                onClick={onAprobarTodo}
-                                                className="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
-                                                title="Aprobar todos los probables"
-                                            >
-                                                <CheckCheck size={16} />
-                                            </button>
-                                        )}
-                                        {onCrearTodo && matches.some(m => m.estado === MatchEstado.SIN_MATCH && !m.mov_sistema) && (
-                                            <button
-                                                onClick={onCrearTodo}
-                                                className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
-                                                title="Crear todos los faltantes"
-                                            >
-                                                <CheckCheck size={16} />
-                                            </button>
-                                        )}
+                                    <div className="flex flex-col items-center justify-center gap-1">
+                                        <span>Acciones</span>
+                                        <div className="flex items-center gap-2">
+                                            {onAprobarTodo && matches.some(m => m.estado === MatchEstado.PROBABLE) && (
+                                                <button
+                                                    onClick={onAprobarTodo}
+                                                    className="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
+                                                    title="Aprobar todos los probables"
+                                                >
+                                                    <CheckCheck size={16} />
+                                                </button>
+                                            )}
+                                            {onCrearTodo && matches.some(m => m.estado === MatchEstado.SIN_MATCH && !m.mov_sistema) && (
+                                                <button
+                                                    onClick={onCrearTodo}
+                                                    className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                                    title="Crear todos los faltantes"
+                                                >
+                                                    <CheckCheck size={16} />
+                                                </button>
+                                            )}
+                                            {onDesvincularTodo && matches.some(m => m.id !== null) && (
+                                                <button
+                                                    onClick={onDesvincularTodo}
+                                                    className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                                                    title="Desvincular TODO y reiniciar"
+                                                >
+                                                    <Unlink size={16} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </th>
                             </tr>
@@ -561,20 +574,20 @@ export const MatchingTable = ({
                                                             className="!p-1 text-blue-600 hover:text-blue-700 bg-blue-50 border-blue-100"
                                                             title="Crear movimiento en sistema"
                                                         >
-                                                            <Icon name="Plus" size={15} />
+                                                            <Icon name="Check" size={15} />
                                                         </Button>
                                                     )}
 
                                                     {/* Desvincular */}
                                                     {hasSystemMovement && onDesvincular && (
                                                         <Button
-                                                            variant="ghost-danger"
+                                                            variant="ghost"
                                                             size="sm"
                                                             onClick={(e) => {
                                                                 e.stopPropagation()
                                                                 onDesvincular(match)
                                                             }}
-                                                            className="!p-1"
+                                                            className="!p-1 text-red-500 hover:text-red-700 hover:bg-red-50"
                                                             title="Desvincular (Eliminar vinculación)"
                                                         >
                                                             <Icon name="Unlink" size={15} />

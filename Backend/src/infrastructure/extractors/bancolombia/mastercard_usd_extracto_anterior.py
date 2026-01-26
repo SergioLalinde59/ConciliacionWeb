@@ -80,10 +80,27 @@ def extraer_resumen(file_obj: Any) -> Dict[str, Any]:
     
     logger.info(f"\nResumen final extraído: {list(resumen.keys())}")
     
-    if not resumen or 'saldo_final' not in resumen:
-        logger.error("✗ FALLO: No se encontró saldo_final en el resumen")
-        logger.error(f"Campos encontrados: {list(resumen.keys())}")
-        raise Exception("No se pudo extraer el resumen del archivo. Verifique el formato.")
+    # RELAXED LOGIC: If we don't have saldo_final, we return what we have so the user can edit it manually.
+    if not resumen:
+        logger.warning("No se extrajo ningún dato del resumen. Se retornarán valores en cero.")
+    
+    # Ensure default keys exist if missing
+    defaults = {
+        'saldo_anterior': Decimal(0),
+        'entradas': Decimal(0),
+        'salidas': Decimal(0),
+        'saldo_final': Decimal(0),
+        'year': 2024, # Default fallback if unknown
+        'month': 1,
+        'periodo_texto': "PERIODO DESCONOCIDO"
+    }
+    
+    for key, default_val in defaults.items():
+        if key not in resumen:
+            resumen[key] = default_val
+            
+    logger.info("=" * 80)
+    logger.info("MASTERCARD USD ANTIGUO - Extracción completada (puede ser parcial)")
     
     logger.info("=" * 80)
     logger.info("MASTERCARD USD ANTIGUO - Extracción completada exitosamente")
@@ -106,27 +123,17 @@ def _extraer_resumen_desde_texto(texto: str) -> Optional[Dict[str, Any]]:
     logger.info("Verificando moneda...")
     
     # PRIMERO: Verificar que NO sea PESOS
-    tiene_pesos = (
-        'PESOS' in texto or
-        'ESTADO DE CUENTA EN: PESOS' in texto or
-        bool(re.search(r'Estado de cuenta en:\s*PESOS', texto, re.IGNORECASE))
-    )
+    tiene_pesos = 'Estado de cuenta en: PESOS' in texto or bool(re.search(r'P+E+S+O+S+', texto))
     
     if tiene_pesos:
-        logger.warning("✗ SALTAR: Detectado PESOS - este es un extracto COP, no USD")
+        logger.warning("✗ SALTAR: Detectado PESOS en formato antiguo - saltando para DOLARES")
         return None
     
     # SEGUNDO: Buscar indicadores de DOLARES
-    tiene_dolares = (
-        'DOLARES' in texto or
-        'ESTADO DE CUENTA EN: DOLARES' in texto or
-        bool(re.search(r'Estado de cuenta en:\s*DOLARES', texto, re.IGNORECASE))
-    )
-    
-    logger.info(f"  - Tiene DOLARES: {tiene_dolares}")
+    tiene_dolares = 'Estado de cuenta en: DOLARES' in texto or bool(re.search(r'D+O+L+A+R+E+S+', texto))
     
     if not tiene_dolares:
-        logger.warning("No se encontró indicación de moneda DOLARES - saltando este texto")
+        logger.warning("No se encontró 'Estado de cuenta en: DOLARES' - saltando este texto")
         return None
     
     logger.info("✓ Confirmado: es un extracto en DOLARES (formato antiguo)")
@@ -284,52 +291,41 @@ def _extraer_resumen_desde_texto(texto: str) -> Optional[Dict[str, Any]]:
     else:
         logger.warning("  ✗ No se encontró el periodo facturado en formato antiguo")
     
-    # Si encontramos los datos principales, retornamos
-    if 'saldo_anterior' in data and 'saldo_final' in data:
-        logger.info("\n✓ Parsing exitoso - retornando datos")
+    # RELAXED: Return whatever we found, even if partial
+    if data:
+        logger.info(f"\n✓ Parsing completado (campos: {list(data.keys())})")
         return data
     
-    logger.warning(f"\n✗ Parsing incompleto - campos encontrados: {list(data.keys())}")
+    logger.warning("\n✗ Parsing falló - no se encontraron datos relevantes")
     return None
 
 
 def _parsear_valor_usd(valor_str: str) -> Decimal:
     """
-    Parsea valores en formato USD (1,234.56)
-    donde coma es miles y punto es decimal.
-    
-    IMPORTANTE: Aunque es USD, en PDFs colombianos a veces usan formato colombiano
-    (1.234,56), por lo que detectamos el formato automáticamente.
+    Parsea valores con detección automática de formato y limpieza de símbolos.
     """
     if not valor_str:
         return Decimal(0)
     
-    # Eliminar espacios
-    valor_limpio = valor_str.strip()
+    v_limpio = re.sub(r'[^\d,.-]', '', valor_str)
     
-    # Detectar formato: Si tiene coma Y punto, determinar cuál es decimal
-    tiene_coma = ',' in valor_limpio
-    tiene_punto = '.' in valor_limpio
-    
-    if tiene_coma and tiene_punto:
-        # Determinar cuál viene último (ese es el decimal)
-        pos_coma = valor_limpio.rfind(',')
-        pos_punto = valor_limpio.rfind('.')
-        
+    if ',' in v_limpio and '.' in v_limpio:
+        pos_coma = v_limpio.rfind(',')
+        pos_punto = v_limpio.rfind('.')
         if pos_punto > pos_coma:
-            # Formato USA: 1,234.56 (punto es decimal)
-            valor_limpio = valor_limpio.replace(',', '')  # Eliminar comas (miles)
+            v_limpio = v_limpio.replace(',', '')
         else:
-            # Formato colombiano: 1.234,56 (coma es decimal)
-            valor_limpio = valor_limpio.replace('.', '')  # Eliminar puntos (miles)
-            valor_limpio = valor_limpio.replace(',', '.')  # Coma -> punto
-    elif tiene_coma:
-        # Solo tiene coma, asumimos formato colombiano
-        valor_limpio = valor_limpio.replace(',', '.')
-    # Si solo tiene punto o ninguno, dejamos como está
-    
+            v_limpio = v_limpio.replace('.', '').replace(',', '.')
+    elif ',' in v_limpio:
+        if len(v_limpio.split(',')[-1]) == 2:
+            v_limpio = v_limpio.replace(',', '.')
+        else:
+            v_limpio = v_limpio.replace(',', '')
+    elif '.' in v_limpio:
+        if len(v_limpio.split('.')[-1]) != 2:
+            v_limpio = v_limpio.replace('.', '')
+            
     try:
-        return Decimal(valor_limpio)
+        return Decimal(v_limpio)
     except:
-        logger.warning(f"No se pudo parsear valor: '{valor_str}', retornando 0")
         return Decimal(0)

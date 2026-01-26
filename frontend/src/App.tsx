@@ -23,8 +23,13 @@ import { SugerenciasReclasificacionPage } from './pages/SugerenciasReclasificaci
 import { ReporteEgresosTerceroPage } from './pages/ReporteEgresosTerceroPage'
 import { ReporteEgresosCentroCostoPage } from './pages/ReporteEgresosCentroCostoPage'
 import { ConfigFiltrosCentrosCostosPage } from './pages/ConfigFiltrosCentrosCostosPage'
+import { ConfigValoresPendientesPage } from './pages/ConfigValoresPendientesPage'
 import { ConciliacionPage } from './pages/ConciliacionPage'
 import { ConciliacionMatchingPage } from './pages/ConciliacionMatchingPage'
+import { CentroControlDatosPage } from './pages/CentroControlDatosPage'
+import { MatchingConfigPage } from './pages/MatchingConfigPage'
+
+import { ReconciliationResetPage } from './pages/ReconciliationResetPage'
 
 
 function App() {
@@ -41,10 +46,11 @@ function App() {
                     <Route path="/maestros/centros-costos" element={<CentrosCostosPage />} />
                     <Route path="/maestros/conceptos" element={<ConceptosPage />} />
                     <Route path="/maestros/config-filtros" element={<ConfigFiltrosCentrosCostosPage />} />
-                    <Route path="/maestros/config-filtros" element={<ConfigFiltrosCentrosCostosPage />} />
+                    <Route path="/maestros/config-valores-pendientes" element={<ConfigValoresPendientesPage />} />
                     <Route path="/maestros/reglas" element={<ReglasPage />} />
                     <Route path="/maestros/alias" element={<ReglasNormalizacionPage />} />
                     <Route path="/maestros/extractores" element={<CuentaExtractoresPage />} />
+                    <Route path="/maestros/matching" element={<MatchingConfigPage />} />
                     <Route path="/movimientos" element={<MovimientosPage />} />
                     <Route path="/movimientos/cargar" element={<UploadMovimientosPage />} />
                     <Route path="/conciliacion/cargar-extracto" element={<UploadExtractoPage />} />
@@ -59,6 +65,9 @@ function App() {
                     <Route path="/movimientos/editar/:id" element={<MovimientoFormPage />} />
                     <Route path="/conciliacion" element={<ConciliacionPage />} />
                     <Route path="/conciliacion/matching" element={<ConciliacionMatchingPage />} />
+                    <Route path="/herramientas/control-datos" element={<CentroControlDatosPage />} />
+                    <Route path="/herramientas/mantenimiento/reset-periodo" element={<ReconciliationResetPage />} />
+                    <Route path="/herramientas/mantenimiento/:categoria" element={<CentroControlDatosPage />} />
                     <Route path="/mvtos/*" element={
                         <div className="p-8">
                             <h1 className="text-2xl font-bold text-gray-400">Próximamente</h1>

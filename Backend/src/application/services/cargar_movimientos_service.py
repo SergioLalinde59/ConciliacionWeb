@@ -1,105 +1,201 @@
-from typing import List
-from src.domain.ports.movimiento_repository import MovimientoRepository
-from src.domain.ports.extracto_reader import ExtractoReader
+from typing import List, Dict, Any, Optional
 from src.domain.models.movimiento import Movimiento
+from src.domain.ports.movimiento_repository import MovimientoRepository
+from src.domain.ports.moneda_repository import MonedaRepository
+from src.domain.ports.cuenta_extractor_repository import CuentaExtractorRepository
+import importlib
 
 class CargarMovimientosService:
     """
-    Servicio de Aplicación: Orquesta la carga de movimientos desde archivos.
+    Servicio especializado en la carga mecánica de movimientos diarios (PDFs diarios, CSV, Excel).
     """
-    
-    def __init__(self, repositorio: MovimientoRepository):
-        self.repositorio = repositorio
+    def __init__(self, 
+                 movimiento_repo: MovimientoRepository, 
+                 moneda_repo: MonedaRepository,
+                 cuenta_extractor_repo: Optional[CuentaExtractorRepository] = None):
+        self.movimiento_repo = movimiento_repo
+        self.moneda_repo = moneda_repo
+        self.cuenta_extractor_repo = cuenta_extractor_repo
+        self._monedas_cache = {}
 
-    def procesar_archivo(self, ruta_archivo: str, lector: ExtractoReader, cuenta_id: int, moneda_id: int) -> dict:
-        """
-        Lee el archivo, verifica duplicados y guarda los nuevos movimientos.
+    def _obtener_id_moneda(self, codigo_iso: str) -> int:
+        """Resuelve el ID de moneda. Default: 1 (COP)."""
+        if not codigo_iso or codigo_iso == 'COP':
+            return 1
         
-        Args:
-            ruta_archivo: Path del archivo
-            lector: Implementación de ExtractoReader a usar
-            cuenta_id: ID de la cuenta a la que pertenecen los movimientos
-            moneda_id: ID de la moneda predeterminada
-            
-        Returns:
-            Resumen con cantidad de nuevos, duplicados y errores.
-        """
-        resultado = {
-            'total_leidos': 0,
-            'nuevos': 0,
-            'duplicados': 0,
-            'errores': []
-        }
+        if codigo_iso in self._monedas_cache:
+            return self._monedas_cache[codigo_iso]
         
-        try:
-            # 1. Leer archivo (Puro en memoria)
-            movimientos = lector.leer_archivo(ruta_archivo)
-            resultado['total_leidos'] = len(movimientos)
-            
-            # --- Pre-Cálculo de Duplicados ---
-            from collections import defaultdict
-            
-            # Key: (fecha, valor, referencia, descripcion)
-            signatures = []
-            file_counts = defaultdict(int)
-            
-            for mov in movimientos:
-                # Normalizar para firma
-                ref = mov.referencia if mov.referencia else ""
-                desc = mov.descripcion if mov.descripcion else ""
-                sig = (mov.fecha, mov.valor, ref, desc)
-                signatures.append(sig)
-                file_counts[sig] += 1
-                
-            # Consultar BD (Estado Inicial)
-            db_initial_counts = {}
-            for sig in file_counts:
-                fecha, valor, ref, desc = sig
+        todas = self.moneda_repo.obtener_todos()
+        for m in todas:
+            self._monedas_cache[m.isocode] = m.monedaid
+            if m.isocode == codigo_iso:
+                return m.monedaid
+        return 1
+
+    def _obtener_modulos_extractor_movimientos(self, cuenta_id: int) -> List[Any]:
+        """Retorna LISTA de módulos extractores de movimientos configurados."""
+        modulos_names = []
+        if self.cuenta_extractor_repo and cuenta_id:
+            db_modulos = self.cuenta_extractor_repo.obtener_modulos(cuenta_id, 'MOVIMIENTOS')
+            if db_modulos:
+                modulos_names = db_modulos
+
+        if not modulos_names:
+            EXTRACTORES_MOVIMIENTOS = {
+                1: ['ahorros_movimientos'],
+                3: ['fondorenta_movimientos'],
+                6: ['mastercard_pesos_extracto_movimientos', 'mastercard_pesos_extracto_anterior_movimientos'],
+                7: ['mastercard_usd_extracto_movimientos', 'mastercard_usd_extracto_anterior_movimientos']
+            }
+            modulos_names = EXTRACTORES_MOVIMIENTOS.get(cuenta_id, [])
+
+        loaded_modules = []
+        for nombre in modulos_names:
+            try:
+                module = importlib.import_module(f"src.infrastructure.extractors.bancolombia.{nombre}")
+                loaded_modules.append(module)
+            except Exception as e:
+                print(f"Error importando extractor {nombre}: {e}")
+        return loaded_modules
+
+    def _extraer_movimientos(self, file_obj: Any, tipo_cuenta: str, cuenta_id: int = None) -> List[Dict[str, Any]]:
+        """Extrae movimientos usando los extractores configurados."""
+        modulos = self._obtener_modulos_extractor_movimientos(cuenta_id)
+        
+        if modulos:
+            for module in modulos:
                 try:
-                    c = self.repositorio.contar_movimientos_similares(
-                        fecha=fecha,
-                        valor=valor,
-                        referencia=ref,
-                        cuenta_id=cuenta_id, # Importante: Usar cuenta del contexto
-                        descripcion=desc
-                    )
-                    db_initial_counts[sig] = c
-                except Exception as e:
-                    resultado['errores'].append(f"Error verificando duplicados para {desc}: {e}")
-                    db_initial_counts[sig] = 999 # Bloquear inserción si falla chequeo
-            
-            inserted_counts_in_batch = defaultdict(int)
-            
-            for i, mov in enumerate(movimientos):
-                try:
-                    # 2. Completar datos faltantes
-                    mov.cuenta_id = cuenta_id
-                    mov.moneda_id = moneda_id
-                    
-                    # 3. Verificar si debemos insertar este
-                    sig = signatures[i]
-                    
-                    # Queremos que Total = Max(FileCount, DBCount)
-                    # Insertamos si no hemos completado el "Delta" necesario
-                    # Delta = Max(0, FileCount - DBCount)
-                    # Si DB ya tiene 2 y File trae 2 -> Delta 0. Insertamos 0.
-                    # Si DB tiene 1 y File trae 2 -> Delta 1. Insertamos 1.
-                    # Si DB tiene 0 y File trae 2 -> Delta 2. Insertamos 2.
-                    
-                    needed = max(0, file_counts[sig] - db_initial_counts.get(sig, 0))
-                    
-                    if inserted_counts_in_batch[sig] < needed:
-                        # 4. Guardar
-                        self.repositorio.guardar(mov)
-                        resultado['nuevos'] += 1
-                        inserted_counts_in_batch[sig] += 1
-                    else:
-                        resultado['duplicados'] += 1
+                    if hasattr(file_obj, 'seek'): file_obj.seek(0)
+                    raw_movs = module.extraer_movimientos(file_obj)
+                    if raw_movs:
+                        for m in raw_movs:
+                            if m.get('description'):
+                                m['descripcion'] = m['description'].strip().title()
+                            elif m.get('descripcion'):
+                                m['descripcion'] = m['descripcion'].strip().title()
                         
+                        if tipo_cuenta == 'MasterCardUSD':
+                            raw_movs = [m for m in raw_movs if m.get('moneda') == 'USD']
+                        elif tipo_cuenta == 'MasterCardPesos':
+                            raw_movs = [m for m in raw_movs if m.get('moneda') == 'COP']
+                        return raw_movs
                 except Exception as e:
-                    resultado['errores'].append(f"Error procesando movimiento {mov.descripcion}: {str(e)}")
-                    
-        except Exception as e:
-            resultado['errores'].append(f"Error crítico leyendo archivo: {str(e)}")
-            
-        return resultado
+                    print(f"DEBUG: Extractor fallo: {e}")
+                    continue
+        return []
+
+    def analizar_archivo(self, file_obj: Any, filename: str, tipo_cuenta: str, cuenta_id: Optional[int] = None) -> Dict[str, Any]:
+        """Analiza el archivo previo a la carga (Previsualización)."""
+        raw_movs = self._extraer_movimientos(file_obj, tipo_cuenta, cuenta_id)
+        resultado_detalle = []
+        stats = {"leidos": len(raw_movs), "duplicados": 0, "nuevos": 0, "actualizables": 0}
+        
+        for raw in raw_movs:
+            try:
+                es_usd = raw.get('moneda') == 'USD'
+                valor_para_check = 0 if es_usd else raw['valor']
+                usd_val = raw['valor'] if es_usd else None
+                
+                es_duplicado = self.movimiento_repo.existe_movimiento(
+                    fecha=raw['fecha'], valor=valor_para_check,
+                    referencia=raw.get('referencia', ''), cuenta_id=cuenta_id,
+                    descripcion=raw['descripcion'], usd=usd_val
+                )
+
+                es_actualizable = False
+                descripcion_actual = None
+
+                if not es_duplicado and cuenta_id:
+                    soft_match = self.movimiento_repo.obtener_exacto(
+                        cuenta_id=cuenta_id, fecha=raw['fecha'],
+                        valor=valor_para_check, referencia=None, descripcion=None
+                    )
+                    if soft_match:
+                        es_actualizable = True
+                        descripcion_actual = soft_match.descripcion
+
+                if not es_duplicado and tipo_cuenta in ['MasterCardPesos', 'MasterCardUSD']:
+                    posible_duplicado = self.movimiento_repo.existe_movimiento(
+                        fecha=raw['fecha'], valor=valor_para_check,
+                        referencia=raw.get('referencia', ''), cuenta_id=cuenta_id,
+                        descripcion='', usd=usd_val
+                    )
+                    if posible_duplicado: es_duplicado = True
+
+                if es_duplicado: stats["duplicados"] += 1
+                elif es_actualizable: stats["actualizables"] += 1
+                else: stats["nuevos"] += 1
+                
+                resultado_detalle.append({
+                    "fecha": raw['fecha'], "descripcion": raw['descripcion'],
+                    "referencia": raw.get('referencia', ''), "valor": raw['valor'],
+                    "moneda": raw.get('moneda', 'COP'), "es_duplicado": es_duplicado,
+                    "es_actualizable": es_actualizable, "descripcion_actual": descripcion_actual
+                })
+            except Exception as e:
+                stats["nuevos"] += 1
+                resultado_detalle.append({"fecha": "Error", "descripcion": str(e), "es_duplicado": False})
+                
+        resultado_detalle.sort(key=lambda x: x['fecha'] if x['fecha'] else '1900-01-01', reverse=True)
+        resultado_detalle.sort(key=lambda x: 0 if not x['es_duplicado'] else 1)
+        
+        return {"estadisticas": stats, "movimientos": resultado_detalle}
+
+    def procesar_archivo(self, file_obj: Any, filename: str, tipo_cuenta: str, cuenta_id: int, actualizar_descripciones: bool = False) -> Dict[str, Any]:
+        """Carga formal de los movimientos a la base de datos."""
+        raw_movs = self._extraer_movimientos(file_obj, tipo_cuenta, cuenta_id)
+        insertados, actualizados, duplicados, errores = 0, 0, 0, 0
+        
+        for raw in raw_movs:
+            try:
+                es_usd = raw.get('moneda') == 'USD'
+                valor_para_bd = 0 if es_usd else raw['valor']
+                valor_para_check = 0 if es_usd else raw['valor']
+                usd_val = raw['valor'] if es_usd else None
+                moneda_id = 1 if es_usd else self._obtener_id_moneda(raw.get('moneda', 'COP'))
+                
+                existe = self.movimiento_repo.existe_movimiento(
+                    fecha=raw['fecha'], valor=valor_para_check,
+                    referencia=raw.get('referencia', ''), cuenta_id=cuenta_id,
+                    descripcion=raw['descripcion'], usd=usd_val
+                )
+                
+                if not existe and tipo_cuenta in ['MasterCardPesos', 'MasterCardUSD']:
+                    existe = self.movimiento_repo.existe_movimiento(
+                        fecha=raw['fecha'], valor=valor_para_check,
+                        referencia=raw.get('referencia', ''), cuenta_id=cuenta_id,
+                        descripcion='', usd=usd_val
+                    )
+                
+                if existe:
+                    duplicados += 1
+                    continue
+                
+                if actualizar_descripciones:
+                    soft_match = self.movimiento_repo.obtener_exacto(
+                        cuenta_id=cuenta_id, fecha=raw['fecha'],
+                        valor=valor_para_check, referencia=None, descripcion=None
+                    )
+                    if soft_match:
+                        soft_match.descripcion = raw['descripcion']
+                        if raw.get('referencia'): soft_match.referencia = raw['referencia']
+                        self.movimiento_repo.guardar(soft_match)
+                        actualizados += 1
+                        continue
+
+                nuevo_mov = Movimiento(
+                    fecha=raw['fecha'], descripcion=raw['descripcion'],
+                    referencia=raw.get('referencia', ''), valor=valor_para_bd,
+                    moneda_id=moneda_id, cuenta_id=cuenta_id, usd=usd_val
+                )
+                self.movimiento_repo.guardar(nuevo_mov)
+                insertados += 1
+            except:
+                errores += 1
+                
+        return {
+            "archivo": filename, "total_extraidos": len(raw_movs),
+            "nuevos_insertados": insertados, "actualizados": actualizados,
+            "duplicados": duplicados, "errores": errores
+        }

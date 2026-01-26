@@ -44,13 +44,39 @@ export const conciliacionService = {
         return handleResponse(response)
     },
 
-    async cargarExtracto(file: File, tipoCuenta: string, cuentaId: number, year: number | undefined, month: number | undefined) {
+    async cargarExtracto(
+        file: File,
+        tipoCuenta: string,
+        cuentaId: number,
+        year: number | undefined,
+        month: number | undefined,
+        overrides?: {
+            saldo_anterior?: number
+            entradas?: number
+            salidas?: number
+            saldo_final?: number
+        },
+        movimientos?: any[] // New: Confirmed movements
+    ) {
         const formData = new FormData()
         formData.append('file', file)
         formData.append('tipo_cuenta', tipoCuenta)
         formData.append('cuenta_id', cuentaId.toString())
         if (year) formData.append('year', year.toString())
         if (month) formData.append('month', month.toString())
+
+        // Append overrides if present
+        if (overrides) {
+            if (overrides.saldo_anterior !== undefined) formData.append('saldo_anterior', overrides.saldo_anterior.toString())
+            if (overrides.entradas !== undefined) formData.append('entradas', overrides.entradas.toString())
+            if (overrides.salidas !== undefined) formData.append('salidas', overrides.salidas.toString())
+            if (overrides.saldo_final !== undefined) formData.append('saldo_final', overrides.saldo_final.toString())
+        }
+
+        // Append movements JSON if present
+        if (movimientos) {
+            formData.append('movimientos_json', JSON.stringify(movimientos))
+        }
 
         const response = await fetch(`${API_BASE_URL}/api/conciliaciones/cargar-extracto`, {
             method: 'POST',

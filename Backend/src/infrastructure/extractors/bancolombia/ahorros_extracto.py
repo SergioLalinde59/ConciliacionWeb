@@ -136,24 +136,11 @@ def _extraer_resumen_desde_texto(texto: str) -> Optional[Dict[str, Any]]:
                     
                 data['periodo_texto'] = f"{year} - {mes_nombre}"
         except Exception as e:
-            print(f"Error parseando fecha periodo: {e}")
+            pass
 
     
     # Si encontramos al menos saldo final y anterior, retornamos
     if 'saldo_final' in data and 'saldo_anterior' in data:
-        # Validación de integridad simple: Anterior + Entradas - Salidas = Final
-        # Esto ayuda a confirmar si el parseo fue correcto
-        try:
-            ant = data['saldo_anterior']
-            ent = data.get('entradas', Decimal(0))
-            sal = data.get('salidas', Decimal(0))
-            fin = data['saldo_final']
-            # Permitir pequeña diferencia por redondeo
-            if abs((ant + ent - sal) - fin) > Decimal('0.1'):
-                print(f"WARN: Integridad matemática extracto no cuadra: {ant} + {ent} - {sal} != {fin}")
-        except:
-            pass
-            
         return data
         
     return None

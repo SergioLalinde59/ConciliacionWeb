@@ -24,15 +24,21 @@ import {
     FileText,
     FileCog,
     GitCompare,
-    RefreshCw
+    RefreshCw,
+    Shield,
+    Settings,
+    HardDrive,
+    AlertCircle
 } from 'lucide-react';
 
 export const Sidebar = () => {
     const location = useLocation();
     const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({
-        maestros: true,
+        maestros: false,
         movimientos: true,
-        reportes: true
+        reportes: false,
+        configuracion: false,
+        mantenimiento: false
     });
 
     const toggleSection = (section: string) => {
@@ -50,16 +56,21 @@ export const Sidebar = () => {
         { name: 'Alias Terceros', path: '/maestros/terceros-descripciones', icon: ListTodo },
         { name: 'Centros de Costos', path: '/maestros/centros-costos', icon: Layers },
         { name: 'Conceptos', path: '/maestros/conceptos', icon: Tags },
+    ];
+
+    const menuConfiguracion = [
         { name: 'Config. Filtros', path: '/maestros/config-filtros', icon: Filter },
+        { name: 'Config. Valores Pendientes', path: '/maestros/config-valores-pendientes', icon: AlertCircle },
         { name: 'Reglas Auto', path: '/maestros/reglas', icon: Zap },
         { name: 'Reglas Normalización', path: '/maestros/alias', icon: RefreshCw },
         { name: 'Extractores', path: '/maestros/extractores', icon: FileCog },
+        { name: 'Matching Inteligente', path: '/maestros/matching', icon: Settings },
     ];
 
     const menuMovimientos = [
         { name: 'Cargar Movimiento', path: '/movimientos/cargar', icon: UploadCloud },
         { name: 'Cargar Extractos', path: '/conciliacion/cargar-extracto', icon: FileText },
-        { name: 'Matching Inteligente', path: '/conciliacion/matching', icon: GitCompare },
+        { name: 'Procesar Matching', path: '/conciliacion/matching', icon: GitCompare },
         { name: 'Por Clasificar', path: '/movimientos/clasificar', icon: ListTodo },
         { name: 'Conciliación', path: '/conciliacion', icon: ClipboardCheck },
         { name: 'Movimientos', path: '/movimientos', icon: Receipt },
@@ -74,9 +85,17 @@ export const Sidebar = () => {
         { name: 'Descargar Movimientos', path: '/reportes/descargar', icon: Download },
     ];
 
+    const menuMantenimiento = [
+        { name: 'Reiniciar Periodo', path: '/herramientas/mantenimiento/reset-periodo', icon: RefreshCw },
+        { name: 'Configuración', path: '/herramientas/mantenimiento/configuracion', icon: Settings },
+        { name: 'Datos', path: '/herramientas/mantenimiento/backups', icon: Download },
+        { name: 'Maestros', path: '/herramientas/mantenimiento/maestros', icon: Shield },
+        { name: 'Sistema Completo', path: '/herramientas/mantenimiento/sistema', icon: HardDrive },
+    ];
+
     const isActive = (path: string) => location.pathname === path;
 
-    const renderMenuSection = (title: string, items: typeof menuMaestros, sectionKey: string) => (
+    const renderMenuSection = (title: string, items: any[], sectionKey: string) => (
         <div className="px-4 mt-4">
             <button
                 onClick={() => toggleSection(sectionKey)}
@@ -132,9 +151,11 @@ export const Sidebar = () => {
                     </Link>
                 </div>
 
-                {renderMenuSection('Maestros', menuMaestros, 'maestros')}
                 {renderMenuSection('Movimientos', menuMovimientos, 'movimientos')}
                 {renderMenuSection('Reportes', menuReportes, 'reportes')}
+                {renderMenuSection('Configuración', menuConfiguracion, 'configuracion')}
+                {renderMenuSection('Maestros', menuMaestros, 'maestros')}
+                {renderMenuSection('Mantenimiento', menuMantenimiento, 'mantenimiento')}
             </nav>
 
             <div className="p-4 border-t border-slate-800">

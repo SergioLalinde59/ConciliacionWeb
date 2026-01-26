@@ -466,7 +466,8 @@ def ejecutar_matching(
             return calcular_stat_movimientos(valid_items)
 
         # Filtrar listas de matches por estado
-        ok_list = [m for m in matches_finales if m.estado == MatchEstado.OK]
+        # IMPORTANTE: OK debe incluir MANUAL para que las estadísticas cierren
+        ok_list = [m for m in matches_finales if m.estado in [MatchEstado.OK, MatchEstado.MANUAL]]
         probables_list = [m for m in matches_finales if m.estado == MatchEstado.PROBABLE]
         sin_match_list = [m for m in matches_finales if m.estado == MatchEstado.SIN_MATCH]
         ignorados_list = [m for m in matches_finales if m.estado == MatchEstado.IGNORADO]
@@ -646,6 +647,32 @@ def desvincular(
     except Exception as e:
         logger.error(f"Error desvinculando: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error eliminando vinculación: {str(e)}")
+
+
+@router.post("/desvincular-todo/{cuenta_id}/{year}/{month}")
+def desvincular_todo(
+    cuenta_id: int,
+    year: int,
+    month: int,
+    conciliacion_service: ConciliacionService = Depends(get_conciliacion_service)
+):
+    """
+    Elimina TODAS las vinculaciones de un periodo para reiniciar el proceso.
+    Tambien resetea los saldos del sistema en la conciliación.
+    """
+    try:
+        logger.info(f"Desvinculando TODO el periodo para cuenta {cuenta_id}, {year}/{month}")
+        
+        eliminados = conciliacion_service.resetear_periodo(cuenta_id, year, month)
+        
+        return {
+            "mensaje": f"Se eliminaron {eliminados} vinculaciones exitosamente y se reinicio el periodo",
+            "eliminados": eliminados
+        }
+        
+    except Exception as e:
+        logger.error(f"Error en desvinculación masiva: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error eliminando todas las vinculaciones: {str(e)}")
 
 
 @router.post("/ignorar", response_model=MovimientoMatchResponse)

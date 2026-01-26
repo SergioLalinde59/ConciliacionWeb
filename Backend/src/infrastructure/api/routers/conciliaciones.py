@@ -206,22 +206,52 @@ async def cargar_extracto(
     cuenta_id: int = Form(...),
     year: Optional[int] = Form(None),
     month: Optional[int] = Form(None),
+    # Optional overrides for extract summary logic
+    saldo_anterior: Optional[Decimal] = Form(None),
+    entradas: Optional[Decimal] = Form(None),
+    salidas: Optional[Decimal] = Form(None),
+    saldo_final: Optional[Decimal] = Form(None),
+    # New: JSON string with confirmed movements
+    movimientos_json: Optional[str] = Form(None),
     service: ProcesadorArchivosService = Depends(get_procesador_service)
 ):
     """
     Carga un extracto y actualiza la conciliación del periodo.
+    Permite sobrescribir los totales del extracto y LA LISTA DE MOVIMIENTOS si se envían explícitamente.
     """
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Solo se permiten archivos PDF")
 
     try:
-        resultado = await service.procesar_extracto(file.file, file.filename, tipo_cuenta, cuenta_id, year, month)
+        # Prepare overrides dict if any value is present
+        overrides = {}
+        if saldo_anterior is not None: overrides['saldo_anterior'] = saldo_anterior
+        if entradas is not None: overrides['entradas'] = entradas
+        if salidas is not None: overrides['salidas'] = salidas
+        if saldo_final is not None: overrides['saldo_final'] = saldo_final
+        
+        # Parse confirmed movements if present
+        movimientos_confirmados = None
+        if movimientos_json:
+            import json
+            try:
+                movimientos_confirmados = json.loads(movimientos_json)
+            except json.JSONDecodeError:
+                raise ValueError("Format error in movimientos_json")
+
+        resultado = await service.procesar_extracto(
+            file.file, 
+            file.filename, 
+            tipo_cuenta, 
+            cuenta_id, 
+            year, 
+            month,
+            overrides=overrides,
+            movimientos_confirmados=movimientos_confirmados
+        )
+        
         # Asegurar que periodo_texto se incluya si es una instancia de modelo
         if hasattr(resultado, 'periodo_texto'):
-            # Forzar la inclusión de la propiedad en el response
-            # Como resultado es un objeto Conciliacion, Pydantic debería leerlo si from_attributes=True.
-            # Pero a veces las @property no se serializan automáticamente.
-            # Vamos a devolver un dict explicitamente mezclado.
             return resultado
         return resultado
     except ValueError as ve:

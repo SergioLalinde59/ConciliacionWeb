@@ -50,3 +50,31 @@ export const configFiltrosCentrosCostosService = {
     eliminar: (id: number): Promise<void> =>
         fetch(`${API_BASE_URL}/api/config-filtros-centros-costos/${id}`, { method: 'DELETE' }).then(handleResponse)
 }
+
+/**
+ * Servicio para configuración de valores pendientes
+ */
+export const configValoresPendientesService = {
+    listar: (): Promise<any[]> =>
+        fetch(`${API_BASE_URL}/api/config-valores-pendientes`).then(handleResponse),
+
+    listarPorTipo: (tipo: string): Promise<number[]> =>
+        fetch(`${API_BASE_URL}/api/config-valores-pendientes/tipo/${tipo}`).then(handleResponse),
+
+    crear: (dto: { tipo: string, valor_id: number, descripcion: string, activo: boolean }): Promise<any> =>
+        fetch(`${API_BASE_URL}/api/config-valores-pendientes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dto)
+        }).then(handleResponse),
+
+    actualizar: (id: number, dto: { tipo: string, valor_id: number, descripcion: string, activo: boolean }): Promise<any> =>
+        fetch(`${API_BASE_URL}/api/config-valores-pendientes/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dto)
+        }).then(handleResponse),
+
+    eliminar: (id: number): Promise<void> =>
+        fetch(`${API_BASE_URL}/api/config-valores-pendientes/${id}`, { method: 'DELETE' }).then(handleResponse)
+}

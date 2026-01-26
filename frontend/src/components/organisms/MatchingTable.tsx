@@ -571,7 +571,7 @@ export const MatchingTable = ({
                                                                 e.stopPropagation()
                                                                 onCrear(match)
                                                             }}
-                                                            className="!p-1 text-blue-600 hover:text-blue-700 bg-blue-50 border-blue-100"
+                                                            className="!p-1 !text-blue-600 hover:!text-blue-700 bg-blue-50 border-blue-100"
                                                             title="Crear movimiento en sistema"
                                                         >
                                                             <Icon name="Check" size={15} />

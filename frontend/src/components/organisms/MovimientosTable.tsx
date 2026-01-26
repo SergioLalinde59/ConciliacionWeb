@@ -94,7 +94,8 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, onDelete, total
                     {new Intl.NumberFormat('es-CO', {
                         style: 'currency',
                         currency: 'COP',
-                        minimumFractionDigits: 1
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
                     }).format(row.valor)}
                 </span>
             )
@@ -188,13 +189,13 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, onDelete, total
                         {movimientos.length} registros
                     </span>
                     <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full text-xs font-bold shadow-sm">
-                        Ingresos: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(totales.ingresos)}
+                        Ingresos: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(totales.ingresos)}
                     </span>
                     <span className="px-3 py-1 bg-rose-50 text-rose-700 border border-rose-100 rounded-full text-xs font-bold shadow-sm">
-                        Egresos: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(totales.egresos)}
+                        Egresos: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(totales.egresos)}
                     </span>
                     <span className={`px-3 py-1 border rounded-full text-xs font-bold shadow-sm ${totales.saldo >= 0 ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
-                        Saldo: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(totales.saldo)}
+                        Saldo: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(totales.saldo)}
                     </span>
                 </div>
             </div>

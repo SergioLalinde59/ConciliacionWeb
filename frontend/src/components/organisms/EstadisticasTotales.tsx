@@ -21,6 +21,7 @@ export const EstadisticasTotales = ({ ingresos, egresos, saldo }: EstadisticasTo
                         value={ingresos}
                         className="text-2xl font-bold text-emerald-600"
                         colorize={false}
+                        decimals={0}
                     />
                 </div>
                 <div className="p-3 bg-emerald-50 rounded-full text-emerald-600">
@@ -34,6 +35,7 @@ export const EstadisticasTotales = ({ ingresos, egresos, saldo }: EstadisticasTo
                         value={egresos}
                         className="text-2xl font-bold text-rose-600"
                         colorize={false}
+                        decimals={0}
                     />
                 </div>
                 <div className="p-3 bg-rose-50 rounded-full text-rose-600">
@@ -47,6 +49,7 @@ export const EstadisticasTotales = ({ ingresos, egresos, saldo }: EstadisticasTo
                         value={saldo}
                         className={`text-2xl font-bold ${saldo >= 0 ? 'text-blue-600' : 'text-rose-600'}`}
                         colorize={false}
+                        decimals={0}
                     />
                 </div>
                 <div className="p-3 bg-blue-50 rounded-full text-blue-600">

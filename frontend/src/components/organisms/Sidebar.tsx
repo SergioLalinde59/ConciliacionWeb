@@ -20,7 +20,6 @@ import {
     Sparkles,
     PieChart,
     Filter,
-    ClipboardCheck,
     FileText,
     FileCog,
     GitCompare,
@@ -72,7 +71,6 @@ export const Sidebar = () => {
         { name: 'Cargar Extractos', path: '/conciliacion/cargar-extracto', icon: FileText },
         { name: 'Procesar Matching', path: '/conciliacion/matching', icon: GitCompare },
         { name: 'Por Clasificar', path: '/movimientos/clasificar', icon: ListTodo },
-        { name: 'Conciliación', path: '/conciliacion', icon: ClipboardCheck },
         { name: 'Movimientos', path: '/movimientos', icon: Receipt },
         { name: 'Sugerencias Reclasif.', path: '/movimientos/sugerencias', icon: Sparkles },
     ];

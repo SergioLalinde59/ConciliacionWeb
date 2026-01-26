@@ -141,11 +141,12 @@ export const ConciliacionPage = () => {
         // Flattened fields for Sorting
         sistema_entradas: number;
         sistema_salidas: number;
-        sistema_saldo_final: number;
         extracto_saldo_anterior: number;
         extracto_entradas: number;
         extracto_salidas: number;
         extracto_saldo_final: number;
+        dif_in: number;
+        dif_out: number;
         diferencia: number;
         // Context
         conciliacion: Conciliacion | undefined;
@@ -167,12 +168,13 @@ export const ConciliacionPage = () => {
                         // Flattened Values (default to 0 to ensure sorting works on numbers)
                         sistema_entradas: conc?.sistema_entradas || 0,
                         sistema_salidas: conc?.sistema_salidas || 0,
-                        sistema_saldo_final: conc?.sistema_saldo_final || 0,
                         extracto_saldo_anterior: conc?.extracto_saldo_anterior || 0,
                         extracto_entradas: conc?.extracto_entradas || 0,
                         extracto_salidas: conc?.extracto_salidas || 0,
                         extracto_saldo_final: conc?.extracto_saldo_final || 0,
-                        diferencia: (conc?.extracto_saldo_final || 0) - (conc?.sistema_saldo_final || 0),
+                        dif_in: (conc?.extracto_entradas || 0) - (conc?.sistema_entradas || 0),
+                        dif_out: (conc?.extracto_salidas || 0) - (conc?.sistema_salidas || 0),
+                        diferencia: ((conc?.extracto_entradas || 0) - (conc?.sistema_entradas || 0)) - ((conc?.extracto_salidas || 0) - (conc?.sistema_salidas || 0)),
                         conciliacion: conc
                     });
                 });
@@ -212,10 +214,10 @@ export const ConciliacionPage = () => {
         {
             key: 'extracto_saldo_anterior',
             header: 'Saldo Ant',
-            accessor: (row) => <CurrencyDisplay value={row.extracto_saldo_anterior} />,
+            accessor: (row) => <CurrencyDisplay value={row.extracto_saldo_anterior} decimals={0} />,
             align: 'right',
             headerClassName: 'bg-emerald-50 text-emerald-800 border-l border-b-2 border-emerald-200',
-            cellClassName: 'border-l border-gray-100 text-gray-600',
+            cellClassName: 'border-l border-gray-100 text-gray-600 text-xs',
             sortable: true
         },
         {
@@ -224,7 +226,7 @@ export const ConciliacionPage = () => {
             accessor: (row) => <CurrencyDisplay value={row.extracto_entradas} />,
             align: 'right',
             headerClassName: 'bg-emerald-50 text-emerald-800 border-b-2 border-emerald-200',
-            cellClassName: 'text-gray-600',
+            cellClassName: 'text-gray-600 text-xs',
             sortable: true
         },
         {
@@ -233,7 +235,7 @@ export const ConciliacionPage = () => {
             accessor: (row) => <CurrencyDisplay value={row.extracto_salidas} />,
             align: 'right',
             headerClassName: 'bg-emerald-50 text-emerald-800 border-b-2 border-emerald-200',
-            cellClassName: 'text-gray-600',
+            cellClassName: 'text-gray-600 text-xs',
             sortable: true
         },
         {
@@ -242,7 +244,7 @@ export const ConciliacionPage = () => {
             accessor: (row) => <CurrencyDisplay value={row.extracto_saldo_final} className="font-bold" />,
             align: 'right',
             headerClassName: 'bg-emerald-50 text-emerald-800 font-bold border-b-2 border-emerald-200',
-            cellClassName: 'bg-emerald-50/30',
+            cellClassName: 'bg-emerald-50/30 text-xs',
             sortable: true
         },
         // Sistema Columns (Ahora segundo)
@@ -252,7 +254,7 @@ export const ConciliacionPage = () => {
             accessor: (row) => <CurrencyDisplay value={row.sistema_entradas} />,
             align: 'right',
             headerClassName: 'bg-blue-50 text-blue-800 border-l border-b-2 border-blue-200',
-            cellClassName: 'border-l border-gray-100 text-gray-600',
+            cellClassName: 'border-l border-gray-100 text-gray-600 text-xs',
             sortable: true
         },
         {
@@ -261,26 +263,35 @@ export const ConciliacionPage = () => {
             accessor: (row) => <CurrencyDisplay value={row.sistema_salidas} />,
             align: 'right',
             headerClassName: 'bg-blue-50 text-blue-800 border-b-2 border-blue-200',
-            cellClassName: 'text-gray-600',
+            cellClassName: 'text-gray-600 text-xs',
+            sortable: true
+        },
+        // Diferencias
+        {
+            key: 'dif_in',
+            header: 'Dif In',
+            accessor: (row) => <CurrencyDisplay value={row.dif_in} colorize={true} />,
+            align: 'right',
+            headerClassName: 'bg-gray-50 text-gray-700 border-l border-b-2 border-gray-200 text-xs',
+            cellClassName: 'border-l border-gray-50 text-xs',
             sortable: true
         },
         {
-            key: 'sistema_saldo_final',
-            header: 'Saldo Final',
-            accessor: (row) => <CurrencyDisplay value={row.sistema_saldo_final} className="font-bold" />,
+            key: 'dif_out',
+            header: 'Dif Out',
+            accessor: (row) => <CurrencyDisplay value={row.dif_out} colorize={true} />,
             align: 'right',
-            headerClassName: 'bg-blue-50 text-blue-800 font-bold border-b-2 border-blue-200',
-            cellClassName: 'bg-blue-50/30',
+            headerClassName: 'bg-gray-50 text-gray-700 border-b-2 border-gray-200 text-xs',
+            cellClassName: 'text-xs',
             sortable: true
         },
-        // Diferencia
         {
             key: 'diferencia',
-            header: 'Diferencia',
+            header: 'DIF',
             accessor: (row) => <CurrencyDisplay value={row.diferencia} className="font-bold" colorize={true} />,
             align: 'right',
-            headerClassName: 'border-l border-gray-200',
-            cellClassName: 'border-l border-gray-100',
+            headerClassName: 'bg-gray-100 text-gray-900 font-bold border-b-2 border-gray-300',
+            cellClassName: 'bg-gray-50/50 text-xs',
             sortable: true
         },
         // Actions
@@ -325,9 +336,9 @@ export const ConciliacionPage = () => {
 
     const headerGroups = [
         { title: '', colSpan: 1 }, // Cuenta
-        { title: 'Extracto (Manual)', colSpan: 4, className: 'text-center bg-gray-50 border-l border-gray-200 text-emerald-800 bg-emerald-50/50' },
-        { title: 'Sistema (Calculado)', colSpan: 3, className: 'text-center bg-gray-50 border-l border-gray-200 text-blue-800 bg-blue-50/50' },
-        { title: '', colSpan: 1 }, // Diferencia
+        { title: 'EXTRACTO', colSpan: 4, className: 'text-center bg-emerald-50 text-emerald-800 border-l border-emerald-200 text-[10px] font-bold tracking-wider' },
+        { title: 'SISTEMA', colSpan: 2, className: 'text-center bg-blue-50 text-blue-800 border-l border-blue-200 text-[10px] font-bold tracking-wider' },
+        { title: 'DIFERENCIAS', colSpan: 3, className: 'text-center bg-gray-100 text-gray-800 border-l border-gray-300 text-[10px] font-bold tracking-wider' },
         { title: '', colSpan: 1 }, // Acciones
     ];
 

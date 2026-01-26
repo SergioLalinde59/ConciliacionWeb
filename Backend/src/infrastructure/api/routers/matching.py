@@ -168,14 +168,20 @@ def crear_movimientos_lote(
     creados_count = 0
     errores = []
     
+    logger.info(f"Iniciando creación en lote de {len(items)} movimientos.")
+    
     for item in items:
         try:
             # 1. Obtener movimiento del extracto
             mov_extracto = repo_extracto.obtener_por_id(item.movimiento_extracto_id)
             if not mov_extracto:
-                errores.append(f"ID {item.movimiento_extracto_id}: No encontrado en extracto")
+                msg = f"ID {item.movimiento_extracto_id}: No encontrado en extracto"
+                logger.error(msg)
+                errores.append(msg)
                 continue
             
+            logger.debug(f"Procesando item extractor ID {item.movimiento_extracto_id} - Fecha: {mov_extracto.fecha}, Valor: {mov_extracto.valor}")
+
             # 2. Verificar si ya existe el movimiento en el sistema (Duplicado)
             # Esto evita crear movimientos repetidos si el usuario hace clic varias veces o si ya existen.
             mov_sistema_existente = repo_sistema.obtener_exacto(
@@ -210,17 +216,26 @@ def crear_movimientos_lote(
                     valor=mov_extracto.valor,
                     usd=mov_extracto.usd,
                     trm=mov_extracto.trm,
-                    moneda_id=1, # Por defecto COP, TODO: Inferir de cuenta o movimiento
+                    moneda_id=1, # Default COP
                     cuenta_id=mov_extracto.cuenta_id,
-                    # Campos de clasificación vacíos = Pendiente
-                    tercero_id=None,
-                    centro_costo_id=None,
-                    concepto_id=None,
                     detalle="Creado desde conciliación"
                 )
+                
+                # Validar moneda explicitamente si es None (aunque dataclass no lo valida, DB podria fallar)
+                if nuevo_mov.moneda_id is None:
+                    nuevo_mov.moneda_id = 1
+
+                logger.debug(f"Intentando guardar nuevo movimiento: {nuevo_mov.descripcion} | {nuevo_mov.valor}")
                 mov_creado = repo_sistema.guardar(nuevo_mov)
+                
                 if mov_creado and mov_creado.id:
+                    logger.info(f"Movimiento creado exitosamente con ID {mov_creado.id}")
                     creados_count += 1
+                else:
+                    msg = f"ID {item.movimiento_extracto_id}: Fallo al guardar movimiento (sin ID retornado)"
+                    logger.error(msg)
+                    errores.append(msg)
+                    continue
             
             if mov_creado and mov_creado.id:
                 # 4. Auto-vincular (Matching Manual Inmediato)
@@ -257,14 +272,17 @@ def crear_movimientos_lote(
                     notas="Creado/Vinculado desde extracto",
                     created_at=created_at
                 )
-                vinculacion_repo.guardar(match)
+                
+                match_guardado = vinculacion_repo.guardar(match)
+                logger.info(f"Vinculación creada exitosamente ID {match_guardado.id} para Extracto {mov_extracto.id} <-> Sistema {mov_creado.id}")
             else:
-                errores.append(f"ID {item.movimiento_extracto_id}: Error al guardar movimiento")
+                errores.append(f"ID {item.movimiento_extracto_id}: Error lógico, movimiento no disponible")
 
         except Exception as e:
-            logger.error(f"Error procesando item {item.movimiento_extracto_id}: {e}")
+            logger.error(f"Error procesando item {item.movimiento_extracto_id}: {e}", exc_info=True)
             errores.append(f"ID {item.movimiento_extracto_id}: {str(e)}")
             
+    logger.info(f"Finalizado proceso lote. Creados: {creados_count}, Errores: {len(errores)}")
     return {"creados": creados_count, "errores": errores}
 
 

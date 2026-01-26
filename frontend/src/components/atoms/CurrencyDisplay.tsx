@@ -22,6 +22,8 @@ interface CurrencyDisplayProps {
     colorize?: boolean
     /** Si se debe mostrar signo + para positivos */
     showPlusSign?: boolean
+    /** Número de decimales a mostrar. Si se omite, usa el valor por defecto de la moneda. */
+    decimals?: number
 }
 
 /**
@@ -53,21 +55,28 @@ const CURRENCY_CONFIG: Record<CurrencyType, { locale: string, options: Intl.Numb
 export const formatCurrency = (
     value: number,
     currency: CurrencyType = 'COP',
-    showSymbol: boolean = true
+    showSymbol: boolean = true,
+    decimals?: number
 ): string => {
     const config = CURRENCY_CONFIG[currency]
     const numValue = Number(value)
+
+    const formatOptions = {
+        ...config.options,
+        minimumFractionDigits: decimals !== undefined ? decimals : config.options.minimumFractionDigits,
+        maximumFractionDigits: decimals !== undefined ? decimals : config.options.maximumFractionDigits
+    }
 
     // Para TRM, si no mostramos símbolo, formateamos como número
     // Para evitar que salga COP 4.000,00 si el style es currency
     if (!showSymbol) {
         return numValue.toLocaleString(config.locale, {
-            minimumFractionDigits: config.options.minimumFractionDigits,
-            maximumFractionDigits: config.options.maximumFractionDigits
+            minimumFractionDigits: formatOptions.minimumFractionDigits,
+            maximumFractionDigits: formatOptions.maximumFractionDigits
         })
     }
 
-    return new Intl.NumberFormat(config.locale, config.options).format(numValue)
+    return new Intl.NumberFormat(config.locale, formatOptions).format(numValue)
 }
 
 /**
@@ -111,7 +120,8 @@ export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
     showSymbol,
     showCurrency, // deprecated alias for showSymbol
     colorize = true,
-    showPlusSign = false
+    showPlusSign = false,
+    decimals
 }) => {
     // Support deprecated showCurrency prop
     const shouldShowSymbol = showSymbol ?? showCurrency ?? true
@@ -120,7 +130,7 @@ export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
     const colorClass = colorize ? getNumberColorClass(value) : ''
 
     // Formatear el valor
-    const formattedValue = formatCurrency(value, currency, shouldShowSymbol)
+    const formattedValue = formatCurrency(value, currency, shouldShowSymbol, decimals)
 
     // Agregar signo + si es positivo y está habilitado
     const displayValue = showPlusSign && value > 0

@@ -178,12 +178,16 @@ export const ConciliacionMatchingPage = () => {
     const createMovementsMutation = useMutation({
         mutationFn: (items: { movimiento_extracto_id: number, descripcion?: string }[]) =>
             matchingService.crearMovimientosLote(items),
-        onSuccess: () => {
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['matching', cuentaId, year, month] })
+            if (data && data.errores && data.errores.length > 0) {
+                alert(`Atención: Se crearon ${data.creados} registros, pero hubo errores:\n${data.errores.join('\n')}`);
+            }
         },
-        onError: (error) => {
+        onError: (error: any) => {
             console.error(error)
-            alert('Error al crear movimientos')
+            const msg = error.response?.data?.detail || error.message || 'Error desconocido';
+            alert(`Error al crear movimientos: ${msg}`)
         }
     })
 

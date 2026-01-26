@@ -317,22 +317,24 @@ def crear_movimiento(
     logger.info(f"Creando nuevo movimiento: {dto.descripcion} por {dto.valor}")
     _validar_catalogos(dto, repo_cuenta, repo_moneda, repo_tercero, repo_centro_costo, repo_concepto)
     
-    nuevo = Movimiento(
-        id=None,
-        fecha=dto.fecha,
-        descripcion=dto.descripcion,
-        referencia=dto.referencia or "",
-        valor=Decimal(str(dto.valor)),
-        usd=Decimal(str(dto.usd)) if dto.usd else None,
-        trm=Decimal(str(dto.trm)) if dto.trm else None,
-        moneda_id=dto.moneda_id,
-        cuenta_id=dto.cuenta_id,
-        tercero_id=dto.tercero_id,
-        centro_costo_id=dto.centro_costo_id,
-        concepto_id=dto.concepto_id,
-        detalle=dto.detalle
-    )
     try:
+        nuevo = Movimiento(
+            id=None,
+            fecha=dto.fecha,
+            descripcion=dto.descripcion,
+            referencia=dto.referencia or "",
+            valor=Decimal(str(dto.valor)),
+            usd=Decimal(str(dto.usd)) if dto.usd else None,
+            trm=Decimal(str(dto.trm)) if dto.trm else None,
+            moneda_id=dto.moneda_id,
+            cuenta_id=dto.cuenta_id,
+            detalle=dto.detalle
+        )
+        # Asignar campos de clasificación vía propiedades (setters)
+        nuevo.tercero_id = dto.tercero_id
+        nuevo.centro_costo_id = dto.centro_costo_id
+        nuevo.concepto_id = dto.concepto_id
+
         guardado = repo.guardar(nuevo)
         logger.info(f"Movimiento guardado con ID {guardado.id}")
         # Recargar para obtener los nombres de las relaciones
@@ -359,27 +361,30 @@ def actualizar_movimiento(
     
     _validar_catalogos(dto, repo_cuenta, repo_moneda, repo_tercero, repo_centro_costo, repo_concepto)
     
-    actualizado = Movimiento(
-        id=id,
-        fecha=dto.fecha,
-        descripcion=dto.descripcion,
-        referencia=dto.referencia or "",
-        valor=Decimal(str(dto.valor)),
-        usd=Decimal(str(dto.usd)) if dto.usd else None,
-        trm=Decimal(str(dto.trm)) if dto.trm else None,
-        moneda_id=dto.moneda_id,
-        cuenta_id=dto.cuenta_id,
-        tercero_id=dto.tercero_id,
-        centro_costo_id=dto.centro_costo_id,
-        concepto_id=dto.concepto_id,
-        detalle=dto.detalle
-    )
     try:
+        actualizado = Movimiento(
+            id=id,
+            fecha=dto.fecha,
+            descripcion=dto.descripcion,
+            referencia=dto.referencia or "",
+            valor=Decimal(str(dto.valor)),
+            usd=Decimal(str(dto.usd)) if dto.usd else None,
+            trm=Decimal(str(dto.trm)) if dto.trm else None,
+            moneda_id=dto.moneda_id,
+            cuenta_id=dto.cuenta_id,
+            detalle=dto.detalle
+        )
+        # Asignar clasificación vía setters (esto creará el detalle automáticamente)
+        actualizado.tercero_id = dto.tercero_id
+        actualizado.centro_costo_id = dto.centro_costo_id
+        actualizado.concepto_id = dto.concepto_id
+
         guardado = repo.guardar(actualizado)
         # Recargar para obtener los nombres
         guardado = repo.obtener_por_id(guardado.id)
         return _to_response(guardado)
     except Exception as e:
+        logger.error(f"Error al actualizar movimiento: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/exportar/datos", response_model=List[dict])

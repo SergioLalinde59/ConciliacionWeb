@@ -2,9 +2,7 @@ from typing import Optional, List, TYPE_CHECKING
 from datetime import date, datetime
 from decimal import Decimal
 from dataclasses import dataclass, field
-
-if TYPE_CHECKING:
-    from src.domain.models.movimiento_detalle import MovimientoDetalle
+from src.domain.models.movimiento_detalle import MovimientoDetalle
 
 @dataclass
 class Movimiento:

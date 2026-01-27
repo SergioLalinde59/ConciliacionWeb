@@ -1,0 +1,153 @@
+import { RotateCcw, CreditCard } from 'lucide-react'
+import { Select } from '../atoms/Select'
+import { Button } from '../atoms/Button'
+import { DateRangeButtons, DateRangeInputs } from '../molecules/DateRangeSelector'
+import { ClassificationFilters } from '../molecules/ClassificationFilters'
+import { FilterToggles } from '../molecules/FilterToggles'
+
+export interface FiltrosReporteProps {
+    // Date filters
+    desde: string
+    hasta: string
+    onDesdeChange: (value: string) => void
+    onHastaChange: (value: string) => void
+
+    // Account filter
+    cuentaId: string
+    onCuentaChange: (value: string) => void
+    cuentas: Array<{ id: number; nombre: string }>
+
+    // Dynamic Exclusion Filters - ALL exclusion filters come from here
+    configuracionExclusion?: Array<{ centro_costo_id: number; etiqueta: string }>;
+    centrosCostosExcluidos?: number[];
+    onCentrosCostosExcluidosChange?: (ids: number[]) => void
+
+    // Pending classification filter
+
+
+    // Classification filters
+    terceroId?: string
+    onTerceroChange?: (value: string) => void
+    centroCostoId?: string
+    onCentroCostoChange?: (value: string) => void
+    conceptoId?: string
+    onConceptoChange?: (value: string) => void
+    terceros?: Array<{ id: number; nombre: string }>
+    centrosCostos?: Array<{ id: number; nombre: string }>
+    conceptos?: Array<{ id: number; nombre: string; centro_costo_id?: number }>
+    showClasificacionFilters?: boolean
+
+    // Income/Expense filters
+    mostrarIngresos?: boolean
+    mostrarEgresos?: boolean
+    onMostrarIngresosChange?: (value: boolean) => void
+    onMostrarEgresosChange?: (value: boolean) => void
+    showIngresosEgresos?: boolean
+
+    // Clear handler
+    onLimpiar: () => void
+}
+
+export const FiltrosReporte = ({
+    desde,
+    hasta,
+    onDesdeChange,
+    onHastaChange,
+    cuentaId,
+    onCuentaChange,
+    cuentas,
+
+    terceroId = '',
+    onTerceroChange,
+    centroCostoId = '',
+    onCentroCostoChange,
+    conceptoId = '',
+    onConceptoChange,
+    terceros = [],
+    centrosCostos = [],
+    conceptos = [],
+    showClasificacionFilters = false,
+    mostrarIngresos = true,
+    mostrarEgresos = true,
+    onMostrarIngresosChange,
+    onMostrarEgresosChange,
+    showIngresosEgresos = false,
+
+    centrosCostosExcluidos = [],
+    onCentrosCostosExcluidosChange,
+    configuracionExclusion = [],
+    onLimpiar
+}: FiltrosReporteProps) => {
+
+    return (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 transition-all hover:shadow-md space-y-3">
+
+            {/* Line 1: Quick Date Buttons */}
+            <DateRangeButtons
+                onDesdeChange={onDesdeChange}
+                onHastaChange={onHastaChange}
+            />
+
+            {/* Line 2: Date Inputs & Account (Grid 3 cols) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <DateRangeInputs
+                    desde={desde}
+                    hasta={hasta}
+                    onDesdeChange={onDesdeChange}
+                    onHastaChange={onHastaChange}
+                />
+
+                <Select
+                    label="Cuenta"
+                    icon={CreditCard}
+                    value={cuentaId}
+                    onChange={(e: any) => onCuentaChange(e.target.value)}
+                    options={[
+                        { value: '', label: 'Todas' },
+                        ...cuentas.map(c => ({ value: c.id, label: c.nombre }))
+                    ]}
+                />
+            </div>
+
+            {/* Line 3: Classification Filters (Row) */}
+            {showClasificacionFilters && (
+                <div>
+                    <ClassificationFilters
+                        terceroId={terceroId}
+                        onTerceroChange={onTerceroChange}
+                        centroCostoId={centroCostoId}
+                        onCentroCostoChange={onCentroCostoChange}
+                        conceptoId={conceptoId}
+                        onConceptoChange={onConceptoChange}
+                        terceros={terceros}
+                        centrosCostos={centrosCostos}
+                        conceptos={conceptos}
+                    />
+                </div>
+            )}
+
+            {/* Line 4: Checkboxes & Clear Button */}
+            <div className="flex flex-col md:flex-row justify-between items-center pt-3 mt-1 border-t border-gray-100 gap-2">
+                <div className="flex-grow">
+                    <FilterToggles
+
+                        mostrarIngresos={mostrarIngresos}
+                        onMostrarIngresosChange={onMostrarIngresosChange}
+                        mostrarEgresos={mostrarEgresos}
+                        onMostrarEgresosChange={onMostrarEgresosChange}
+                        showIngresosEgresos={showIngresosEgresos}
+
+                        configuracionExclusion={configuracionExclusion}
+                        centrosCostosExcluidos={centrosCostosExcluidos}
+                        onCentrosCostosExcluidosChange={onCentrosCostosExcluidosChange}
+                    />
+                </div>
+                <div>
+                    <Button variant="ghost" size="sm" onClick={onLimpiar} icon={RotateCcw}>
+                        Limpiar Filtros
+                    </Button>
+                </div>
+            </div>
+        </div>
+    )
+}

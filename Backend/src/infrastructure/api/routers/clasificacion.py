@@ -179,38 +179,13 @@ def preview_clasificacion_lote(
     NO modifica nada, solo para preview antes de aplicar en lote.
     """
     try:
-        # Buscar pendientes que coinciden con el patrón (ILIKE)
-        from src.infrastructure.database.postgres_movimiento_repository import PostgresMovimientoRepository
+        # Usar buscar_avanzado que ya maneja la lógica de pendientes y el split de tablas
+        movimientos, _ = mov_repo.buscar_avanzado(
+            descripcion_contiene=dto.patron,
+            solo_pendientes=True,
+            limit=50
+        )
         
-        if isinstance(mov_repo, PostgresMovimientoRepository):
-            cursor = mov_repo.conn.cursor()
-            query = """
-                SELECT m.Id, m.Fecha, m.Descripcion, m.Referencia, m.Valor, m.USD, m.TRM, 
-                       m.MonedaID, m.CuentaID, m.TerceroID, m.centro_costo_id, m.ConceptoID, m.created_at, m.Detalle,
-                       c.cuenta AS cuenta_nombre,
-                       mon.moneda AS moneda_nombre,
-                       t.tercero AS tercero_nombre,
-                       cc.centro_costo AS centro_costo_nombre,
-                       con.concepto AS concepto_nombre
-                FROM movimientos m
-                LEFT JOIN cuentas c ON m.CuentaID = c.cuentaid
-                LEFT JOIN monedas mon ON m.MonedaID = mon.monedaid
-                LEFT JOIN terceros t ON m.TerceroID = t.terceroid
-                LEFT JOIN centro_costos cc ON m.centro_costo_id = cc.centro_costo_id
-                LEFT JOIN conceptos con ON m.ConceptoID = con.conceptoid
-                WHERE UPPER(m.Descripcion) LIKE UPPER(%s)
-                  AND (m.TerceroID IS NULL OR m.centro_costo_id IS NULL OR m.ConceptoID IS NULL)
-                ORDER BY m.Fecha DESC
-                LIMIT 50
-            """
-            patron = f"%{dto.patron}%"
-            cursor.execute(query, (patron,))
-            rows = cursor.fetchall()
-            cursor.close()
-            
-            movimientos = [mov_repo._row_to_movimiento(row) for row in rows]
-            return [_to_response(m) for m in movimientos]
-        
-        return []
+        return [_to_response(m) for m in movimientos]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

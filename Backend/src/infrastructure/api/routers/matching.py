@@ -461,14 +461,25 @@ def ejecutar_matching(
         # 7. Calcular estadísticas detalladas
 
         # 7. Calcular estadísticas detalladas
+        # Detectar si es cuenta USD para usar las columnas correctas en stats e integridad
+        cuenta_obj = cuenta_repo.obtener_por_id(cuenta_id)
+        es_usd = cuenta_obj and "USD" in cuenta_obj.cuenta.upper()
+
         def calcular_stat_movimientos(movimientos):
             """Helper para calcular stats de una lista de objetos movimiento o extracto"""
             cantidad = len(movimientos)
-            total = sum(m.valor for m in movimientos)
+            
+            def get_val(m):
+                # Si es cuenta USD, priorizar el campo usd si está disponible
+                if es_usd and hasattr(m, 'usd') and m.usd is not None:
+                    return m.usd
+                return m.valor
+
+            total = sum(get_val(m) for m in movimientos)
             
             # Para ingresos/egresos, usamos la lógica de signo
-            ingresos = sum(m.valor for m in movimientos if m.valor > 0)
-            egresos = sum(m.valor for m in movimientos if m.valor < 0)
+            ingresos = sum(get_val(m) for m in movimientos if get_val(m) > 0)
+            egresos = sum(get_val(m) for m in movimientos if get_val(m) < 0)
             
             return {
                 'cantidad': cantidad,

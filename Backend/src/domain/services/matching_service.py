@@ -81,10 +81,24 @@ class MatchingService:
                     mov_sistema.fecha
                 )
                 
+                # REGLA PARA USD: Si ambos tienen USD, priorizamos USD para el score_valor
+                # En cuentas USD, el valor COP puede ser 0 o inconsistente por TRM.
+                val1 = mov_extracto.valor
+                val2 = mov_sistema.valor
+                tolerancia = config.tolerancia_valor
+
+                if mov_extracto.usd is not None and mov_sistema.usd is not None:
+                    val1 = mov_extracto.usd
+                    val2 = mov_sistema.usd
+                    # Si comparamos USD, una tolerancia de pesos (ej: 500) es muy alta.
+                    # Usamos una tolerancia técnica mínima para USD (ej: 0.01) si la proporcionada es mayor.
+                    if tolerancia > Decimal('1.00'):
+                        tolerancia = Decimal('0.01')
+
                 score_valor = self.calcular_score_valor(
-                    mov_extracto.valor,
-                    mov_sistema.valor,
-                    config.tolerancia_valor
+                    val1,
+                    val2,
+                    tolerancia
                 )
                 
                 score_descripcion = self.calcular_score_descripcion(

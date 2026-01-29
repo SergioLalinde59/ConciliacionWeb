@@ -8,8 +8,7 @@ import {
     Wallet,
     TrendingUp,
     TrendingDown,
-    Unlink,
-    AlertCircle
+    Unlink
 } from 'lucide-react';
 import { mantenimientoService } from '../../api/mantenimientoService';
 import type { DesvinculacionStats } from '../../api/mantenimientoService';
@@ -17,14 +16,17 @@ import { apiService } from '../../services/api';
 import type { Movimiento } from '../../types';
 import { DataTable, type Column } from '../../components/molecules/DataTable';
 import { Button } from '../../components/atoms/Button';
-import { SelectorCuenta } from '../../components/molecules/SelectorCuenta';
 import { ClassificationDisplay } from '../../components/molecules/entities/ClassificationDisplay';
+import { FiltrosReporte } from '../../components/organisms/FiltrosReporte';
 
 export const DesvincularMovimientosPage = () => {
     // Estado principal
     const [fecha, setFecha] = useState<string>('');
     const [fechaFin, setFechaFin] = useState<string>('');
-    const [selectedCuentaId, setSelectedCuentaId] = useState<number | undefined>(undefined);
+    const [selectedCuentaId, setSelectedCuentaId] = useState<string>('');
+    const [terceroId, setTerceroId] = useState<string>('');
+    const [centroCostoId, setCentroCostoId] = useState<string>('');
+    const [conceptoId, setConceptoId] = useState<string>('');
 
     // UI State
     const [loading, setLoading] = useState(false);
@@ -33,7 +35,6 @@ export const DesvincularMovimientosPage = () => {
     const [soloClasificados, setSoloClasificados] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
-    const [confirmingMassive, setConfirmingMassive] = useState(false);
 
     // Data State
     const [stats, setStats] = useState<DesvinculacionStats[] | null>(null);
@@ -45,21 +46,14 @@ export const DesvincularMovimientosPage = () => {
 
 
     // Limpiar resultados al cambiar filtros
+    // Limpiar resultados al cambiar filtros
     useEffect(() => {
         setStats(null);
         setMovimientos([]);
         setSelectedIds(new Set());
         setSuccess(null);
         setError(null);
-
-        // Auto-set fechaFin al último día del mes cuando cambia la fecha de inicio
-        if (fecha) {
-            const [year, month] = fecha.split('-').map(Number);
-            // Para obtener el último día del mes de 'fecha':
-            const endDate = new Date(year, month, 0);
-            setFechaFin(endDate.toISOString().split('T')[0]);
-        }
-    }, [fecha, selectedCuentaId]);
+    }, [fecha, fechaFin, selectedCuentaId, terceroId, centroCostoId, conceptoId]);
 
     const handleAnalizar = async () => {
         if (!fecha || !fechaFin) return;
@@ -73,7 +67,10 @@ export const DesvincularMovimientosPage = () => {
 
         try {
             // 1. Obtener estadísticas (bloqueos y totales)
-            const statsData = await mantenimientoService.analizarDesvinculacion(fecha, fechaFin, selectedCuentaId);
+            // Note: statsData currently only supports basic filtering. 
+            // If the backend `analizarDesvinculacion` endpoint doesn't support extra filters, the stats might be broad.
+            // However, we will trust the user to look at the filtered list.
+            const statsData = await mantenimientoService.analizarDesvinculacion(fecha, fechaFin, selectedCuentaId ? Number(selectedCuentaId) : undefined);
             setStats(statsData);
 
             // 2. Obtener lista de movimientos detallada
@@ -81,7 +78,10 @@ export const DesvincularMovimientosPage = () => {
             const movesResponse = await apiService.movimientos.listar({
                 fecha_inicio: fecha,
                 fecha_fin: fechaFin,
-                cuenta_id: selectedCuentaId,
+                cuenta_id: selectedCuentaId ? Number(selectedCuentaId) : undefined,
+                tercero_id: terceroId ? Number(terceroId) : undefined,
+                centro_costo_id: centroCostoId ? Number(centroCostoId) : undefined,
+                concepto_id: conceptoId ? Number(conceptoId) : undefined,
                 pendiente: !soloClasificados,
                 limit: 1000
             });
@@ -96,24 +96,7 @@ export const DesvincularMovimientosPage = () => {
         }
     };
 
-    const handleDesvincularMasivo = async () => {
-        if (!fecha || !fechaFin) return;
-        setLoading(true);
-        setError(null);
-
-        try {
-            const result = await mantenimientoService.desvincularMovimientos(fecha, backup, selectedCuentaId, fechaFin);
-            setSuccess(result.mensaje);
-
-            // Refresh
-            handleAnalizar();
-            setConfirmingMassive(false);
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Eliminated handleDesvincularMasivo as per user request
 
     const handleDesvincularUno = async (row: Movimiento) => {
         if (!confirm("¿Estás seguro de desvincular este movimiento? Se reseteará a estado pendiente.")) return;
@@ -362,51 +345,45 @@ export const DesvincularMovimientosPage = () => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
 
                 {/* Filters Board */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                    <div className="md:col-span-3 space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">Fecha Inicio</label>
-                        <input
-                            type="date"
-                            value={fecha}
-                            onChange={(e) => setFecha(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-gray-900"
-                        />
-                    </div>
-
-                    <div className="md:col-span-3 space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">Fecha Fin</label>
-                        <input
-                            type="date"
-                            value={fechaFin}
-                            onChange={(e) => setFechaFin(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-gray-900"
-                        />
-                    </div>
-
-                    <div className="md:col-span-4">
-                        <SelectorCuenta
-                            value={selectedCuentaId ?? ''}
-                            onChange={(val) => setSelectedCuentaId(val ? Number(val) : undefined)}
-                            soloConciliables={false}
-                            soloPermiteCarga={true}
-                            showTodas={true}
-                            label="Cuenta Filtro (Opcional)"
-                        />
-                    </div>
-
-                    <div className="md:col-span-2">
+                <FiltrosReporte
+                    desde={fecha}
+                    hasta={fechaFin}
+                    onDesdeChange={setFecha}
+                    onHastaChange={setFechaFin}
+                    cuentaId={selectedCuentaId}
+                    onCuentaChange={setSelectedCuentaId}
+                    terceroId={terceroId}
+                    onTerceroChange={setTerceroId}
+                    centroCostoId={centroCostoId}
+                    onCentroCostoChange={setCentroCostoId}
+                    conceptoId={conceptoId}
+                    onConceptoChange={setConceptoId}
+                    showClasificacionFilters={true}
+                    showIngresosEgresos={false}
+                    soloConciliables={false}
+                    onLimpiar={() => {
+                        setFecha('');
+                        setFechaFin('');
+                        setSelectedCuentaId('');
+                        setTerceroId('');
+                        setCentroCostoId('');
+                        setConceptoId('');
+                        setStats(null);
+                        setMovimientos([]);
+                    }}
+                    extraActions={
                         <Button
                             onClick={handleAnalizar}
                             disabled={!fecha || !fechaFin || analyzing}
-                            className="w-full"
+                            className="min-w-[120px]"
                             variant="primary"
                             icon={Search}
                             isLoading={analyzing}
                         >
                             Analizar
                         </Button>
-                    </div>
-                </div>
+                    }
+                />
 
                 {/* Feedback Messages */}
                 {error && (
@@ -495,21 +472,17 @@ export const DesvincularMovimientosPage = () => {
                                 {selectedIds.size > 0 ? (
                                     <button
                                         onClick={handleDesvincularSeleccion}
-                                        disabled={loading}
+                                        disabled={loading || hasBlockedAccounts}
                                         className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm flex items-center gap-2 transition-transform active:scale-95"
+                                        title={hasBlockedAccounts ? "No se puede desvincular: Periodo conciliado/cerrado" : "Desvincular seleccionados"}
                                     >
                                         <Unlink size={16} />
                                         Desvincular Selección ({selectedIds.size})
                                     </button>
                                 ) : (
-                                    <button
-                                        onClick={() => setConfirmingMassive(true)}
-                                        disabled={hasBlockedAccounts || movimientos.length === 0}
-                                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm flex items-center gap-2 transition-transform active:scale-95"
-                                    >
-                                        <Unlink size={16} />
-                                        Desvincular Todo el Rango
-                                    </button>
+                                    <span className="text-xs text-slate-400 italic px-2">
+                                        Seleccione movimientos para desvincular
+                                    </span>
                                 )}
                             </div>
                         </div>
@@ -531,58 +504,7 @@ export const DesvincularMovimientosPage = () => {
                 )}
             </div>
 
-            {/* Confirmation Modal */}
-            {confirmingMassive && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl border-none max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="bg-amber-500 p-6 text-white flex items-center gap-4">
-                            <div className="p-3 bg-white/20 rounded-full">
-                                <AlertCircle className="h-8 w-8 text-white" />
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-xl">¿Confirmar Desvinculación?</h3>
-                                <p className="text-amber-100 text-xs font-medium tracking-wide mt-1 opacity-90">
-                                    RESET MASIVO DE MOVIMIENTOS
-                                </p>
-                            </div>
-                        </div>
-                        <div className="p-8">
-                            <div className="space-y-4 text-center">
-                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                    <p className="text-slate-500 text-sm font-medium">Registros a desvincular:</p>
-                                    <p className="mt-1 font-black text-gray-900 text-4xl">
-                                        {totalRecords}
-                                    </p>
-                                    {backup && (
-                                        <p className="text-xs text-blue-600 mt-2 flex items-center justify-center gap-1 font-medium">
-                                            <CheckCircle2 size={12} /> Backup habilitado
-                                        </p>
-                                    )}
-                                </div>
-                                <p className="text-sm text-gray-600 leading-relaxed">
-                                    Esta acción reiniciará los movimientos a su estado original (pendientes), perdiendo las clasificaciones actuales y detalles divididos.
-                                </p>
-                            </div>
-
-                            <div className="mt-8 flex gap-3">
-                                <button
-                                    onClick={() => setConfirmingMassive(false)}
-                                    className="flex-1 px-4 py-3 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 font-bold transition-all text-sm uppercase tracking-wide"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={handleDesvincularMasivo}
-                                    className="flex-[2] px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 font-black shadow-lg shadow-amber-200 transition-all text-sm uppercase tracking-wide flex justify-center items-center gap-2"
-                                >
-                                    {loading ? 'Procesando...' : 'Sí, Desvincular'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )
-            }
+            {/* Confirmation Modal removed */}
         </div >
     );
 };

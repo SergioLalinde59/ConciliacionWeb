@@ -357,7 +357,7 @@ export const MovimientoModal = ({ isOpen, onClose, movimiento, onSave, mode = 'c
                         <h3 className="text-sm font-semibold text-gray-700">Clasificación Contable</h3>
 
                         {/* Classification Table */}
-                        <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                        <div className="bg-gray-50 rounded-lg border border-gray-200">
                             <table className="w-full text-sm text-left">
                                 <thead className="text-xs text-gray-500 uppercase bg-gray-100 border-b">
                                     <tr>

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { X, ChevronRight } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { ChevronRight, X } from 'lucide-react'
 import { apiService } from '../services/api'
 import { useReporteDesgloseGastos, useConfiguracionExclusion } from '../hooks/useReportes'
 import { useSessionStorage } from '../hooks/useSessionStorage'
@@ -7,6 +7,7 @@ import { getMesActual } from '../utils/dateUtils'
 import { FiltrosReporte } from '../components/organisms/FiltrosReporte'
 import { EstadisticasTotales } from '../components/organisms/EstadisticasTotales'
 import { CurrencyDisplay } from '../components/atoms/CurrencyDisplay'
+import { DataTable, type Column } from '../components/molecules/DataTable'
 import type { ConfigFiltroExclusion } from '../types/filters'
 
 interface ItemDesglose {
@@ -28,6 +29,8 @@ interface DrilldownLevel {
     sortField: 'nombre' | 'ingresos' | 'egresos' | 'saldo'
 }
 
+type SortField = 'nombre' | 'ingresos' | 'egresos' | 'saldo'
+
 export const ReporteEgresosTerceroPage = () => {
     // Filtros
     const [desde, setDesde] = useSessionStorage('rep_egresos_desde', getMesActual().inicio)
@@ -43,9 +46,11 @@ export const ReporteEgresosTerceroPage = () => {
     const [centrosCostosExcluidos, setCentrosCostosExcluidos] = useSessionStorage<number[] | null>('rep_egresos_centrosCostosExcluidos', null)
     const actualCentrosCostosExcluidos = centrosCostosExcluidos || []
 
-    // State for Sorting and Modals (Re-added)
+    // State for Sorting and Modals
+    // For main table, we track direction. Default is descending (false for asc in original logic which was odd, let's standardize)
+    // Original logic: sortAscTercero = false (descending). sortField = 'egresos'.
     const [sortAscTercero, setSortAscTercero] = useState(false)
-    const [sortFieldTercero, setSortFieldTercero] = useState<'nombre' | 'ingresos' | 'egresos' | 'saldo'>('egresos')
+    const [sortFieldTercero, setSortFieldTercero] = useState<SortField>('egresos')
 
     const [centroCostoModal, setCentroCostoModal] = useState<DrilldownLevel>({
         level: 'centro_costo',
@@ -104,8 +109,6 @@ export const ReporteEgresosTerceroPage = () => {
         fetchCentrosCostos(item.id)
     }
 
-    // Manual fetch for modals to keep it simple without too many dependent queries in the main component body
-    // Ideally these would be separate components with their own queries, but staying consistent with current structure layout.
     const fetchCentrosCostos = (tId: number) => {
         apiService.movimientos.reporteDesgloseGastos({
             nivel: 'centro_costo',
@@ -146,7 +149,8 @@ export const ReporteEgresosTerceroPage = () => {
         })
     }
 
-    const sortData = (data: ItemDesglose[], field: 'nombre' | 'ingresos' | 'egresos' | 'saldo', asc: boolean) => {
+    // Generic sort function
+    const sortData = (data: ItemDesglose[], field: SortField, asc: boolean) => {
         return [...data].sort((a, b) => {
             if (field === 'nombre') {
                 return asc ? a.nombre.localeCompare(b.nombre) : b.nombre.localeCompare(a.nombre)
@@ -157,15 +161,14 @@ export const ReporteEgresosTerceroPage = () => {
         })
     }
 
-    const handleSortTercero = (field: 'nombre' | 'ingresos' | 'egresos' | 'saldo') => {
-        if (field === sortFieldTercero) {
-            // Toggle sort direction if clicking the same field
-            setSortAscTercero(!sortAscTercero)
-        } else {
-            // Set new field and default to descending for numeric, ascending for name
-            setSortFieldTercero(field)
-            setSortAscTercero(field === 'nombre')
-        }
+    const sortedTercerosData = useMemo(() => {
+        return sortData(tercerosData, sortFieldTercero, sortAscTercero)
+    }, [tercerosData, sortFieldTercero, sortAscTercero])
+
+    const handleSortTercero = (key: string, direction: 'asc' | 'desc' | null) => {
+        if (!direction || !key) return
+        setSortFieldTercero(key as SortField)
+        setSortAscTercero(direction === 'asc')
     }
 
     const handleLimpiar = () => {
@@ -186,12 +189,80 @@ export const ReporteEgresosTerceroPage = () => {
         }
     }
 
-
     const totales = {
         ingresos: tercerosData.reduce((acc, curr) => acc + curr.ingresos, 0),
         egresos: tercerosData.reduce((acc, curr) => acc + curr.egresos, 0),
         saldo: tercerosData.reduce((acc, curr) => acc + curr.saldo, 0)
     }
+
+    // Column Definitions
+    const createColumns = (onRowClick?: (item: ItemDesglose) => void): Column<ItemDesglose>[] => [
+        {
+            key: 'nombre',
+            header: 'Nombre',
+            sortable: true,
+            accessor: (row) => (
+                <span
+                    className={`text-sm font-medium text-gray-700 ${onRowClick ? 'cursor-pointer' : ''}`}
+                    onClick={() => onRowClick && onRowClick(row)}
+                >
+                    {row.nombre}
+                </span>
+            )
+        },
+        {
+            key: 'ingresos',
+            header: 'Ingresos',
+            sortable: true,
+            align: 'right',
+            accessor: (row) => (
+                <span className="font-mono text-sm">
+                    <CurrencyDisplay value={row.ingresos} showCurrency={false} />
+                </span>
+            )
+        },
+        {
+            key: 'egresos',
+            header: 'Egresos',
+            sortable: true,
+            align: 'right',
+            accessor: (row) => (
+                <span className="font-mono text-sm">
+                    <CurrencyDisplay value={-row.egresos} showCurrency={false} />
+                </span>
+            )
+        },
+        {
+            key: 'saldo',
+            header: 'Saldo',
+            sortable: true,
+            align: 'right',
+            accessor: (row) => (
+                <span className="font-mono text-sm font-bold">
+                    <CurrencyDisplay value={row.saldo} showCurrency={false} />
+                </span>
+            )
+        }
+    ]
+
+    const mainTableColumns = useMemo(() => [
+        ...createColumns(handleTerceroClick),
+        {
+            key: 'actions',
+            header: 'Acción',
+            align: 'center' as const,
+            width: 'w-20',
+            accessor: (row: ItemDesglose) => (
+                <button
+                    onClick={() => handleTerceroClick(row)}
+                    className="p-1 hover:bg-gray-100 rounded-full transition-colors group"
+                >
+                    <ChevronRight size={16} className="text-gray-300 group-hover:text-blue-500" />
+                </button>
+            )
+        }
+    ], [handleTerceroClick])
+
 
     const Modal = ({ modalState, setModalState, onRowClick }: {
         modalState: DrilldownLevel,
@@ -200,36 +271,31 @@ export const ReporteEgresosTerceroPage = () => {
     }) => {
         if (!modalState.isOpen) return null
 
-        const handleSort = (field: 'nombre' | 'ingresos' | 'egresos' | 'saldo') => {
-            if (field === modalState.sortField) {
-                setModalState((prev: DrilldownLevel) => ({ ...prev, sortAsc: !prev.sortAsc }))
-            } else {
-                setModalState((prev: DrilldownLevel) => ({ ...prev, sortField: field, sortAsc: field === 'nombre' }))
-            }
+        const handleSortModal = (key: string, direction: 'asc' | 'desc' | null) => {
+            if (!direction || !key) return
+            setModalState((prev: DrilldownLevel) => ({
+                ...prev,
+                sortField: key as SortField,
+                sortAsc: direction === 'asc'
+            }))
         }
 
-        const sortDataModal = (data: ItemDesglose[], field: 'nombre' | 'ingresos' | 'egresos' | 'saldo', asc: boolean) => {
-            return [...data].sort((a, b) => {
-                if (field === 'nombre') {
-                    return asc ? a.nombre.localeCompare(b.nombre) : b.nombre.localeCompare(a.nombre)
-                }
-                const valueA = a[field]
-                const valueB = b[field]
-                return asc ? valueA - valueB : valueB - valueA
-            })
-        }
+        const sortedData = useMemo(() => {
+            return sortData(modalState.data, modalState.sortField, modalState.sortAsc)
+        }, [modalState.data, modalState.sortField, modalState.sortAsc])
 
-        const sortedData = sortDataModal(modalState.data, modalState.sortField, modalState.sortAsc)
         const totalesModal = {
             ingresos: modalState.data.reduce((acc, curr) => acc + curr.ingresos, 0),
             egresos: modalState.data.reduce((acc, curr) => acc + curr.egresos, 0),
             saldo: modalState.data.reduce((acc, curr) => acc + curr.saldo, 0)
         }
 
+        const modalColumns = createColumns(onRowClick)
+
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                 <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
-                    {/* Header with title and close button */}
+                    {/* Header */}
                     <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                         <h3 className="text-lg font-bold text-gray-900">{modalState.title}</h3>
                         <button onClick={() => setModalState((prev: DrilldownLevel) => ({ ...prev, isOpen: false }))} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
@@ -237,109 +303,46 @@ export const ReporteEgresosTerceroPage = () => {
                         </button>
                     </div>
 
-                    <div className="overflow-y-auto flex-1 p-0">
-                        <table className="w-full text-left">
-                            {/* Totals Row */}
-                            <thead className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-200">
-                                <tr>
-                                    <td className="py-3 px-4 text-xs font-bold text-gray-700 uppercase">Totales</td>
-                                    <td className="py-3 px-4 text-right">
-                                        <div className="flex flex-col items-end">
-                                            <span className="text-xs text-gray-500 uppercase font-semibold">Ingresos</span>
-                                            <span className="text-sm font-bold text-green-600">
-                                                <CurrencyDisplay value={totalesModal.ingresos} showCurrency={true} />
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="py-3 px-4 text-right">
-                                        <div className="flex flex-col items-end">
-                                            <span className="text-xs text-gray-500 uppercase font-semibold">Egresos</span>
-                                            <span className="text-sm font-bold text-red-600">
-                                                <CurrencyDisplay value={-totalesModal.egresos} showCurrency={true} />
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="py-3 px-4 text-right">
-                                        <div className="flex flex-col items-end">
-                                            <span className="text-xs text-gray-500 uppercase font-semibold">Saldo</span>
-                                            <span className="text-sm font-bold">
-                                                <CurrencyDisplay value={totalesModal.saldo} showCurrency={true} />
-                                            </span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </thead>
+                    <div className="overflow-y-auto flex-1 flex flex-col">
+                        {/* Totals Summary as a separate header section inside modal content */}
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 p-4 grid grid-cols-4 gap-4">
+                            <div className="text-xs font-bold text-gray-700 uppercase flex items-center">Totales</div>
+                            <div className="text-right">
+                                <span className="text-xs text-gray-500 uppercase font-semibold block">Ingresos</span>
+                                <span className="text-sm font-bold text-green-600">
+                                    <CurrencyDisplay value={totalesModal.ingresos} showCurrency={true} />
+                                </span>
+                            </div>
+                            <div className="text-right">
+                                <span className="text-xs text-gray-500 uppercase font-semibold block">Egresos</span>
+                                <span className="text-sm font-bold text-red-600">
+                                    <CurrencyDisplay value={-totalesModal.egresos} showCurrency={true} />
+                                </span>
+                            </div>
+                            <div className="text-right">
+                                <span className="text-xs text-gray-500 uppercase font-semibold block">Saldo</span>
+                                <span className="text-sm font-bold">
+                                    <CurrencyDisplay value={totalesModal.saldo} showCurrency={true} />
+                                </span>
+                            </div>
+                        </div>
 
-                            {/* Column Headers */}
-                            <thead className="bg-gray-50 sticky top-0 text-xs font-bold text-gray-500 uppercase">
-                                <tr>
-                                    <th
-                                        className="py-3 px-4 cursor-pointer hover:bg-gray-100 transition-colors select-none"
-                                        onClick={() => handleSort('nombre')}
-                                    >
-                                        <div className="flex items-center gap-1">
-                                            Nombre
-                                            {modalState.sortField === 'nombre' && (
-                                                <span className="text-blue-600">{modalState.sortAsc ? '↑' : '↓'}</span>
-                                            )}
-                                        </div>
-                                    </th>
-                                    <th
-                                        className="py-3 px-4 text-right cursor-pointer hover:bg-gray-100 transition-colors select-none"
-                                        onClick={() => handleSort('ingresos')}
-                                    >
-                                        <div className="flex items-center justify-end gap-1">
-                                            Ingresos
-                                            {modalState.sortField === 'ingresos' && (
-                                                <span className="text-blue-600">{modalState.sortAsc ? '↑' : '↓'}</span>
-                                            )}
-                                        </div>
-                                    </th>
-                                    <th
-                                        className="py-3 px-4 text-right cursor-pointer hover:bg-gray-100 transition-colors select-none"
-                                        onClick={() => handleSort('egresos')}
-                                    >
-                                        <div className="flex items-center justify-end gap-1">
-                                            Egresos
-                                            {modalState.sortField === 'egresos' && (
-                                                <span className="text-blue-600">{modalState.sortAsc ? '↑' : '↓'}</span>
-                                            )}
-                                        </div>
-                                    </th>
-                                    <th
-                                        className="py-3 px-4 text-right cursor-pointer hover:bg-gray-100 transition-colors select-none"
-                                        onClick={() => handleSort('saldo')}
-                                    >
-                                        <div className="flex items-center justify-end gap-1">
-                                            Saldo
-                                            {modalState.sortField === 'saldo' && (
-                                                <span className="text-blue-600">{modalState.sortAsc ? '↑' : '↓'}</span>
-                                            )}
-                                        </div>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {sortedData.map((item, idx) => (
-                                    <tr
-                                        key={idx}
-                                        onClick={() => onRowClick && onRowClick(item)}
-                                        className={`hover:bg-blue-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
-                                    >
-                                        <td className="py-3 px-4 text-sm text-gray-700">{item.nombre}</td>
-                                        <td className="py-3 px-4 text-sm text-right font-mono">
-                                            <CurrencyDisplay value={item.ingresos} showCurrency={false} />
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-right font-mono">
-                                            <CurrencyDisplay value={-item.egresos} showCurrency={false} />
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-right font-mono font-bold">
-                                            <CurrencyDisplay value={item.saldo} showCurrency={false} />
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                        {/* DataTable */}
+                        <div className="flex-1 overflow-hidden">
+                            <DataTable
+                                data={sortedData}
+                                columns={modalColumns}
+                                getRowKey={(row) => row.id}
+                                sortKey={modalState.sortField}
+                                sortDirection={modalState.sortAsc ? 'asc' : 'desc'}
+                                onSort={handleSortModal}
+                                stickyHeader={true}
+                                showActions={false}
+                                rounded={false}
+                                className="h-full"
+                                rowPy="py-1"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -353,7 +356,7 @@ export const ReporteEgresosTerceroPage = () => {
                 <p className="text-gray-500 text-sm mt-1">Drilldown interactivo de egresos</p>
             </div>
 
-            {/* Filtros usando componente reutilizable */}
+            {/* Filtros */}
             <FiltrosReporte
                 desde={desde}
                 hasta={hasta}
@@ -379,7 +382,6 @@ export const ReporteEgresosTerceroPage = () => {
                 onLimpiar={handleLimpiar}
             />
 
-
             {/* Estadísticas Totales */}
             <EstadisticasTotales
                 ingresos={totales.ingresos}
@@ -387,97 +389,37 @@ export const ReporteEgresosTerceroPage = () => {
                 saldo={totales.saldo}
             />
 
-            {/* Main Content */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50">
+            {/* Main Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                <div className="px-4 py-2 border-b border-gray-50 flex justify-between items-center bg-gray-50 rounded-t-xl">
                     <div>
-                        <h3 className="text-lg font-bold text-gray-800">Egresos por Tercero</h3>
-                        <p className="text-xs text-slate-500">
-                            Ingresos: ${totales.ingresos.toLocaleString('es-CO')} |
-                            Egresos: ${totales.egresos.toLocaleString('es-CO')} |
-                            Saldo: ${totales.saldo.toLocaleString('es-CO')}
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">
-                            {sortAscTercero ? '↑' : '↓'} {sortFieldTercero === 'nombre' ? 'Nombre' : sortFieldTercero === 'ingresos' ? 'Ingresos' : sortFieldTercero === 'egresos' ? 'Egresos' : 'Saldo'}
-                        </span>
+                        <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Egresos por Tercero</h3>
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="bg-white border-b border-gray-100 text-xs font-bold text-gray-500 uppercase">
-                            <tr>
-                                <th
-                                    className="py-3 px-6 cursor-pointer hover:bg-gray-50 transition-colors select-none"
-                                    onClick={() => handleSortTercero('nombre')}
-                                >
-                                    <div className="flex items-center gap-1">
-                                        Tercero
-                                        {sortFieldTercero === 'nombre' && (
-                                            <span className="text-blue-600">{sortAscTercero ? '↑' : '↓'}</span>
-                                        )}
-                                    </div>
-                                </th>
-                                <th
-                                    className="py-3 px-6 text-right cursor-pointer hover:bg-gray-50 transition-colors select-none"
-                                    onClick={() => handleSortTercero('ingresos')}
-                                >
-                                    <div className="flex items-center justify-end gap-1">
-                                        Ingresos
-                                        {sortFieldTercero === 'ingresos' && (
-                                            <span className="text-blue-600">{sortAscTercero ? '↑' : '↓'}</span>
-                                        )}
-                                    </div>
-                                </th>
-                                <th
-                                    className="py-3 px-6 text-right cursor-pointer hover:bg-gray-50 transition-colors select-none"
-                                    onClick={() => handleSortTercero('egresos')}
-                                >
-                                    <div className="flex items-center justify-end gap-1">
-                                        Egresos
-                                        {sortFieldTercero === 'egresos' && (
-                                            <span className="text-blue-600">{sortAscTercero ? '↑' : '↓'}</span>
-                                        )}
-                                    </div>
-                                </th>
-                                <th
-                                    className="py-3 px-6 text-right cursor-pointer hover:bg-gray-50 transition-colors select-none"
-                                    onClick={() => handleSortTercero('saldo')}
-                                >
-                                    <div className="flex items-center justify-end gap-1">
-                                        Saldo
-                                        {sortFieldTercero === 'saldo' && (
-                                            <span className="text-blue-600">{sortAscTercero ? '↑' : '↓'}</span>
-                                        )}
-                                    </div>
-                                </th>
-                                <th className="py-3 px-6 text-center">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {loading ? (
-                                <tr><td colSpan={5} className="py-8 text-center text-sm text-gray-500">Cargando...</td></tr>
-                            ) : sortData(tercerosData, sortFieldTercero, sortAscTercero).map((item, i) => (
-                                <tr key={i} className="hover:bg-blue-50 transition-colors group cursor-pointer" onClick={() => handleTerceroClick(item)}>
-                                    <td className="py-3 px-6 text-sm font-medium text-gray-700">{item.nombre}</td>
-                                    <td className="py-3 px-6 text-sm text-right font-mono">
-                                        <CurrencyDisplay value={item.ingresos} showCurrency={false} />
-                                    </td>
-                                    <td className="py-3 px-6 text-sm text-right font-mono">
-                                        <CurrencyDisplay value={-item.egresos} showCurrency={false} />
-                                    </td>
-                                    <td className="py-3 px-6 text-sm text-right font-mono font-bold">
-                                        <CurrencyDisplay value={item.saldo} showCurrency={false} />
-                                    </td>
-                                    <td className="py-3 px-6 text-center">
-                                        <ChevronRight size={16} className="mx-auto text-gray-300 group-hover:text-blue-500" />
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div
+                    style={{
+                        height: '700px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        background: '#fcfcfc'
+                    }}
+                >
+                    <DataTable
+                        data={sortedTercerosData}
+                        columns={mainTableColumns}
+                        getRowKey={(row) => row.id}
+                        loading={loading}
+                        sortKey={sortFieldTercero}
+                        sortDirection={sortAscTercero ? 'asc' : 'desc'}
+                        onSort={handleSortTercero}
+                        showActions={false}
+                        rounded={false}
+                        stickyHeader={true}
+                        rowPy="py-1"
+                        className="flex-1 overflow-y-auto w-full"
+                        style={{ height: '100%' }}
+                    />
                 </div>
             </div>
 
@@ -487,3 +429,4 @@ export const ReporteEgresosTerceroPage = () => {
         </div>
     )
 }
+

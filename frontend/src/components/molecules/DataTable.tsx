@@ -72,6 +72,23 @@ export interface DataTableProps<T> {
     className?: string
     /** Si la tabla tiene bordes redondeados */
     rounded?: boolean
+    /** Si el header debe ser sticky */
+    stickyHeader?: boolean
+    /** Claves de ordenamiento controlado (opcional) */
+    sortKey?: string | null
+    /** Dirección de ordenamiento controlado (opcional) */
+    sortDirection?: SortDirection
+    /** Callback para cambio de ordenamiento controlado */
+    onSort?: (key: string, direction: SortDirection) => void
+    /** Padding vertical de las filas (default: py-3) */
+    rowPy?: string
+    /** Referencia al contenedor principal (para scroll infinito, etc) */
+    containerRef?: React.RefObject<HTMLDivElement | null>
+    /** Callback de scroll */
+    /** Callback de scroll */
+    onScroll?: React.UIEventHandler<HTMLDivElement>
+    /** Estilos en línea opcionales */
+    style?: React.CSSProperties
 }
 
 type SortDirection = 'asc' | 'desc' | null
@@ -108,15 +125,32 @@ export function DataTable<T extends Record<string, any>>({
     defaultSortDirection = 'asc',
     className = '',
     rounded = true,
+    stickyHeader = false,
+    sortKey: controlledSortKey,
+    sortDirection: controlledSortDirection,
+    onSort,
+    rowPy = 'py-3',
+    containerRef,
+    onScroll,
+    style,
 }: DataTableProps<T>) {
-    const [sortKey, setSortKey] = useState<string | null>(defaultSortKey ?? null)
-    const [sortDirection, setSortDirection] = useState<SortDirection>(defaultSortKey ? defaultSortDirection : null)
+    // Estado interno solo si no se controla externamente
+    const [internalSortKey, setInternalSortKey] = useState<string | null>(defaultSortKey ?? null)
+    const [internalSortDirection, setInternalSortDirection] = useState<SortDirection>(defaultSortKey ? defaultSortDirection : null)
 
-    // Ordenar datos
+    // Determinar qué estado usar
+    const isControlled = controlledSortKey !== undefined
+    const currentSortKey = isControlled ? controlledSortKey : internalSortKey
+    const currentSortDirection = isControlled ? controlledSortDirection : internalSortDirection
+
+    // Ordenar datos (solo si no es controlado)
     const sortedData = useMemo(() => {
-        if (!sortKey || !sortDirection) return data
+        // Si es controlado, asumimos que la data ya viene ordenada o se ordenará arriba
+        if (isControlled) return data
 
-        const column = columns.find(c => c.key === sortKey)
+        if (!currentSortKey || !currentSortDirection) return data
+
+        const column = columns.find(c => c.key === currentSortKey)
         if (!column) return data
 
         const key = column.sortKey ?? column.key
@@ -127,40 +161,47 @@ export function DataTable<T extends Record<string, any>>({
 
             // Manejo de nulls
             if (aVal == null && bVal == null) return 0
-            if (aVal == null) return sortDirection === 'asc' ? 1 : -1
-            if (bVal == null) return sortDirection === 'asc' ? -1 : 1
+            if (aVal == null) return currentSortDirection === 'asc' ? 1 : -1
+            if (bVal == null) return currentSortDirection === 'asc' ? -1 : 1
 
             // Comparación
             if (typeof aVal === 'string' && typeof bVal === 'string') {
-                return sortDirection === 'asc'
+                return currentSortDirection === 'asc'
                     ? aVal.localeCompare(bVal)
                     : bVal.localeCompare(aVal)
             }
 
             if (typeof aVal === 'number' && typeof bVal === 'number') {
-                return sortDirection === 'asc' ? aVal - bVal : bVal - aVal
+                return currentSortDirection === 'asc' ? aVal - bVal : bVal - aVal
             }
 
             return 0
         })
-    }, [data, sortKey, sortDirection, columns])
+    }, [data, currentSortKey, currentSortDirection, columns, isControlled])
 
     // Toggle ordenamiento
     const handleSort = (columnKey: string) => {
         const column = columns.find(c => c.key === columnKey)
         if (!column?.sortable) return
 
-        if (sortKey === columnKey) {
+        let newDirection: SortDirection = 'asc'
+        let newKey: string | null = columnKey
+
+        if (currentSortKey === columnKey) {
             // Ciclar: asc -> desc -> null
-            if (sortDirection === 'asc') {
-                setSortDirection('desc')
-            } else if (sortDirection === 'desc') {
-                setSortKey(null)
-                setSortDirection(null)
+            if (currentSortDirection === 'asc') {
+                newDirection = 'desc'
+            } else if (currentSortDirection === 'desc') {
+                newKey = null
+                newDirection = null
             }
+        }
+
+        if (isControlled && onSort) {
+            onSort(newKey || '', newDirection) // enviamos '' si es null para compatibilidad, o ajustar logica
         } else {
-            setSortKey(columnKey)
-            setSortDirection('asc')
+            setInternalSortKey(newKey)
+            setInternalSortDirection(newDirection)
         }
     }
 
@@ -205,11 +246,16 @@ export function DataTable<T extends Record<string, any>>({
     const showActionsColumn = showActions && (onEdit || onDelete)
 
     return (
-        <div className={`overflow-x-auto ${rounded ? 'rounded-lg' : ''} ${className}`}>
+        <div
+            ref={containerRef}
+            onScroll={onScroll}
+            style={style}
+            className={`overflow-x-auto ${rounded ? 'rounded-lg' : ''} ${className}`}
+        >
             <table className="w-full text-left border-collapse">
                 <thead>
                     {headerGroups && (
-                        <tr className="bg-gray-50 border-b border-gray-200">
+                        <tr className={`bg-gray-50 border-b border-gray-200 ${stickyHeader ? 'sticky top-0 z-10' : ''}`}>
                             {headerGroups.map((group, index) => (
                                 <th
                                     key={index}
@@ -221,7 +267,7 @@ export function DataTable<T extends Record<string, any>>({
                             ))}
                         </tr>
                     )}
-                    <tr className="border-b border-gray-200 bg-gray-50">
+                    <tr className={`border-b border-gray-200 bg-gray-50 ${stickyHeader ? (headerGroups ? 'sticky top-[25px] z-10' : 'sticky top-0 z-10') : ''}`}>
                         {columns.map((column) => (
                             <th
                                 key={column.key}
@@ -236,8 +282,8 @@ export function DataTable<T extends Record<string, any>>({
                             >
                                 <div className={`flex items-center gap-1 ${column.align === 'right' ? 'justify-end' : column.align === 'center' ? 'justify-center' : ''}`}>
                                     {column.header}
-                                    {column.sortable && sortKey === column.key && (
-                                        sortDirection === 'asc'
+                                    {column.sortable && currentSortKey === column.key && (
+                                        currentSortDirection === 'asc'
                                             ? <ChevronUp size={14} className="text-blue-600" />
                                             : <ChevronDown size={14} className="text-blue-600" />
                                     )}
@@ -258,7 +304,7 @@ export function DataTable<T extends Record<string, any>>({
                                 <td
                                     key={column.key}
                                     className={`
-                                        py-3 px-4 text-sm
+                                        ${rowPy} px-4 text-sm
                                         ${column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left'}
                                         ${column.cellClassName ?? ''}
                                     `}
@@ -267,7 +313,7 @@ export function DataTable<T extends Record<string, any>>({
                                 </td>
                             ))}
                             {showActionsColumn && (
-                                <td className="py-3 px-4 text-right">
+                                <td className={`${rowPy} px-4 text-right`}>
                                     <div className="flex justify-end gap-2">
                                         {onEdit && (
                                             <Button

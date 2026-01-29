@@ -35,6 +35,7 @@ interface FiltrosReporteProps {
     centrosCostosExcluidos?: number[]
     onCentrosCostosExcluidosChange?: (val: number[]) => void
     soloConciliables?: boolean
+    extraActions?: React.ReactNode
 }
 
 export const FiltrosReporte = ({
@@ -63,7 +64,8 @@ export const FiltrosReporte = ({
     configuracionExclusion = [],
     centrosCostosExcluidos = [],
     onCentrosCostosExcluidosChange,
-    soloConciliables = true
+    soloConciliables = true,
+    extraActions
 }: FiltrosReporteProps) => {
 
     // Obtener catálogos del hook si no se pasan como props
@@ -135,10 +137,11 @@ export const FiltrosReporte = ({
                         onCentrosCostosExcluidosChange={onCentrosCostosExcluidosChange}
                     />
                 </div>
-                <div>
+                <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" onClick={onLimpiar} icon={RotateCcw}>
                         Limpiar Filtros
                     </Button>
+                    {extraActions}
                 </div>
             </div>
         </div>

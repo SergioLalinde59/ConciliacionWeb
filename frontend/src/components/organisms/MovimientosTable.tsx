@@ -4,7 +4,7 @@ import { ClassificationDisplay } from '../molecules/entities/ClassificationDispl
 import { Button } from '../atoms/Button'
 import { DataTable } from '../molecules/DataTable'
 import type { Column } from '../molecules/DataTable'
-import { useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import type { Movimiento } from '../../types'
 
 interface MovimientosTableProps {
@@ -20,7 +20,75 @@ interface MovimientosTableProps {
     }
 }
 
+type SortDirection = 'asc' | 'desc' | null
+
 export const MovimientosTable = ({ movimientos, loading, onEdit, onView, onDelete, totales }: MovimientosTableProps) => {
+    // State for controlled sorting
+    const [sortKey, setSortKey] = useState<string | null>(null)
+    const [sortDirection, setSortDirection] = useState<SortDirection>(null)
+
+    // State for pagination/infinite scroll
+    const [visibleLimit, setVisibleLimit] = useState(15)
+    const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+    // Reset limit when filters change (movimientos list changes)
+    useEffect(() => {
+        setVisibleLimit(15)
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = 0
+        }
+    }, [movimientos])
+
+    const handleSort = (key: string, direction: SortDirection) => {
+        setSortKey(key === '' ? null : key)
+        setSortDirection(direction)
+    }
+
+    // Handle infinite scroll
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+        // Load more when scrolled near bottom (100px threshold)
+        if (scrollHeight - scrollTop - clientHeight < 100) {
+            if (visibleLimit < movimientos.length) {
+                setVisibleLimit(prev => Math.min(prev + 15, movimientos.length))
+            }
+        }
+    }
+
+    // Calculate sorted and sliced data
+    const processedData = useMemo(() => {
+        let data = [...movimientos]
+
+        // 1. Sort globally
+        if (sortKey && sortDirection) {
+            data.sort((a, b) => {
+                let aVal = a[sortKey as keyof Movimiento]
+                let bVal = b[sortKey as keyof Movimiento]
+
+                // Handle specific complex fields by mapping to simple values if needed, 
+                // essentially handled by providing the correct sortKey in columns definition
+
+                if (aVal == null && bVal == null) return 0
+                if (aVal == null) return sortDirection === 'asc' ? 1 : -1
+                if (bVal == null) return sortDirection === 'asc' ? -1 : 1
+
+                if (typeof aVal === 'string' && typeof bVal === 'string') {
+                    return sortDirection === 'asc'
+                        ? aVal.localeCompare(bVal)
+                        : bVal.localeCompare(aVal)
+                }
+
+                if (typeof aVal === 'number' && typeof bVal === 'number') {
+                    return sortDirection === 'asc' ? aVal - bVal : bVal - aVal
+                }
+
+                return 0
+            })
+        }
+
+        // 2. Slice for view
+        return data.slice(0, visibleLimit)
+    }, [movimientos, sortKey, sortDirection, visibleLimit])
 
     const columns: Column<Movimiento>[] = useMemo(() => [
         {
@@ -46,6 +114,7 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, onView, onDelet
             key: 'cuenta',
             header: 'CUENTA',
             sortable: true,
+            sortKey: 'cuenta_nombre', // Fix sort
             width: 'w-30',
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
             cellClassName: '!py-0.5 !px-0.5',
@@ -61,6 +130,7 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, onView, onDelet
             key: 'tercero',
             header: 'TERCERO',
             sortable: true,
+            sortKey: 'tercero_nombre', // Fix sort
             width: 'w-45',
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
             cellClassName: '!py-0.5 !px-0.5',
@@ -77,6 +147,7 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, onView, onDelet
             key: 'clasificacion',
             header: 'CLASIFICACIÓN',
             sortable: true,
+            sortKey: 'centro_costo_nombre', // Fix sort - prioritizing cost center as main classification
             width: 'w-30',
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
             cellClassName: '!py-0.5 !px-0.5',
@@ -183,8 +254,8 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, onView, onDelet
 
 
     return (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-            <div className="p-3 border-b border-gray-100 bg-gray-50/80 flex justify-between items-center">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm flex flex-col h-[700px]">
+            <div className="p-3 border-b border-gray-100 bg-gray-50/80 flex justify-between items-center flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <LayoutList className="text-gray-400" size={20} />
                     <div>
@@ -196,7 +267,7 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, onView, onDelet
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="px-3 py-1 bg-white border border-gray-200 text-gray-700 rounded-full text-xs font-bold shadow-sm">
-                        {movimientos.length} registros
+                        {movimientos.length} registros (mostrando {Math.min(visibleLimit, movimientos.length)})
                     </span>
                     <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full text-xs font-bold shadow-sm">
                         Ingresos: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(totales.ingresos)}
@@ -211,18 +282,25 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, onView, onDelet
             </div>
 
             <DataTable
-                data={movimientos}
+                containerRef={scrollContainerRef}
+                onScroll={handleScroll}
+                data={processedData}
                 columns={columns}
                 getRowKey={(row) => row.id}
                 loading={loading}
                 showActions={false}
                 rounded={false}
-                className="border-none"
+                className="border-none h-full overflow-y-auto"
                 emptyMessage="No se encontraron movimientos con los filtros actuales."
+                rowPy="py-1" // Reduced padding
+                stickyHeader={true} // Sticky header
+                sortKey={sortKey} // Controlled sort
+                sortDirection={sortDirection} // Controlled sort direction
+                onSort={handleSort} // Controlled sort handler
             />
 
-            <div className="p-3 bg-gray-50/50 border-t border-gray-100 text-[10px] text-gray-400 text-center uppercase tracking-widest font-medium">
-                Gestión de Movimientos • Sistema de Conciliación Bancaria
+            <div className="p-3 bg-gray-50/50 border-t border-gray-100 text-[10px] text-gray-400 text-center uppercase tracking-widest font-medium flex-shrink-0">
+                Gestión de Movimientos • Sistema de Conciliación Bancaria • Mostrando {Math.min(visibleLimit, movimientos.length)} de {movimientos.length}
             </div>
         </div>
     )

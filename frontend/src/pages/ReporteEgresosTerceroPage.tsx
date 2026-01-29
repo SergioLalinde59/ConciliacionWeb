@@ -80,7 +80,6 @@ export const ReporteEgresosTerceroPage = () => {
     const { data: tercerosDataRaw, isLoading: loading } = useReporteDesgloseGastos(paramsReporte)
     const tercerosData = (tercerosDataRaw as ItemDesglose[]) || []
 
-
     // Load Exclusion Config
     const { data: configuracionExclusion = [] } = useConfiguracionExclusion()
 

@@ -296,7 +296,7 @@ export const ConciliacionMatchingPage = () => {
                 <div className="flex gap-4">
                     <div className="flex-1">
                         <SelectorCuenta
-                            value={cuentaId || ''}
+                            value={cuentaId?.toString() ?? ''}
                             onChange={(val) => setCuentaId(Number(val))}
                         />
                     </div>

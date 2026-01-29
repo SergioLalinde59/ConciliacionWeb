@@ -10,6 +10,8 @@ import { useSessionStorage } from '../hooks/useSessionStorage'
 import { getMesActual } from '../utils/dateUtils'
 import type { ConfigFiltroExclusion } from '../types/filters'
 import { useReporteClasificacion, useConfiguracionExclusion } from '../hooks/useReportes'
+import { useSettings } from '../context/SettingsContext'
+import { formatCurrency } from '../utils/formatters'
 
 
 interface ItemReporte {
@@ -23,6 +25,7 @@ interface ItemReporte {
 }
 
 export const ReporteClasificacionesPage = () => {
+    const { showDecimals } = useSettings();
     // Filtros
     const [desde, setDesde] = useSessionStorage('rep_filtro_desde', getMesActual().inicio)
     const [hasta, setHasta] = useSessionStorage('rep_filtro_hasta', getMesActual().fin)
@@ -80,7 +83,7 @@ export const ReporteClasificacionesPage = () => {
     })
 
     // Datos Maestros
-    const { terceros, centrosCostos } = useCatalogo()
+    const { terceros, centrosCostos, conceptos } = useCatalogo()
 
     // Drilldown State (First Level: Centros de Costo)
 
@@ -453,6 +456,9 @@ export const ReporteClasificacionesPage = () => {
                 onCentroCostoChange={setCentroCostoId}
                 conceptoId={conceptoId}
                 onConceptoChange={setConceptoId}
+                terceros={terceros}
+                centrosCostos={centrosCostos}
+                conceptos={conceptos}
                 showClasificacionFilters={true}
                 mostrarIngresos={mostrarIngresos}
                 onMostrarIngresosChange={setMostrarIngresos}
@@ -498,7 +504,7 @@ export const ReporteClasificacionesPage = () => {
                                 <XAxis type="number" />
                                 <YAxis dataKey="nombre" type="category" width={100} tick={{ fontSize: 11 }} />
                                 <Tooltip
-                                    formatter={(value: any) => `$${Number(value).toLocaleString('es-CO', { maximumFractionDigits: 0 })}`}
+                                    formatter={(value: any) => formatCurrency(value, showDecimals)}
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                 />
                                 <Legend />

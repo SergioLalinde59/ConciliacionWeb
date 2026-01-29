@@ -46,6 +46,11 @@ export const UploadExtractoPage: React.FC = () => {
     const [tipoCuenta, setTipoCuenta] = useState('')
     const [cuentaId, setCuentaId] = useState<number | null>(null)
     const { cuentas } = useCatalogo()
+
+    // DEBUG: Logs restaurados
+    console.log("[UploadExtractoPage] Cuentas cargadas desde hook:", cuentas?.length || 0, cuentas);
+
+
     const [localFilename, setLocalFilename] = useState<string | null>(null)
 
     // --- State: Analysis & Data ---
@@ -369,12 +374,12 @@ export const UploadExtractoPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
                 {/* 1. Selección de Archivo y Cuenta */}
                 <div className="p-5 border-b border-gray-100 grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-gray-50/50">
                     <div className="md:col-span-4">
                         <SelectorCuenta
-                            value={cuentaId || ''}
+                            value={cuentaId?.toString() ?? ''}
                             onChange={(val) => {
                                 const id = Number(val)
                                 setCuentaId(id)
@@ -383,7 +388,8 @@ export const UploadExtractoPage: React.FC = () => {
                                 if (cuenta) setTipoCuenta(cuenta.nombre)
                             }}
                             label="Cuenta"
-                            soloConciliables={true}
+                            soloConciliables={false}
+                            soloPermiteCarga={true}
                         />
                     </div>
 

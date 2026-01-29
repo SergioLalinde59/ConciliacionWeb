@@ -30,8 +30,10 @@ import {
     AlertCircle,
     Unlink
 } from 'lucide-react';
+import { useSettings } from '../../context/SettingsContext';
 
 export const Sidebar = () => {
+    const { showDecimals, toggleShowDecimals } = useSettings();
     const location = useLocation();
     const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({
         maestros: false,
@@ -158,7 +160,25 @@ export const Sidebar = () => {
                 {renderMenuSection('Mantenimiento', menuMantenimiento, 'mantenimiento')}
             </nav>
 
+
             <div className="p-4 border-t border-slate-800">
+                <div className="mb-4">
+                    <label className="flex items-center cursor-pointer">
+                        <div className="relative">
+                            <input
+                                type="checkbox"
+                                className="sr-only"
+                                checked={showDecimals}
+                                onChange={toggleShowDecimals}
+                            />
+                            <div className={`block w-10 h-6 rounded-full transition-colors ${showDecimals ? 'bg-blue-600' : 'bg-slate-700'}`}></div>
+                            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${showDecimals ? 'transform translate-x-4' : ''}`}></div>
+                        </div>
+                        <div className="ml-3 text-slate-400 text-xs font-medium">
+                            {showDecimals ? 'Con Decimales' : 'Sin Decimales'}
+                        </div>
+                    </label>
+                </div>
                 <div className="flex items-center gap-3 text-slate-400 text-sm">
                     <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold">U</div>
                     <div>

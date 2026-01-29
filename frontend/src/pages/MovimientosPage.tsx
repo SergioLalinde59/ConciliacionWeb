@@ -11,7 +11,6 @@ import { FiltrosReporte } from '../components/organisms/FiltrosReporte'
 import { EstadisticasTotales } from '../components/organisms/EstadisticasTotales'
 import { MovimientosTable } from '../components/organisms/MovimientosTable'
 import { MovimientoModal } from '../components/organisms/modals/MovimientoModal'
-import { useCatalogo } from '../hooks/useCatalogo'
 import toast from 'react-hot-toast'
 
 
@@ -34,7 +33,6 @@ export const MovimientosPage = () => {
     const [configuracionExclusion, setConfiguracionExclusion] = useState<Array<{ centro_costo_id: number; etiqueta: string; activo_por_defecto: boolean }>>([])
     // We use null initial value to detect if we need to set defaults from config
     const [centrosCostosExcluidos, setCentrosCostosExcluidos] = useSessionStorage<number[] | null>('filtro_centrosCostosExcluidos', null)
-    const { terceros, centrosCostos, conceptos } = useCatalogo()
 
     // Centros de costos excluidos finales para la API
     const actualCentrosCostosExcluidos = useMemo(() => {
@@ -272,9 +270,6 @@ export const MovimientosPage = () => {
                 configuracionExclusion={configuracionExclusion}
                 centrosCostosExcluidos={actualCentrosCostosExcluidos}
                 onCentrosCostosExcluidosChange={setCentrosCostosExcluidos}
-                terceros={terceros}
-                centrosCostos={centrosCostos}
-                conceptos={conceptos}
             />
 
             {/* Estadísticas Totales */}

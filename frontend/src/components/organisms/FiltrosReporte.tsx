@@ -6,6 +6,7 @@ import { ClassificationFilters } from '../molecules/ClassificationFilters'
 import { FilterToggles } from '../molecules/FilterToggles'
 import type { Tercero, CentroCosto, Concepto } from '../../types'
 import type { ConfigFiltroExclusion } from '../../types/filters'
+import { useCatalogo } from '../../hooks/useCatalogo'
 
 interface FiltrosReporteProps {
     desde: string
@@ -65,6 +66,14 @@ export const FiltrosReporte = ({
     soloConciliables = true
 }: FiltrosReporteProps) => {
 
+    // Obtener catálogos del hook si no se pasan como props
+    const { terceros: catTerceros, centrosCostos: catCentros, conceptos: catConceptos } = useCatalogo()
+
+    // Priorizar props, fallback a hook
+    const finalTerceros = terceros && terceros.length > 0 ? terceros : catTerceros
+    const finalCentrosCostos = centrosCostos && centrosCostos.length > 0 ? centrosCostos : catCentros
+    const finalConceptos = conceptos && conceptos.length > 0 ? conceptos : catConceptos
+
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 transition-all hover:shadow-md space-y-3">
 
@@ -103,9 +112,9 @@ export const FiltrosReporte = ({
                         onCentroCostoChange={onCentroCostoChange}
                         conceptoId={conceptoId}
                         onConceptoChange={onConceptoChange}
-                        terceros={terceros}
-                        centrosCostos={centrosCostos}
-                        conceptos={conceptos}
+                        terceros={finalTerceros}
+                        centrosCostos={finalCentrosCostos}
+                        conceptos={finalConceptos}
                     />
                 </div>
             )}

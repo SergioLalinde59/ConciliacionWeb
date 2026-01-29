@@ -46,9 +46,16 @@ services:
   frontend:
     build:
       context: ./frontend
+      target: build
     container_name: mvtos_frontend
+    environment:
+      - VITE_API_URL=http://backend:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host
     ports:
-      - "5173:80"
+      - "5173:5173"
     depends_on:
       - backend
 

@@ -57,6 +57,7 @@ export const EntitySelector = ({
         return opts
     }, [options, showAllOption, allOptionLabel])
 
+
     return (
         <ComboBox
             label={label}

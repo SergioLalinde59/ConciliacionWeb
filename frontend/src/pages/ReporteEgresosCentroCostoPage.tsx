@@ -80,7 +80,6 @@ export const ReporteEgresosCentroCostoPage = () => {
     const { data: gruposDataRaw, isLoading: loading } = useReporteDesgloseGastos(paramsReporte)
     const gruposData = (gruposDataRaw as ItemDesglose[]) || []
 
-
     // Load Exclusion Config
     const { data: configuracionExclusion = [] } = useConfiguracionExclusion()
 

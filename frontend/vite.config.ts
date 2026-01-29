@@ -8,4 +8,12 @@ export default defineConfig({
         react(),
         tailwindcss(),
     ],
+    server: {
+        host: true, // Listen on all interfaces
+        port: 5173,
+        watch: {
+            usePolling: true,
+        },
+        allowedHosts: ['conciliacion.local']
+    },
 })

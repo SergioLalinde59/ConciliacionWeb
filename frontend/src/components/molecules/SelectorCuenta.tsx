@@ -38,12 +38,20 @@ export const SelectorCuenta: React.FC<SelectorCuentaProps> = ({
         if (soloPermiteCarga) {
             result = result.filter((c: Cuenta) => c.permite_carga)
         }
+        console.log(`[SelectorCuenta] Filtrando: Total=${cuentas?.length}, SoloConciliables=${soloConciliables}, SoloPermiteCarga=${soloPermiteCarga} -> Result=${result.length}`);
         return result
     }, [cuentas, soloConciliables, soloPermiteCarga])
 
-    // Options are now handled by EntitySelector, we just pass the entities
-    // But EntitySelector expects { id, nombre }
-    // Cuenta has { id, nombre, ... } which is compatible.
+    // Map properties for EntitySelector
+    // Backend returns: { cuentaid, cuenta, ... }
+    // EntitySelector expects: { id, nombre }
+    const mappedCuentas = useMemo(() => {
+        return filteredCuentas.map((c: any) => ({
+            ...c,
+            id: c.cuentaid || c.id,
+            nombre: c.cuenta || c.nombre
+        }))
+    }, [filteredCuentas])
 
     return (
         <EntitySelector
@@ -51,7 +59,7 @@ export const SelectorCuenta: React.FC<SelectorCuentaProps> = ({
             icon={CreditCard}
             value={value}
             onChange={onChange}
-            options={filteredCuentas}
+            options={mappedCuentas}
             className={className}
             error={error}
             disabled={disabled}

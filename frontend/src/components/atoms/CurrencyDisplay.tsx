@@ -113,6 +113,9 @@ export const getNumberColorClass = (value: number): string => {
  * // Sin símbolo, sin colorización
  * <CurrencyDisplay value={100000} showSymbol={false} colorize={false} />
  */
+import { useSettings } from '../../context/SettingsContext'
+import { getAmountColorClass } from '../../utils/formatters'
+
 export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
     value,
     className = '',
@@ -123,14 +126,47 @@ export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
     showPlusSign = false,
     decimals
 }) => {
+    const { showDecimals } = useSettings();
+
     // Support deprecated showCurrency prop
     const shouldShowSymbol = showSymbol ?? showCurrency ?? true
 
     // Determinar el color basado en el valor
-    const colorClass = colorize ? getNumberColorClass(value) : ''
+    const colorClass = colorize ? getAmountColorClass(value) : ''
 
-    // Formatear el valor
-    const formattedValue = formatCurrency(value, currency, shouldShowSymbol, decimals)
+    // Determine decimal places
+    // If decimals is explicitly provided, use it.
+    // Otherwise, use context preference.
+    let effectiveDecimals = decimals;
+    if (effectiveDecimals === undefined) {
+        effectiveDecimals = showDecimals ? 2 : 0;
+    }
+
+    // Reuse the util if applicable, or keep internal logic if complex currency support is needed.
+    // The util supports simple COP formatting. For USD/TRM we might need the internal logic or update the util.
+    // The util I created is simple. The existing component has specific logic for USD/TRM.
+    // I will adapt the existing logic to use effectiveDecimals.
+
+    const config = CURRENCY_CONFIG[currency]
+    const numValue = Number(value)
+
+    const formatOptions = {
+        ...config.options,
+        minimumFractionDigits: effectiveDecimals,
+        maximumFractionDigits: effectiveDecimals
+    }
+
+    let formattedValue = '';
+
+    // Para TRM, si no mostramos símbolo, formateamos como número
+    if (!shouldShowSymbol) {
+        formattedValue = numValue.toLocaleString(config.locale, {
+            minimumFractionDigits: formatOptions.minimumFractionDigits,
+            maximumFractionDigits: formatOptions.maximumFractionDigits
+        })
+    } else {
+        formattedValue = new Intl.NumberFormat(config.locale, formatOptions).format(numValue)
+    }
 
     // Agregar signo + si es positivo y está habilitado
     const displayValue = showPlusSign && value > 0

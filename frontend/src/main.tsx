@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { setQueryClient } from './utils/queryClient'
+import { SettingsProvider } from './context/SettingsContext'
 import './index.css'
 import App from './App.tsx'
 
@@ -25,7 +26,9 @@ setQueryClient(queryClient)
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <SettingsProvider>
+        <App />
+      </SettingsProvider>
     </QueryClientProvider>
   </StrictMode>,
 )

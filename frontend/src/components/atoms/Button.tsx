@@ -1,10 +1,11 @@
-import React from 'react'
+import { type ButtonHTMLAttributes, type ElementType, type ReactNode } from 'react'
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'ghost-danger' | 'warning' | 'ghost-warning'
     size?: 'sm' | 'md' | 'lg'
     isLoading?: boolean
-    icon?: React.ElementType
+    icon?: ElementType
+    children?: ReactNode
 }
 
 export const Button = ({

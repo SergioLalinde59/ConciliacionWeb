@@ -162,3 +162,34 @@ class MovimientoRepository(ABC):
         """Elimina físicamente un movimiento y sus dependencias si es necesario"""
         pass
 
+    @abstractmethod
+    def analizar_desvinculacion(self, fecha_inicio: date, fecha_fin: date, cuenta_id: Optional[int] = None) -> List[dict]:
+        """
+        Analiza qué movimientos se desvincularían en un rango de fechas.
+        Retorna estadísticas agrupadas por cuenta.
+        """
+        pass
+
+    @abstractmethod
+    def eliminar_rango(self, fecha_inicio: date, fecha_fin: date, cuenta_id: Optional[int] = None) -> int:
+        """
+        Elimina movimientos en un rango de fechas.
+        Debe manejar la eliminación en cascada (vinculaciones, detalles, encabezado).
+        """
+        pass
+
+    @abstractmethod
+    def desvincular_rango(self, fecha_inicio: date, fecha_fin: date, cuenta_id: Optional[int] = None) -> int:
+        """
+        Resetea movimientos en un rango, eliminando clasificaciones y vinculaciones.
+        Mantiene el encabezado pero reinicia a un estado pendiente.
+        """
+        pass
+
+    @abstractmethod
+    def desvincular_por_ids(self, ids: List[int]) -> int:
+        """
+        Resetea movimientos específicos por ID.
+        """
+        pass
+

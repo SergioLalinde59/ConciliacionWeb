@@ -4,6 +4,10 @@ from src.domain.ports.movimiento_repository import MovimientoRepository
 from src.domain.ports.moneda_repository import MonedaRepository
 from src.domain.ports.cuenta_extractor_repository import CuentaExtractorRepository
 import importlib
+import traceback
+from datetime import date
+from src.infrastructure.extractors.utils import extraer_periodo_de_movimientos
+from src.infrastructure.logging.config import logger
 
 class CargarMovimientosService:
     """
@@ -140,12 +144,22 @@ class CargarMovimientosService:
         resultado_detalle.sort(key=lambda x: x['fecha'] if x['fecha'] else '1900-01-01', reverse=True)
         resultado_detalle.sort(key=lambda x: 0 if not x['es_duplicado'] else 1)
         
-        return {"estadisticas": stats, "movimientos": resultado_detalle}
+        return {
+            "estadisticas": stats, 
+            "movimientos": resultado_detalle,
+            "periodo": extraer_periodo_de_movimientos(resultado_detalle)
+        }
 
     def procesar_archivo(self, file_obj: Any, filename: str, tipo_cuenta: str, cuenta_id: int, actualizar_descripciones: bool = False) -> Dict[str, Any]:
         """Carga formal de los movimientos a la base de datos."""
         raw_movs = self._extraer_movimientos(file_obj, tipo_cuenta, cuenta_id)
         insertados, actualizados, duplicados, errores = 0, 0, 0, 0
+        
+        # Financial stats
+        total_ingresos = 0
+        total_egresos = 0
+        total_ingresos_usd = 0
+        total_egresos_usd = 0
         
         for raw in raw_movs:
             try:
@@ -155,6 +169,19 @@ class CargarMovimientosService:
                 usd_val = raw['valor'] if es_usd else None
                 moneda_id = 1 if es_usd else self._obtener_id_moneda(raw.get('moneda', 'COP'))
                 
+                # Accumulate stats
+                valor = float(raw['valor'])
+                if es_usd:
+                    if valor > 0:
+                        total_ingresos_usd += valor
+                    else:
+                        total_egresos_usd += valor
+                else:
+                    if valor > 0:
+                        total_ingresos += valor
+                    else:
+                        total_egresos += valor
+
                 existe = self.movimiento_repo.existe_movimiento(
                     fecha=raw['fecha'], valor=valor_para_check,
                     referencia=raw.get('referencia', ''), cuenta_id=cuenta_id,
@@ -184,18 +211,27 @@ class CargarMovimientosService:
                         actualizados += 1
                         continue
 
+                fecha_obj = date.fromisoformat(raw['fecha'])
+                
                 nuevo_mov = Movimiento(
-                    fecha=raw['fecha'], descripcion=raw['descripcion'],
+                    fecha=fecha_obj, descripcion=raw['descripcion'],
                     referencia=raw.get('referencia', ''), valor=valor_para_bd,
                     moneda_id=moneda_id, cuenta_id=cuenta_id, usd=usd_val
                 )
                 self.movimiento_repo.guardar(nuevo_mov)
                 insertados += 1
-            except:
+            except Exception as e:
+                logger.error(f"ERROR procesando movimiento: {e}")
+                logger.error(traceback.format_exc())
                 errores += 1
                 
         return {
             "archivo": filename, "total_extraidos": len(raw_movs),
             "nuevos_insertados": insertados, "actualizados": actualizados,
-            "duplicados": duplicados, "errores": errores
+            "duplicados": duplicados, "errores": errores,
+            "periodo": extraer_periodo_de_movimientos(raw_movs),
+            "total_ingresos": total_ingresos,
+            "total_egresos": total_egresos,
+            "total_ingresos_usd": total_ingresos_usd,
+            "total_egresos_usd": total_egresos_usd
         }

@@ -20,18 +20,22 @@ def update_config():
         # (cuenta_id, tipo, modulo, orden)
         configs = [
             # ID 1: Ahorros
-            (1, 'MOVIMIENTOS', 'ahorros_extracto_movimientos', 1),
+            (1, 'MOVIMIENTOS', 'ahorros_movimientos', 1),
+            (1, 'MOVIMIENTOS', 'ahorros_extracto_movimientos', 2),
             
-            # ID 3: FondoRenta (THE FIX)
-            (3, 'MOVIMIENTOS', 'fondorenta_extracto_movimientos', 1),
+            # ID 3: FondoRenta
+            (3, 'MOVIMIENTOS', 'fondorenta_movimientos', 1),
+            (3, 'MOVIMIENTOS', 'fondorenta_extracto_movimientos', 2),
             
             # ID 6: MasterCard Pesos
-            (6, 'MOVIMIENTOS', 'mastercard_pesos_extracto_movimientos', 1),
-            (6, 'MOVIMIENTOS', 'mastercard_pesos_extracto_anterior_movimientos', 2),
+            (6, 'MOVIMIENTOS', 'mastercard_movimientos', 1),
+            (6, 'MOVIMIENTOS', 'mastercard_pesos_extracto_movimientos', 2),
+            (6, 'MOVIMIENTOS', 'mastercard_pesos_extracto_anterior_movimientos', 3),
             
             # ID 7: MasterCard USD
-            (7, 'MOVIMIENTOS', 'mastercard_usd_extracto_movimientos', 1),
-            (7, 'MOVIMIENTOS', 'mastercard_usd_extracto_anterior_movimientos', 2),
+            (7, 'MOVIMIENTOS', 'mastercard_movimientos', 1),
+            (7, 'MOVIMIENTOS', 'mastercard_usd_extracto_movimientos', 2),
+            (7, 'MOVIMIENTOS', 'mastercard_usd_extracto_anterior_movimientos', 3),
         ]
 
         print("--- Updating Configuration ---")

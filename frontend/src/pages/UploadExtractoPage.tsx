@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { apiService } from '../services/api'
-import type { Cuenta } from '../types'
+import { useCatalogo } from '../hooks/useCatalogo'
 import { ExtractDetailsTable } from '../components/organisms/ExtractDetailsTable'
 import type { ExtractDetailRow } from '../components/organisms/ExtractDetailsTable'
 import { UploadCloud, FileText, CheckCircle, AlertCircle, BarChart3, FolderOpen, ChevronDown, ChevronUp, Edit2, RotateCcw, Info } from 'lucide-react'
@@ -8,6 +8,7 @@ import { Modal } from '../components/molecules/Modal'
 import { Button } from '../components/atoms/Button'
 import { ExtractoResumenCinta } from '../components/molecules/ExtractoResumenCinta'
 import { EditExtractMovementModal } from '../components/organisms/modals/EditExtractMovementModal'
+import { SelectorCuenta } from '../components/molecules/SelectorCuenta'
 
 interface ResumenExtracto {
     saldo_anterior: number
@@ -44,7 +45,7 @@ export const UploadExtractoPage: React.FC = () => {
     const [file, setFile] = useState<File | null>(null)
     const [tipoCuenta, setTipoCuenta] = useState('')
     const [cuentaId, setCuentaId] = useState<number | null>(null)
-    const [cuentas, setCuentas] = useState<Cuenta[]>([])
+    const { cuentas } = useCatalogo()
     const [localFilename, setLocalFilename] = useState<string | null>(null)
 
     // --- State: Analysis & Data ---
@@ -75,12 +76,6 @@ export const UploadExtractoPage: React.FC = () => {
     const [loadingFiles, setLoadingFiles] = useState(false)
     const [showSuccessModal, setShowSuccessModal] = useState(false)
 
-
-    useEffect(() => {
-        apiService.cuentas.listar()
-            .then(setCuentas)
-            .catch(err => console.error(err))
-    }, [])
 
     // --- Handlers: File Selection ---
 
@@ -140,7 +135,7 @@ export const UploadExtractoPage: React.FC = () => {
         setResumen(null)
 
         try {
-            let data;
+            let data: any;
             if (isLocal) {
                 data = await apiService.archivos.procesarLocal(
                     fileOrName as string,
@@ -378,23 +373,18 @@ export const UploadExtractoPage: React.FC = () => {
                 {/* 1. Selección de Archivo y Cuenta */}
                 <div className="p-5 border-b border-gray-100 grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-gray-50/50">
                     <div className="md:col-span-4">
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">Cuenta</label>
-                        <select
+                        <SelectorCuenta
                             value={cuentaId || ''}
-                            onChange={(e) => {
-                                const id = Number(e.target.value)
+                            onChange={(val) => {
+                                const id = Number(val)
                                 setCuentaId(id)
                                 resetState()
                                 const cuenta = cuentas.find(c => c.id === id)
                                 if (cuenta) setTipoCuenta(cuenta.nombre)
                             }}
-                            className="w-full text-sm rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        >
-                            <option value="">Seleccione...</option>
-                            {cuentas.filter(c => c.permite_conciliar).map(c => (
-                                <option key={c.id} value={c.id}>{c.nombre}</option>
-                            ))}
-                        </select>
+                            label="Cuenta"
+                            soloConciliables={true}
+                        />
                     </div>
 
                     <div className="md:col-span-6">

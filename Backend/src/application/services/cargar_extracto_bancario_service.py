@@ -9,6 +9,7 @@ from src.domain.ports.movimiento_extracto_repository import MovimientoExtractoRe
 from src.domain.ports.cuenta_extractor_repository import CuentaExtractorRepository
 from src.infrastructure.logging.config import logger
 import importlib
+from src.infrastructure.extractors.utils import extraer_periodo_de_nombre_archivo, obtener_nombre_mes, extraer_periodo_de_movimientos
 
 class CargarExtractoBancarioService:
     """
@@ -25,14 +26,7 @@ class CargarExtractoBancarioService:
 
     def _extraer_periodo_nombre_archivo(self, filename: str) -> Optional[tuple[int, int]]:
         """Extrae año y mes del nombre del archivo (ej: 2025-01 o 202501)."""
-        import re
-        match = re.search(r'(\d{4})[-_ ]?(\d{2})', filename)
-        if match:
-            year = int(match.group(1))
-            month = int(match.group(2))
-            if 2000 < year < 2100 and 1 <= month <= 12:
-                return year, month
-        return None
+        return extraer_periodo_de_nombre_archivo(filename)
 
     def _obtener_modulos_extractor_movimientos(self, cuenta_id: int) -> List[Any]:
         """Retorna LISTA de módulos extractores de movimientos configurados."""
@@ -373,4 +367,8 @@ class CargarExtractoBancarioService:
             self.movimiento_extracto_repo.eliminar_por_periodo(cuenta_id, year, month)
             self.movimiento_extracto_repo.guardar_lote(movimientos_extracto_objs)
             
-        return {"id_conciliacion": guardado.id, "nuevos": len(movimientos_extracto_objs)}
+        return {
+            "id_conciliacion": guardado.id, 
+            "nuevos": len(movimientos_extracto_objs),
+            "periodo": f"{year}-{obtener_nombre_mes(month)}"
+        }

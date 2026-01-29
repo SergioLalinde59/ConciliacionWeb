@@ -1,51 +1,39 @@
-import { RotateCcw, CreditCard } from 'lucide-react'
-import { Select } from '../atoms/Select'
+import { RotateCcw } from 'lucide-react'
+import { SelectorCuenta } from '../molecules/SelectorCuenta'
 import { Button } from '../atoms/Button'
 import { DateRangeButtons, DateRangeInputs } from '../molecules/DateRangeSelector'
 import { ClassificationFilters } from '../molecules/ClassificationFilters'
 import { FilterToggles } from '../molecules/FilterToggles'
+import type { Tercero, CentroCosto, Concepto } from '../../types'
+import type { ConfigFiltroExclusion } from '../../types/filters'
 
-export interface FiltrosReporteProps {
-    // Date filters
+interface FiltrosReporteProps {
     desde: string
     hasta: string
-    onDesdeChange: (value: string) => void
-    onHastaChange: (value: string) => void
-
-    // Account filter
+    onDesdeChange: (val: string) => void
+    onHastaChange: (val: string) => void
     cuentaId: string
-    onCuentaChange: (value: string) => void
-    cuentas: Array<{ id: number; nombre: string }>
-
-    // Dynamic Exclusion Filters - ALL exclusion filters come from here
-    configuracionExclusion?: Array<{ centro_costo_id: number; etiqueta: string }>;
-    centrosCostosExcluidos?: number[];
-    onCentrosCostosExcluidosChange?: (ids: number[]) => void
-
-    // Pending classification filter
-
-
-    // Classification filters
+    onCuentaChange: (val: string) => void
     terceroId?: string
-    onTerceroChange?: (value: string) => void
+    onTerceroChange?: (val: string) => void
     centroCostoId?: string
-    onCentroCostoChange?: (value: string) => void
+    onCentroCostoChange?: (val: string) => void
     conceptoId?: string
-    onConceptoChange?: (value: string) => void
-    terceros?: Array<{ id: number; nombre: string }>
-    centrosCostos?: Array<{ id: number; nombre: string }>
-    conceptos?: Array<{ id: number; nombre: string; centro_costo_id?: number }>
-    showClasificacionFilters?: boolean
-
-    // Income/Expense filters
-    mostrarIngresos?: boolean
-    mostrarEgresos?: boolean
-    onMostrarIngresosChange?: (value: boolean) => void
-    onMostrarEgresosChange?: (value: boolean) => void
-    showIngresosEgresos?: boolean
-
-    // Clear handler
+    onConceptoChange?: (val: string) => void
+    terceros?: Tercero[]
+    centrosCostos?: CentroCosto[]
+    conceptos?: Concepto[]
     onLimpiar: () => void
+    showClasificacionFilters?: boolean
+    showIngresosEgresos?: boolean
+    mostrarIngresos?: boolean
+    onMostrarIngresosChange?: (val: boolean) => void
+    mostrarEgresos?: boolean
+    onMostrarEgresosChange?: (val: boolean) => void
+    configuracionExclusion?: ConfigFiltroExclusion[]
+    centrosCostosExcluidos?: number[]
+    onCentrosCostosExcluidosChange?: (val: number[]) => void
+    soloConciliables?: boolean
 }
 
 export const FiltrosReporte = ({
@@ -55,63 +43,59 @@ export const FiltrosReporte = ({
     onHastaChange,
     cuentaId,
     onCuentaChange,
-    cuentas,
-
-    terceroId = '',
+    terceroId,
     onTerceroChange,
-    centroCostoId = '',
+    centroCostoId,
     onCentroCostoChange,
-    conceptoId = '',
+    conceptoId,
     onConceptoChange,
     terceros = [],
     centrosCostos = [],
     conceptos = [],
+    onLimpiar,
     showClasificacionFilters = false,
+    showIngresosEgresos = true,
     mostrarIngresos = true,
-    mostrarEgresos = true,
     onMostrarIngresosChange,
+    mostrarEgresos = true,
     onMostrarEgresosChange,
-    showIngresosEgresos = false,
-
+    configuracionExclusion = [],
     centrosCostosExcluidos = [],
     onCentrosCostosExcluidosChange,
-    configuracionExclusion = [],
-    onLimpiar
+    soloConciliables = true
 }: FiltrosReporteProps) => {
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 transition-all hover:shadow-md space-y-3">
 
-            {/* Line 1: Quick Date Buttons */}
-            <DateRangeButtons
-                onDesdeChange={onDesdeChange}
-                onHastaChange={onHastaChange}
-            />
-
-            {/* Line 2: Date Inputs & Account (Grid 3 cols) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <DateRangeInputs
-                    desde={desde}
-                    hasta={hasta}
-                    onDesdeChange={onDesdeChange}
-                    onHastaChange={onHastaChange}
-                />
-
-                <Select
-                    label="Cuenta"
-                    icon={CreditCard}
-                    value={cuentaId}
-                    onChange={(e: any) => onCuentaChange(e.target.value)}
-                    options={[
-                        { value: '', label: 'Todas' },
-                        ...cuentas.map(c => ({ value: c.id, label: c.nombre }))
-                    ]}
-                />
+            {/* Fila 1: Botones de Rango de Fecha */}
+            <div className="pb-2">
+                <DateRangeButtons onDesdeChange={onDesdeChange} onHastaChange={onHastaChange} />
             </div>
 
-            {/* Line 3: Classification Filters (Row) */}
+            {/* Fila 2: Inputs de Fecha y Selector de Cuenta en una sola fila */}
+            <div className="flex flex-col lg:flex-row gap-4 items-end">
+                <div className="flex-grow">
+                    <DateRangeInputs
+                        desde={desde}
+                        hasta={hasta}
+                        onDesdeChange={onDesdeChange}
+                        onHastaChange={onHastaChange}
+                    />
+                </div>
+                <div className="w-full lg:w-1/3">
+                    <SelectorCuenta
+                        value={cuentaId}
+                        onChange={onCuentaChange}
+                        soloConciliables={soloConciliables}
+                        showTodas={true}
+                    />
+                </div>
+            </div>
+
+            {/* Fila 3: Clasificadores (si aplica) */}
             {showClasificacionFilters && (
-                <div>
+                <div className="pt-2">
                     <ClassificationFilters
                         terceroId={terceroId}
                         onTerceroChange={onTerceroChange}

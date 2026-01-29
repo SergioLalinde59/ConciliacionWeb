@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { Save, RefreshCw, ArrowLeft, FileText } from 'lucide-react';
 
 import { FiltrosReporte } from '../components/organisms/FiltrosReporte';
+import { useCatalogo } from '../hooks/useCatalogo';
 import { conciliacionService } from '../services/conciliacionService';
-import { cuentasService } from '../services/api';
 import { getMesActual, getMonthsBetween } from '../utils/dateUtils';
 import type { Conciliacion } from '../types/Conciliacion';
 import type { Cuenta } from '../types';
@@ -22,16 +22,10 @@ export const ConciliacionPage = () => {
     // State for Detail View
     const [selectedConciliacion, setSelectedConciliacion] = useState<{ cuentaId: number, year: number, month: number } | null>(null);
 
-    // Load available accounts for the filter
-    const { data: cuentasResult } = useQuery({
-        queryKey: ['cuentas'],
-        queryFn: cuentasService.listar
-    });
-    const cuentas = cuentasResult || [];
+    const { cuentas } = useCatalogo();
 
     // Filter accounts to display
     const reconcilableCuentas = useMemo(() => {
-        if (!cuentas) return [];
         return cuentas.filter((c: Cuenta) => c.permite_conciliar);
     }, [cuentas]);
 
@@ -73,7 +67,7 @@ export const ConciliacionPage = () => {
                             .then(data => {
                                 results[`${cta.id}-${year}-${month}`] = data;
                             })
-                            .catch(e => console.error(`Error fetching conciliacion for ${cta.id}-${year}-${month}`, e))
+                            .catch((e: Error) => console.error(`Error fetching conciliacion for ${cta.id}-${year}-${month}`, e))
                     );
                 }
             }
@@ -92,9 +86,9 @@ export const ConciliacionPage = () => {
     const closeMutation = useMutation({
         mutationFn: ({ cuentaId, year, month }: { cuentaId: number, year: number, month: number }) =>
             conciliacionService.cerrarConciliacion(cuentaId, year, month),
-        onSuccess: (data) => {
+        onSuccess: (data: Conciliacion) => {
             const key = getConcKey(data.cuenta_id, data.year, data.month);
-            setConciliaciones(prev => ({
+            setConciliaciones((prev: Record<string, Conciliacion>) => ({
                 ...prev,
                 [key]: data
             }));
@@ -109,11 +103,11 @@ export const ConciliacionPage = () => {
         try {
             const updated = await conciliacionService.recalculate(cuentaId, year, month);
             const key = getConcKey(cuentaId, year, month);
-            setConciliaciones(prev => ({
+            setConciliaciones((prev: Record<string, Conciliacion>) => ({
                 ...prev,
                 [key]: updated
             }));
-        } catch (e) {
+        } catch (e: any) {
             console.error("Error recalculating", e);
         }
     };
@@ -402,12 +396,10 @@ export const ConciliacionPage = () => {
                 onHastaChange={setHasta}
                 cuentaId={cuentaId}
                 onCuentaChange={setCuentaId}
-                cuentas={reconcilableCuentas}
                 onLimpiar={handleLimpiar}
                 // Disable unused filters
                 showClasificacionFilters={false}
                 showIngresosEgresos={false}
-
             />
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

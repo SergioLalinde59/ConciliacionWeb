@@ -1,4 +1,6 @@
-import { Edit2, LayoutList, Trash2 } from 'lucide-react'
+import { Edit2, Eye, LayoutList } from 'lucide-react'
+import { EntityDisplay } from '../molecules/entities/EntityDisplay'
+import { ClassificationDisplay } from '../molecules/entities/ClassificationDisplay'
 import { Button } from '../atoms/Button'
 import { DataTable } from '../molecules/DataTable'
 import type { Column } from '../molecules/DataTable'
@@ -9,6 +11,7 @@ interface MovimientosTableProps {
     movimientos: Movimiento[]
     loading: boolean
     onEdit: (mov: Movimiento) => void
+    onView?: (mov: Movimiento) => void
     onDelete?: (mov: Movimiento) => void
     totales: {
         ingresos: number
@@ -17,7 +20,7 @@ interface MovimientosTableProps {
     }
 }
 
-export const MovimientosTable = ({ movimientos, loading, onEdit, onDelete, totales }: MovimientosTableProps) => {
+export const MovimientosTable = ({ movimientos, loading, onEdit, onView, onDelete, totales }: MovimientosTableProps) => {
 
     const columns: Column<Movimiento>[] = useMemo(() => [
         {
@@ -45,8 +48,14 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, onDelete, total
             sortable: true,
             width: 'w-30',
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
-            cellClassName: '!py-0.5 !px-0.5 text-[12px] text-gray-500',
-            accessor: (row) => row.cuenta_display
+            cellClassName: '!py-0.5 !px-0.5',
+            accessor: (row) => (
+                <EntityDisplay
+                    id={row.cuenta_id}
+                    nombre={row.cuenta_nombre || row.cuenta_display || ''}
+                    nameClassName="text-[12px] text-gray-500"
+                />
+            )
         },
         {
             key: 'tercero',
@@ -54,11 +63,14 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, onDelete, total
             sortable: true,
             width: 'w-45',
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
-            cellClassName: '!py-0.5 !px-0.5 text-[12px] text-gray-600',
+            cellClassName: '!py-0.5 !px-0.5',
             accessor: (row) => (
-                <div className="max-w-[200px] truncate" title={row.tercero_display || ''}>
-                    {row.tercero_display || <span className="text-gray-300 italic">No asignado</span>}
-                </div>
+                <EntityDisplay
+                    id={row.tercero_id || ''}
+                    nombre={row.tercero_nombre || ''}
+                    nameClassName="text-[12px] text-gray-600"
+                    className="max-w-[200px]"
+                />
             )
         },
         {
@@ -69,16 +81,11 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, onDelete, total
             headerClassName: '!py-2.5 !px-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest',
             cellClassName: '!py-0.5 !px-0.5',
             accessor: (row) => (
-                row.centro_costo_display ? (
-                    <div className="flex flex-col gap-0">
-                        <span className="text-[13px] font-bold text-slate-700 leading-tight">{row.centro_costo_display}</span>
-                        <span className="text-[12px] text-slate-400 italic font-medium leading-tight">{row.concepto_display}</span>
-                    </div>
-                ) : (
-                    <span className="inline-flex items-center px-1 py-0.5 rounded text-[12px] font-medium bg-amber-50 text-amber-700 border border-amber-100 italic leading-none">
-                        Sin clasificar
-                    </span>
-                )
+                <ClassificationDisplay
+                    centroCosto={row.centro_costo_id ? { id: row.centro_costo_id, nombre: row.centro_costo_nombre || '' } : null}
+                    concepto={row.concepto_id ? { id: row.concepto_id, nombre: row.concepto_nombre || '' } : null}
+                    detallesCount={row.detalles?.length}
+                />
             )
         },
         {
@@ -146,6 +153,17 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, onDelete, total
             cellClassName: '!py-0.5 !px-0.5',
             accessor: (row) => (
                 <div className="flex items-center justify-center gap-1">
+                    {onView && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onView(row)}
+                            className="!p-1.5 text-blue-600 hover:text-blue-700"
+                            title="Ver Detalles"
+                        >
+                            <Eye size={15} />
+                        </Button>
+                    )}
                     <Button
                         variant="ghost-warning"
                         size="sm"
@@ -155,19 +173,11 @@ export const MovimientosTable = ({ movimientos, loading, onEdit, onDelete, total
                     >
                         <Edit2 size={15} />
                     </Button>
-                    <Button
-                        variant="ghost-danger"
-                        size="sm"
-                        onClick={() => onDelete && onDelete(row)}
-                        className="!p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50"
-                        title="Borrar Movimiento"
-                    >
-                        <Trash2 size={15} />
-                    </Button>
+
                 </div>
             )
         }
-    ], [onEdit, onDelete])
+    ], [onEdit, onView, onDelete])
 
 
 

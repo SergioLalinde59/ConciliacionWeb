@@ -13,6 +13,7 @@ export interface ClasificacionManual {
 export interface Cuenta {
     id: number
     nombre: string
+    moneda?: string
     permite_carga: boolean
     permite_conciliar: boolean
 }
@@ -52,6 +53,17 @@ export interface Concepto {
     centro_costo_id?: number
 }
 
+export interface MovimientoDetalle {
+    id?: number
+    valor: number
+    centro_costo_id: number | null
+    concepto_id: number | null
+    tercero_id?: number | null
+    centro_costo_nombre?: string
+    concepto_nombre?: string
+    tercero_nombre?: string
+}
+
 export interface Movimiento {
     id: number
     fecha: string
@@ -73,6 +85,14 @@ export interface Movimiento {
     centro_costo_display?: string
     concepto_display?: string
     detalle?: string // Campo adicional de BD
+    detalles?: MovimientoDetalle[]
+
+    // Nombres directos para reportes/tablas
+    cuenta_nombre?: string
+    moneda_nombre?: string
+    tercero_nombre?: string
+    centro_costo_nombre?: string
+    concepto_nombre?: string
 }
 
 export interface SugerenciaClasificacion {

@@ -238,7 +238,7 @@ export const MatchingTable = ({
             <div className="p-3 border-b border-gray-100 bg-emerald-50 flex justify-between items-center">
                 <div className="flex items-center gap-6">
                     <div className="flex items-center gap-2">
-                        <Unlink className="text-emerald-600" size={20} />
+                        <Unlink className="text-amber-600" size={20} />
                         <div>
                             <h3 className="text-lg font-bold text-gray-900 leading-none">Matches Encontrados</h3>
                             <p className="text-xs text-emerald-700 mt-1">
@@ -334,7 +334,7 @@ export const MatchingTable = ({
                                             {onDesvincularTodo && matches.some(m => m.id !== null) && (
                                                 <button
                                                     onClick={onDesvincularTodo}
-                                                    className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                                                    className="p-1 text-amber-500 hover:text-amber-700 hover:bg-amber-50 rounded transition-colors"
                                                     title="Desvincular TODO y reiniciar"
                                                 >
                                                     <Unlink size={16} />
@@ -581,13 +581,13 @@ export const MatchingTable = ({
                                                     {/* Desvincular */}
                                                     {hasSystemMovement && onDesvincular && (
                                                         <Button
-                                                            variant="ghost"
+                                                            variant="ghost-warning"
                                                             size="sm"
                                                             onClick={(e) => {
                                                                 e.stopPropagation()
                                                                 onDesvincular(match)
                                                             }}
-                                                            className="!p-1 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                            className="!p-1"
                                                             title="Desvincular (Eliminar vinculación)"
                                                         >
                                                             <Icon name="Unlink" size={15} />

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { apiService } from '../services/api'
 import type { Cuenta } from '../types'
-import { UploadCloud, FileText, CheckCircle, AlertCircle, FolderOpen } from 'lucide-react'
+import { UploadCloud, FileText, AlertCircle, FolderOpen } from 'lucide-react'
 import { Modal } from '../components/molecules/Modal'
 import { Button } from '../components/atoms/Button'
+import { LoadResultSummary } from '../components/molecules/LoadResultSummary'
 
 export const UploadMovimientosPage: React.FC = () => {
     const [file, setFile] = useState<File | null>(null)
@@ -403,7 +404,7 @@ export const UploadMovimientosPage: React.FC = () => {
                     isOpen={showLocalModal}
                     onClose={() => setShowLocalModal(false)}
                     title="Seleccionar Archivo del Servidor"
-                    size="md"
+                    size="xl"
                     footer={
                         <Button variant="secondary" onClick={() => setShowLocalModal(false)}>
                             Cancelar
@@ -447,45 +448,11 @@ export const UploadMovimientosPage: React.FC = () => {
                     }
                 >
                     {result && (
-                        <div className="space-y-6 text-center py-4">
-                            <div className="flex justify-center">
-                                <div className="bg-green-100 p-4 rounded-full">
-                                    <CheckCircle className="h-12 w-12 text-green-600" />
-                                </div>
-                            </div>
-
-                            <div>
-                                <h4 className="text-xl font-bold text-gray-900 mb-1 text-center">
-                                    {cuentaId} - {tipoCuenta}
-                                </h4>
-                                <p className="text-gray-500 text-center font-medium">
-                                    {result.periodo || 'YYYY-MMM'}
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4 text-left bg-gray-50 p-4 rounded-xl">
-                                <div className="space-y-1">
-                                    <p className="text-xs text-gray-500 uppercase font-semibold">Total Leídos</p>
-                                    <p className="text-2xl font-bold text-gray-900">{result.total_extraidos}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-xs text-blue-600 uppercase font-semibold">Nuevos Cargados</p>
-                                    <p className="text-2xl font-bold text-blue-600">{result.nuevos_insertados}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-xs text-indigo-600 uppercase font-semibold">Desc. Actualizadas</p>
-                                    <p className="text-2xl font-bold text-indigo-600">{result.actualizados || 0}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-xs text-orange-600 uppercase font-semibold">Duplicados Ignorados</p>
-                                    <p className="text-2xl font-bold text-orange-600">{result.duplicados}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-xs text-red-600 uppercase font-semibold">Errores</p>
-                                    <p className="text-2xl font-bold text-red-600">{result.errores}</p>
-                                </div>
-                            </div>
-                        </div>
+                        <LoadResultSummary
+                            result={result}
+                            tipoCuenta={tipoCuenta}
+                            cuentaId={cuentaId}
+                        />
                     )}
                 </Modal>
 

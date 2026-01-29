@@ -1,22 +1,23 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LayoutList } from 'lucide-react'
 
 
 import type { Movimiento } from '../types'
 import { apiService } from '../services/api'
-import { useCatalogo } from '../hooks/useCatalogo'
 import { useSessionStorage } from '../hooks/useSessionStorage'
 import { getMesActual } from '../utils/dateUtils'
 import { FiltrosReporte } from '../components/organisms/FiltrosReporte'
 import { EstadisticasTotales } from '../components/organisms/EstadisticasTotales'
 import { MovimientosTable } from '../components/organisms/MovimientosTable'
 import { MovimientoModal } from '../components/organisms/modals/MovimientoModal'
+import { useCatalogo } from '../hooks/useCatalogo'
 import toast from 'react-hot-toast'
 
 
 export const MovimientosPage = () => {
     const navigate = useNavigate()
+    const lastRequestRef = useRef<number>(0)
 
     // Filtros
     // Filtros persistentes con useSessionStorage
@@ -33,15 +34,14 @@ export const MovimientosPage = () => {
     const [configuracionExclusion, setConfiguracionExclusion] = useState<Array<{ centro_costo_id: number; etiqueta: string; activo_por_defecto: boolean }>>([])
     // We use null initial value to detect if we need to set defaults from config
     const [centrosCostosExcluidos, setCentrosCostosExcluidos] = useSessionStorage<number[] | null>('filtro_centrosCostosExcluidos', null)
+    const { terceros, centrosCostos, conceptos } = useCatalogo()
 
     // Centros de costos excluidos finales para la API
     const actualCentrosCostosExcluidos = useMemo(() => {
-        return centrosCostosExcluidos || []
+        return (centrosCostosExcluidos || []) as number[]
     }, [centrosCostosExcluidos])
 
 
-    // Datos Maestros desde Hook centralizado
-    const { cuentas, terceros, centrosCostos, conceptos } = useCatalogo()
 
     // Paginación ELIMINADA - mostrar todos los registros
     const [movimientos, setMovimientos] = useState<Movimiento[]>([])
@@ -51,6 +51,10 @@ export const MovimientosPage = () => {
     // Estado para borrado
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
     const [movimientoToDelete, setMovimientoToDelete] = useState<Movimiento | null>(null)
+
+    // Estado para vista/edición
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+    const [movimientoToView, setMovimientoToView] = useState<Movimiento | null>(null)
 
 
 
@@ -76,7 +80,17 @@ export const MovimientosPage = () => {
 
 
     const cargarMovimientos = useCallback((f_desde?: string, f_hasta?: string) => {
+        const finalDesde = f_desde || desde
+        const finalHasta = f_hasta || hasta
+
+        // Prevent API call if date range is invalid
+        if (finalDesde && finalHasta && finalDesde > finalHasta) {
+            return
+        }
+
         setLoading(true)
+        const requestId = Date.now()
+        lastRequestRef.current = requestId
 
         // Determinar tipo_movimiento basado en los checkboxes
         let tipoMovimiento: string | undefined = undefined
@@ -94,8 +108,8 @@ export const MovimientosPage = () => {
         const parsedConceptoId = conceptoId && conceptoId !== '' ? parseInt(conceptoId) : undefined
 
         const filterParams = {
-            desde: f_desde || desde,
-            hasta: f_hasta || hasta,
+            desde: finalDesde,
+            hasta: finalHasta,
             cuenta_id: parsedCuentaId,
             tercero_id: parsedTerceroId,
             centro_costo_id: parsedCentroCostoId,
@@ -108,6 +122,9 @@ export const MovimientosPage = () => {
 
         apiService.movimientos.listar(filterParams)
             .then(response => {
+                // Ignore stale responses
+                if (lastRequestRef.current !== requestId) return
+
                 setMovimientos(response.items)  // Todos los registros
                 // Store global totals from server if available
                 if (response.totales) {
@@ -116,6 +133,7 @@ export const MovimientosPage = () => {
                 setLoading(false)
             })
             .catch(err => {
+                if (lastRequestRef.current !== requestId) return
                 console.error("Error cargando movimientos:", err)
                 setLoading(false)
             })
@@ -139,7 +157,7 @@ export const MovimientosPage = () => {
                 // If no user preference saved (null), use defaults from DB
                 if (centrosCostosExcluidos === null) {
                     // Set all filters with activo_por_defecto=true as excluded
-                    const defaults = data.filter((d: any) => d.activo_por_defecto).map((d: any) => d.centro_costo_id)
+                    const defaults = data.filter((d: any) => d.activo_por_defecto).map((d: any) => d.centro_costo_id) as number[]
                     setCentrosCostosExcluidos(defaults)
                 }
             })
@@ -160,7 +178,7 @@ export const MovimientosPage = () => {
         setConceptoId('')
         // Reset all exclusion filters to defaults from config
         if (configuracionExclusion.length > 0) {
-            const defaults = configuracionExclusion.filter(d => d.activo_por_defecto).map(d => d.centro_costo_id)
+            const defaults = configuracionExclusion.filter(d => d.activo_por_defecto).map(d => d.centro_costo_id) as number[]
             setCentrosCostosExcluidos(defaults)
         } else {
             setCentrosCostosExcluidos([])
@@ -187,6 +205,27 @@ export const MovimientosPage = () => {
         } catch (error: any) {
             console.error('Error eliminando movimiento:', error)
             toast.error(error.message || 'Error al eliminar el movimiento')
+        }
+    }
+
+    const handleViewClick = (mov: Movimiento) => {
+        setMovimientoToView(mov)
+        setIsViewModalOpen(true)
+    }
+
+    const handleSaveEdit = async (payload: any) => {
+        if (!movimientoToView) return
+
+        try {
+            await apiService.movimientos.actualizar(movimientoToView.id, payload)
+            toast.success('Movimiento actualizado correctamente')
+            setIsViewModalOpen(false)
+            setMovimientoToView(null)
+            cargarMovimientos() // Recargar lista
+        } catch (error: any) {
+            console.error('Error actualizando movimiento:', error)
+            toast.error(error.message || 'Error al actualizar el movimiento')
+            throw error // Re-throw para que el modal sepa que falló
         }
     }
 
@@ -217,30 +256,25 @@ export const MovimientosPage = () => {
                 onHastaChange={setHasta}
                 cuentaId={cuentaId}
                 onCuentaChange={setCuentaId}
-                cuentas={cuentas}
                 terceroId={terceroId}
                 onTerceroChange={setTerceroId}
                 centroCostoId={centroCostoId}
-                onCentroCostoChange={(val) => {
-                    setCentroCostoId(val)
-                    setConceptoId('')
-                }}
+                onCentroCostoChange={setCentroCostoId}
                 conceptoId={conceptoId}
                 onConceptoChange={setConceptoId}
-                terceros={terceros}
-                centrosCostos={centrosCostos}
-                conceptos={conceptos}
+                onLimpiar={handleLimpiar}
                 showClasificacionFilters={true}
-
+                showIngresosEgresos={true}
                 mostrarIngresos={mostrarIngresos}
                 onMostrarIngresosChange={setMostrarIngresos}
                 mostrarEgresos={mostrarEgresos}
                 onMostrarEgresosChange={setMostrarEgresos}
-                showIngresosEgresos={true}
                 configuracionExclusion={configuracionExclusion}
                 centrosCostosExcluidos={actualCentrosCostosExcluidos}
                 onCentrosCostosExcluidosChange={setCentrosCostosExcluidos}
-                onLimpiar={handleLimpiar}
+                terceros={terceros}
+                centrosCostos={centrosCostos}
+                conceptos={conceptos}
             />
 
             {/* Estadísticas Totales */}
@@ -254,6 +288,7 @@ export const MovimientosPage = () => {
             <MovimientosTable
                 movimientos={movimientos}
                 loading={loading}
+                onView={handleViewClick}
                 onEdit={(mov) => navigate(`/movimientos/editar/${mov.id}`)}
                 onDelete={handleDeleteClick}
                 totales={totales}
@@ -269,6 +304,18 @@ export const MovimientosPage = () => {
                 movimiento={movimientoToDelete}
                 onSave={handleConfirmDelete}
                 mode="delete"
+            />
+
+            {/* Modal de Vista/Edición */}
+            <MovimientoModal
+                isOpen={isViewModalOpen}
+                onClose={() => {
+                    setIsViewModalOpen(false)
+                    setMovimientoToView(null)
+                }}
+                movimiento={movimientoToView}
+                onSave={handleSaveEdit}
+                mode="edit"
             />
 
 

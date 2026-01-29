@@ -6,7 +6,6 @@ import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { FiltrosReporte } from '../components/organisms/FiltrosReporte'
-import { useCatalogo } from '../hooks/useCatalogo'
 import { useSessionStorage } from '../hooks/useSessionStorage'
 import { getMesActual } from '../utils/dateUtils'
 import type { Movimiento } from '../types'
@@ -68,16 +67,15 @@ export const DescargarMovimientosPage: React.FC = () => {
     // Data State
     const [movimientos, setMovimientos] = useState<Movimiento[]>([])
     const [loading, setLoading] = useState(false)
-    const { cuentas, terceros, centrosCostos, conceptos } = useCatalogo()
 
     // Load Exclusion Config
     useEffect(() => {
         apiService.movimientos.obtenerConfiguracionFiltrosExclusion()
-            .then(data => {
+            .then((data: any) => {
                 setConfiguracionExclusion(data)
                 // No defaults - user must choose which groups to exclude
             })
-            .catch(err => console.error("Error fetching filter config", err))
+            .catch((err: any) => console.error("Error fetching filter config", err))
     }, [])
 
     // Fetch Data
@@ -100,11 +98,11 @@ export const DescargarMovimientosPage: React.FC = () => {
         }
 
         apiService.movimientos.listar(filterParams)
-            .then(response => {
+            .then((response: any) => {
                 setMovimientos(response.items || [])
                 setLoading(false)
             })
-            .catch(err => {
+            .catch((err: any) => {
                 console.error("Error cargando datos para exportar:", err)
                 toast.error("Error cargando datos")
                 setLoading(false)
@@ -193,7 +191,7 @@ export const DescargarMovimientosPage: React.FC = () => {
                         }
                     }
 
-                    rowData.push(idVal ?? '')
+                    rowData.push((idVal as string | number) ?? '')
                     rowData.push(displayVal ?? '')
                 } else {
                     const fieldName = (plainFormat && col.fieldId) ? col.fieldId : col.fieldDisplay
@@ -464,19 +462,15 @@ export const DescargarMovimientosPage: React.FC = () => {
                     onHastaChange={setHasta}
                     cuentaId={cuentaId}
                     onCuentaChange={setCuentaId}
-                    cuentas={cuentas}
                     terceroId={terceroId}
                     onTerceroChange={setTerceroId}
                     centroCostoId={centroCostoId}
-                    onCentroCostoChange={(val) => {
+                    onCentroCostoChange={(val: string) => {
                         setCentroCostoId(val)
                         setConceptoId('')
                     }}
                     conceptoId={conceptoId}
                     onConceptoChange={setConceptoId}
-                    terceros={terceros}
-                    centrosCostos={centrosCostos}
-                    conceptos={conceptos}
                     showClasificacionFilters={true}
                     configuracionExclusion={configuracionExclusion}
                     centrosCostosExcluidos={actualCentrosCostosExcluidos}

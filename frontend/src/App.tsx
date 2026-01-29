@@ -30,6 +30,7 @@ import { CentroControlDatosPage } from './pages/CentroControlDatosPage'
 import { MatchingConfigPage } from './pages/MatchingConfigPage'
 
 import { ReconciliationResetPage } from './pages/ReconciliationResetPage'
+import { DesvincularMovimientosPage } from './pages/mantenimiento/DesvincularMovimientosPage'
 
 
 function App() {
@@ -67,6 +68,7 @@ function App() {
                     <Route path="/conciliacion/matching" element={<ConciliacionMatchingPage />} />
                     <Route path="/herramientas/control-datos" element={<CentroControlDatosPage />} />
                     <Route path="/herramientas/mantenimiento/reset-periodo" element={<ReconciliationResetPage />} />
+                    <Route path="/herramientas/mantenimiento/desvincular-movimientos" element={<DesvincularMovimientosPage />} />
                     <Route path="/herramientas/mantenimiento/:categoria" element={<CentroControlDatosPage />} />
                     <Route path="/mvtos/*" element={
                         <div className="p-8">

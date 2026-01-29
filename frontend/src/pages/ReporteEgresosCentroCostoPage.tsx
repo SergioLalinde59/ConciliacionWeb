@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, ChevronRight } from 'lucide-react'
 import { apiService } from '../services/api'
-import { useCatalogo } from '../hooks/useCatalogo'
 import { useReporteDesgloseGastos, useConfiguracionExclusion } from '../hooks/useReportes'
 import { useSessionStorage } from '../hooks/useSessionStorage'
 import { getMesActual } from '../utils/dateUtils'
@@ -81,8 +80,6 @@ export const ReporteEgresosCentroCostoPage = () => {
     const { data: gruposDataRaw, isLoading: loading } = useReporteDesgloseGastos(paramsReporte)
     const gruposData = (gruposDataRaw as ItemDesglose[]) || []
 
-    // Load Catalogs
-    const { cuentas, terceros, centrosCostos, conceptos } = useCatalogo()
 
     // Load Exclusion Config
     const { data: configuracionExclusion = [] } = useConfiguracionExclusion()
@@ -116,7 +113,7 @@ export const ReporteEgresosCentroCostoPage = () => {
             concepto_id: conceptoId ? Number(conceptoId) : undefined,
             centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined
         } as any).then(data => {
-            setTerceroModal(prev => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
+            setTerceroModal((prev: DrilldownLevel) => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
         })
     }
 
@@ -142,7 +139,7 @@ export const ReporteEgresosCentroCostoPage = () => {
             concepto_id: conceptoId ? Number(conceptoId) : undefined,
             centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined
         } as any).then(data => {
-            setConceptoModal(prev => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
+            setConceptoModal((prev: DrilldownLevel) => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
         })
     }
 
@@ -199,10 +196,10 @@ export const ReporteEgresosCentroCostoPage = () => {
         if (!modalState.isOpen) return null
 
         const handleSort = (field: 'nombre' | 'ingresos' | 'egresos' | 'saldo') => {
-            if (field === modalState.sortField) {
-                setModalState(prev => ({ ...prev, sortAsc: !prev.sortAsc }))
+            if (modalState.sortField === field) {
+                setModalState((prev: DrilldownLevel) => ({ ...prev, sortAsc: !prev.sortAsc }))
             } else {
-                setModalState(prev => ({ ...prev, sortField: field, sortAsc: field === 'nombre' }))
+                setModalState((prev: DrilldownLevel) => ({ ...prev, sortField: field, sortAsc: field === 'nombre' }))
             }
         }
 
@@ -359,16 +356,12 @@ export const ReporteEgresosCentroCostoPage = () => {
                 onHastaChange={setHasta}
                 cuentaId={cuentaId}
                 onCuentaChange={setCuentaId}
-                cuentas={cuentas}
                 terceroId={terceroId}
                 onTerceroChange={setTerceroId}
                 centroCostoId={centroCostoId}
                 onCentroCostoChange={setCentroCostoId}
                 conceptoId={conceptoId}
                 onConceptoChange={setConceptoId}
-                terceros={terceros}
-                centrosCostos={centrosCostos}
-                conceptos={conceptos}
                 showClasificacionFilters={true}
                 mostrarIngresos={mostrarIngresos}
                 onMostrarIngresosChange={setMostrarIngresos}

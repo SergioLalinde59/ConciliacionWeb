@@ -1,5 +1,6 @@
 import { CheckCircle, XCircle } from 'lucide-react'
-import { DataTable, idColumn, nombreColumn, type Column } from '../../molecules/DataTable'
+import { DataTable, type Column } from '../../molecules/DataTable'
+import { EntityDisplay } from '../../molecules/entities/EntityDisplay'
 import type { Cuenta } from '../../../types'
 
 interface Props {
@@ -14,8 +15,18 @@ interface Props {
  */
 export const CuentasTable = ({ cuentas, loading, onEdit, onDelete }: Props) => {
     const columns: Column<Cuenta>[] = [
-        idColumn<Cuenta>(),
-        nombreColumn<Cuenta>({ header: 'Nombre de la Cuenta' }),
+        {
+            key: 'cuenta',
+            header: 'CUENTA',
+            sortable: true,
+            sortKey: 'nombre',
+            accessor: (row) => (
+                <EntityDisplay
+                    id={row.id}
+                    nombre={row.nombre}
+                />
+            )
+        },
         {
             key: 'permite_carga',
             header: 'Permite Carga',

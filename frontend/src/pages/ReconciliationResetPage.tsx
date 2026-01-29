@@ -126,7 +126,7 @@ export const ReconciliationResetPage: React.FC = () => {
                     <RefreshCw size={32} />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Reiniciar Periodo de Conciliación</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">Reiniciar Conciliación</h1>
                     <p className="text-gray-500">Elimina vinculaciones y restablece el balance del sistema para un mes específico.</p>
                 </div>
             </div>
@@ -265,7 +265,7 @@ export const ReconciliationResetPage: React.FC = () => {
                         {loading ? 'Procesando...' : (
                             <>
                                 <RefreshCw size={20} />
-                                Reiniciar Periodo
+                                Reiniciar Conciliación
                             </>
                         )}
                     </button>

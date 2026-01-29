@@ -6,6 +6,7 @@ from decimal import Decimal
 from src.infrastructure.logging.config import logger
 
 from src.domain.models.movimiento import Movimiento
+from src.domain.models.movimiento_detalle import MovimientoDetalle
 from src.domain.ports.movimiento_repository import MovimientoRepository
 from src.domain.ports.cuenta_repository import CuentaRepository
 from src.domain.ports.moneda_repository import MonedaRepository
@@ -26,6 +27,11 @@ from src.domain.ports.config_valor_pendiente_repository import ConfigValorPendie
 
 router = APIRouter(prefix="/api/movimientos", tags=["movimientos"])
 
+class MovimientoDetalleDTO(BaseModel):
+    valor: float
+    centro_costo_id: Optional[int] = None
+    concepto_id: Optional[int] = None
+
 class MovimientoDTO(BaseModel):
     fecha: date
     descripcion: str
@@ -38,7 +44,18 @@ class MovimientoDTO(BaseModel):
     tercero_id: Optional[int] = None
     centro_costo_id: Optional[int] = None
     concepto_id: Optional[int] = None
+    detalles: Optional[List[MovimientoDetalleDTO]] = None
     detalle: Optional[str] = None
+
+class MovimientoDetalleResponse(BaseModel):
+    id: int
+    valor: float
+    centro_costo_id: Optional[int]
+    concepto_id: Optional[int]
+    tercero_id: Optional[int]
+    centro_costo_nombre: Optional[str]
+    concepto_nombre: Optional[str]
+    tercero_nombre: Optional[str]
 
 class MovimientoResponse(BaseModel):
     id: int
@@ -55,6 +72,13 @@ class MovimientoResponse(BaseModel):
     concepto_id: Optional[int]
     created_at: Optional[datetime]
     detalle: Optional[str]
+    detalles: Optional[List[MovimientoDetalleResponse]] = None
+    # Nombres para visualización directa
+    cuenta_nombre: Optional[str] = None
+    moneda_nombre: Optional[str] = None
+    tercero_nombre: Optional[str] = None
+    centro_costo_nombre: Optional[str] = None
+    concepto_nombre: Optional[str] = None
     # Campos de visualización en formato "id - descripción"
     cuenta_display: str
     moneda_display: str
@@ -72,7 +96,22 @@ class PaginatedMovimientosResponse(BaseModel):
 
 def _to_response(mov: Movimiento) -> MovimientoResponse:
     """Convierte un Movimiento de dominio a MovimientoResponse con formato display"""
-    return MovimientoResponse(
+    detalles_response = None
+    if mov.detalles:
+        detalles_response = [
+            MovimientoDetalleResponse(
+                id=d.id,
+                valor=float(d.valor),
+                centro_costo_id=d.centro_costo_id,
+                concepto_id=d.concepto_id,
+                tercero_id=d.tercero_id,
+                centro_costo_nombre=d.centro_costo_nombre,
+                concepto_nombre=d.concepto_nombre,
+                tercero_nombre=d.tercero_nombre
+            ) for d in mov.detalles
+        ]
+
+    response = MovimientoResponse(
         id=mov.id,
         fecha=mov.fecha,
         descripcion=mov.descripcion,
@@ -87,12 +126,25 @@ def _to_response(mov: Movimiento) -> MovimientoResponse:
         concepto_id=mov.concepto_id,
         created_at=mov.created_at,
         detalle=mov.detalle,
+        detalles=detalles_response,
+        cuenta_nombre=mov.cuenta_nombre,
+        moneda_nombre=mov.moneda_nombre,
+        tercero_nombre=mov.tercero_nombre,
+        centro_costo_nombre=mov.centro_costo_nombre,
+        concepto_nombre=mov.concepto_nombre,
         cuenta_display=f"{mov.cuenta_id} - {mov.cuenta_nombre}" if mov.cuenta_id and mov.cuenta_nombre else (str(mov.cuenta_id) if mov.cuenta_id else "Sin Cuenta"),
         moneda_display=f"{mov.moneda_id} - {mov.moneda_nombre}" if mov.moneda_id and mov.moneda_nombre else (str(mov.moneda_id) if mov.moneda_id else "Sin Moneda"),
         tercero_display=f"{mov.tercero_id} - {mov.tercero_nombre}" if mov.tercero_id and mov.tercero_nombre else None,
         centro_costo_display=f"{mov.centro_costo_id} - {mov.centro_costo_nombre}" if mov.centro_costo_id and mov.centro_costo_nombre else None,
         concepto_display=f"{mov.concepto_id} - {mov.concepto_nombre}" if mov.concepto_id and mov.concepto_nombre else None
     )
+    
+    if mov.id == 2232:
+        logger.info(f"DEBUG_2232: _to_response. mov.tercero_id={mov.tercero_id}, mov.tercero_nombre={mov.tercero_nombre}")
+        logger.info(f"DEBUG_2232: Generated tercero_display={response.tercero_display}")
+        logger.info(f"DEBUG_2232: mov.detalles={mov.detalles}")
+        
+    return response
 
 def _validar_catalogos(
     dto: MovimientoDTO,
@@ -136,12 +188,28 @@ def listar_movimientos(
     centro_costo_id: Optional[int] = None,
     concepto_id: Optional[int] = None,
     centros_costos_excluidos: Optional[List[int]] = Query(None),
-    solo_pendientes: bool = False,
+    pendiente: Optional[bool] = None,
     tipo_movimiento: Optional[str] = None,
     repo: MovimientoRepository = Depends(get_movimiento_repository)
 ):
-    """Lista todos los movimientos con filtros (sin paginación)."""
+    """
+    Lista todos los movimientos con filtros (legacy compatible way).
+    Si pendiente is None, trae todos.
+    Si pendiente is False, aplica solo_clasificados=True en repo.
+    """
     logger.info(f"Listando todos los movimientos sin paginación")
+    
+    # Logic transformation for repo
+    solo_clasificados_val = False
+    solo_pendientes = None 
+    solo_pendientes_val = solo_pendientes
+    
+    if pendiente is not None:
+        if pendiente is True:
+            solo_pendientes_val = True
+        else:
+            solo_clasificados_val = True
+
     try:
         # Obtener TODOS los movimientos sin límites de paginación
         movimientos, total = repo.buscar_avanzado(
@@ -152,7 +220,8 @@ def listar_movimientos(
             centro_costo_id=centro_costo_id,
             concepto_id=concepto_id,
             centros_costos_excluidos=centros_costos_excluidos,
-            solo_pendientes=solo_pendientes,
+            solo_pendientes=solo_pendientes_val,
+            solo_clasificados=solo_clasificados_val,
             tipo_movimiento=tipo_movimiento,
             skip=0,
             limit=None  # Sin límite - retornar todos
@@ -303,6 +372,40 @@ def reporte_desglose_gastos(
         logger.error(f"Error generando reporte desglose: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error generando reporte")
 
+def _validar_detalles(
+    dto: MovimientoDTO,
+    repo_centro_costo: CentroCostoRepository,
+    repo_concepto: ConceptoRepository
+):
+    """Valida la consistencia de los detalles si existen"""
+    if not dto.detalles:
+        return
+
+    total_movimiento = Decimal(str(dto.valor))
+    suma_detalles = sum(Decimal(str(d.valor)) for d in dto.detalles)
+    
+    # Tolerancia para comparacion float/decimal
+    if abs(total_movimiento - suma_detalles) > Decimal('0.01'):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"La suma de los detalles ({suma_detalles}) debe ser igual al valor total del movimiento ({total_movimiento})"
+        )
+
+    for i, d in enumerate(dto.detalles):
+        if d.centro_costo_id and not repo_centro_costo.obtener_por_id(d.centro_costo_id):
+            raise HTTPException(status_code=400, detail=f"Detalle {i+1}: Centro de Costo {d.centro_costo_id} no existe")
+        
+        if d.concepto_id:
+            concepto = repo_concepto.obtener_por_id(d.concepto_id)
+            if not concepto:
+                raise HTTPException(status_code=400, detail=f"Detalle {i+1}: Concepto {d.concepto_id} no existe")
+            
+            if d.centro_costo_id and concepto.centro_costo_id != d.centro_costo_id:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Detalle {i+1}: El concepto {d.concepto_id} no pertenece al centro de costo {d.centro_costo_id}"
+                )
+
 @router.post("", response_model=MovimientoResponse)
 def crear_movimiento(
     dto: MovimientoDTO, 
@@ -316,6 +419,7 @@ def crear_movimiento(
 ):
     logger.info(f"Creando nuevo movimiento: {dto.descripcion} por {dto.valor}")
     _validar_catalogos(dto, repo_cuenta, repo_moneda, repo_tercero, repo_centro_costo, repo_concepto)
+    _validar_detalles(dto, repo_centro_costo, repo_concepto)
     
     try:
         nuevo = Movimiento(
@@ -328,12 +432,26 @@ def crear_movimiento(
             trm=Decimal(str(dto.trm)) if dto.trm else None,
             moneda_id=dto.moneda_id,
             cuenta_id=dto.cuenta_id,
+            tercero_id=dto.tercero_id,  # FIX: Asignar Tercero al Encabezado
             detalle=dto.detalle
         )
-        # Asignar campos de clasificación vía propiedades (setters)
-        nuevo.tercero_id = dto.tercero_id
-        nuevo.centro_costo_id = dto.centro_costo_id
-        nuevo.concepto_id = dto.concepto_id
+
+        if dto.detalles and len(dto.detalles) > 0:
+            # Modo Avanzado: Lista de detalles
+            detalles_obj = []
+            for d in dto.detalles:
+                detalles_obj.append(MovimientoDetalle(
+                    valor=Decimal(str(d.valor)),
+                    centro_costo_id=d.centro_costo_id,
+                    concepto_id=d.concepto_id,
+                    tercero_id=dto.tercero_id # Heredar Tercero del Encabezado
+                ))
+            nuevo.detalles = detalles_obj
+        else:
+            # Modo Simple: Asignar clasificación vía propiedades (setters)
+            nuevo.tercero_id = dto.tercero_id
+            nuevo.centro_costo_id = dto.centro_costo_id
+            nuevo.concepto_id = dto.concepto_id
 
         guardado = repo.guardar(nuevo)
         logger.info(f"Movimiento guardado con ID {guardado.id}")
@@ -360,6 +478,7 @@ def actualizar_movimiento(
         raise HTTPException(status_code=404, detail="Movimiento no encontrado")
     
     _validar_catalogos(dto, repo_cuenta, repo_moneda, repo_tercero, repo_centro_costo, repo_concepto)
+    _validar_detalles(dto, repo_centro_costo, repo_concepto)
     
     try:
         actualizado = Movimiento(
@@ -372,12 +491,31 @@ def actualizar_movimiento(
             trm=Decimal(str(dto.trm)) if dto.trm else None,
             moneda_id=dto.moneda_id,
             cuenta_id=dto.cuenta_id,
+            tercero_id=dto.tercero_id,  # FIX: Asignar Tercero al Encabezado
             detalle=dto.detalle
         )
-        # Asignar clasificación vía setters (esto creará el detalle automáticamente)
-        actualizado.tercero_id = dto.tercero_id
-        actualizado.centro_costo_id = dto.centro_costo_id
-        actualizado.concepto_id = dto.concepto_id
+
+        if dto.detalles and len(dto.detalles) > 0 and not (dto.centro_costo_id or dto.concepto_id):
+            # Modo Avanzado: Lista de detalles explícita y NO hay campos raíz (o se prefiere detalles)
+            # NOTA: Ajustamos para que si vienen detalles PERO también vienen campos raíz, 
+            # se sospeche que es un spread accidental del frontend (bug que estamos arreglando).
+            # Si es un split real, el frontend NO debería mandar centro_costo/concepto en la raíz 
+            # o el backend debería saber distinguir.
+            # Por ahora: Si vienen campos raíz, los usamos para unificar en un solo detalle (Modo Simple).
+            detalles_obj = []
+            for d in dto.detalles:
+                detalles_obj.append(MovimientoDetalle(
+                    valor=Decimal(str(d.valor)),
+                    centro_costo_id=d.centro_costo_id,
+                    concepto_id=d.concepto_id,
+                    tercero_id=dto.tercero_id # Heredar Tercero del Encabezado
+                ))
+            actualizado.detalles = detalles_obj
+        else:
+             # Modo Simple (o migración de split a simple)
+            actualizado.tercero_id = dto.tercero_id
+            actualizado.centro_costo_id = dto.centro_costo_id
+            actualizado.concepto_id = dto.concepto_id
 
         guardado = repo.guardar(actualizado)
         # Recargar para obtener los nombres

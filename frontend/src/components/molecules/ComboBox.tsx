@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, ChevronDown } from 'lucide-react'
 import { Input } from '../atoms/Input'
+import { EntityDisplay } from './entities/EntityDisplay'
 
 interface ComboBoxOption {
-    id: number
+    id: number | string
     nombre: string
 }
 
@@ -16,9 +17,24 @@ interface ComboBoxProps {
     required?: boolean
     disabled?: boolean
     autoFocus?: boolean
+    className?: string
+    error?: string
+    icon?: React.ElementType
 }
 
-export const ComboBox = ({ value, onChange, options, placeholder, label, required, disabled, autoFocus }: ComboBoxProps) => {
+export const ComboBox = ({
+    value,
+    onChange,
+    options,
+    placeholder,
+    label,
+    required,
+    disabled,
+    autoFocus,
+    className = '',
+    error,
+    icon: Icon
+}: ComboBoxProps) => {
     const [searchTerm, setSearchTerm] = useState('')
     const [showDropdown, setShowDropdown] = useState(false)
     const [filteredOptions, setFilteredOptions] = useState<ComboBoxOption[]>(options)
@@ -84,10 +100,17 @@ export const ComboBox = ({ value, onChange, options, placeholder, label, require
             e.preventDefault()
 
             // 1. Intentar buscar por ID exacto primero
+            // Permitir búsqueda exacta para strings también
+            const option = options.find(opt => opt.id.toString() === searchTerm)
+            if (option) {
+                selectOption(option)
+                return
+            }
+
             const idMatch = searchTerm.match(/^\d+/)
             if (idMatch) {
                 const id = parseInt(idMatch[0])
-                const option = options.find(opt => opt.id === id)
+                const option = options.find(opt => opt.id === id || opt.id === id.toString())
                 if (option) {
                     selectOption(option)
                     return
@@ -139,14 +162,15 @@ export const ComboBox = ({ value, onChange, options, placeholder, label, require
     }
 
     return (
-        <div className="relative" ref={dropdownRef}>
+        <div className={`relative ${className}`} ref={dropdownRef}>
             {label && (
                 <label className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-2 mb-1.5">
+                    {Icon && <Icon size={14} />}
                     {label}{required && <span className="text-rose-500">*</span>}
                 </label>
             )}
 
-            <div className="relative group">
+            <div className={`relative group ${error ? 'mb-0' : ''}`}>
                 <Input
                     ref={inputRef}
                     type="text"
@@ -158,10 +182,11 @@ export const ComboBox = ({ value, onChange, options, placeholder, label, require
                     disabled={disabled}
                     required={required}
                     autoFocus={autoFocus}
-                    className="pr-10" // Space for icons
+                    className={`pr-10 ${error ? '!border-rose-300 focus:!border-rose-500 focus:!ring-rose-100' : ''}`}
                 />
 
-                <div className="absolute right-2 top-[calc(50%+10px)] -translate-y-1/2 flex items-center gap-1">
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    {/* ... existing buttons ... */}
                     {searchTerm && !disabled && (
                         <button
                             type="button"
@@ -197,10 +222,12 @@ export const ComboBox = ({ value, onChange, options, placeholder, label, require
                                 className={`px-3 py-2.5 hover:bg-blue-50 cursor-pointer text-sm transition-colors border-b border-gray-50 last:border-0 flex items-center gap-2 ${value === option.id.toString() ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
                                     }`}
                             >
-                                <span className="font-mono text-[10px] px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 w-10 text-center">
-                                    {option.id}
-                                </span>
-                                <span className="truncate">{option.nombre}</span>
+                                <EntityDisplay
+                                    id={option.id}
+                                    nombre={option.nombre}
+                                    className="w-full"
+                                    idClassName="bg-gray-100 text-gray-500 min-w-[30px] text-center"
+                                />
                             </div>
                         ))
                     ) : (
@@ -210,6 +237,7 @@ export const ComboBox = ({ value, onChange, options, placeholder, label, require
                     )}
                 </div>
             )}
+            {error && <span className="text-xs text-rose-500 ml-0.5 font-medium animate-fadeIn mt-1 block">{error}</span>}
         </div>
     )
 }

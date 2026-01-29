@@ -1,6 +1,7 @@
-from datetime import datetime
+from typing import Optional, List, Dict, Any, Tuple
 from decimal import Decimal
-from typing import Optional
+from datetime import datetime
+import re
 
 def parsear_fecha(fecha_str: str) -> Optional[str]:
     """
@@ -66,3 +67,51 @@ def parsear_valor(valor_str: str) -> Optional[Decimal]:
     except Exception as e:
         print(f"⚠ Error al parsear valor '{valor_str}': {e}")
         return None
+
+def obtener_nombre_mes(mes_idx: int) -> str:
+    """Retorna el nombre corto del mes (ENE, FEB, etc.). 1-indexed."""
+    meses_es = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
+    if 1 <= mes_idx <= 12:
+        return meses_es[mes_idx - 1]
+    return "UNK"
+
+def extraer_periodo_de_movimientos(movs: List[Dict[str, Any]]) -> Optional[str]:
+    """
+    Retorna "YYYY-MMM" basado en las fechas de los movimientos.
+    Se asume que los movimientos tienen un campo 'fecha' en formato ISO (YYYY-MM-DD).
+    """
+    if not movs:
+        return None
+    
+    try:
+        # Extraer todas las fechas válidas
+        fechas = [m['fecha'] for m in movs if m.get('fecha') and isinstance(m['fecha'], str)]
+        if not fechas:
+            return None
+        
+        # En el caso más común, todos los movimientos son del mismo mes.
+        # Usamos la primera fecha para determinar el periodo.
+        # Podríamos hacer un conteo por mes si fuera necesario, pero por ahora esto es suficiente.
+        fecha_str = fechas[0]
+        partes = fecha_str.split('-')
+        if len(partes) >= 2:
+            year = partes[0]
+            month = int(partes[1])
+            return f"{year}-{obtener_nombre_mes(month)}"
+    except Exception as e:
+        print(f"⚠ Error al extraer periodo de movimientos: {e}")
+    
+    return None
+
+def extraer_periodo_de_nombre_archivo(filename: str) -> Optional[Tuple[int, int]]:
+    """Extrae año y mes del nombre del archivo (ej: 2025-01 o 202501)."""
+    if not filename:
+        return None
+        
+    match = re.search(r'(\d{4})[-_ ]?(\d{2})', filename)
+    if match:
+        year = int(match.group(1))
+        month = int(match.group(2))
+        if 2000 < year < 2100 and 1 <= month <= 12:
+            return year, month
+    return None

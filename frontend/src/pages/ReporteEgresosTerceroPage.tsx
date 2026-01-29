@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, ChevronRight } from 'lucide-react'
 import { apiService } from '../services/api'
-import { useCatalogo } from '../hooks/useCatalogo'
 import { useReporteDesgloseGastos, useConfiguracionExclusion } from '../hooks/useReportes'
 import { useSessionStorage } from '../hooks/useSessionStorage'
 import { getMesActual } from '../utils/dateUtils'
@@ -81,8 +80,6 @@ export const ReporteEgresosTerceroPage = () => {
     const { data: tercerosDataRaw, isLoading: loading } = useReporteDesgloseGastos(paramsReporte)
     const tercerosData = (tercerosDataRaw as ItemDesglose[]) || []
 
-    // Load Catalogs
-    const { cuentas, terceros, centrosCostos, conceptos } = useCatalogo()
 
     // Load Exclusion Config
     const { data: configuracionExclusion = [] } = useConfiguracionExclusion()
@@ -120,7 +117,7 @@ export const ReporteEgresosTerceroPage = () => {
             concepto_id: conceptoId ? Number(conceptoId) : undefined,
             centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined
         } as any).then(data => {
-            setCentroCostoModal(prev => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
+            setCentroCostoModal((prev: DrilldownLevel) => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
         })
     }
 
@@ -146,7 +143,7 @@ export const ReporteEgresosTerceroPage = () => {
             concepto_id: conceptoId ? Number(conceptoId) : undefined,
             centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined
         } as any).then(data => {
-            setConceptoModal(prev => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
+            setConceptoModal((prev: DrilldownLevel) => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
         })
     }
 
@@ -206,9 +203,9 @@ export const ReporteEgresosTerceroPage = () => {
 
         const handleSort = (field: 'nombre' | 'ingresos' | 'egresos' | 'saldo') => {
             if (field === modalState.sortField) {
-                setModalState(prev => ({ ...prev, sortAsc: !prev.sortAsc }))
+                setModalState((prev: DrilldownLevel) => ({ ...prev, sortAsc: !prev.sortAsc }))
             } else {
-                setModalState(prev => ({ ...prev, sortField: field, sortAsc: field === 'nombre' }))
+                setModalState((prev: DrilldownLevel) => ({ ...prev, sortField: field, sortAsc: field === 'nombre' }))
             }
         }
 
@@ -236,7 +233,7 @@ export const ReporteEgresosTerceroPage = () => {
                     {/* Header with title and close button */}
                     <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                         <h3 className="text-lg font-bold text-gray-900">{modalState.title}</h3>
-                        <button onClick={() => setModalState(prev => ({ ...prev, isOpen: false }))} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                        <button onClick={() => setModalState((prev: DrilldownLevel) => ({ ...prev, isOpen: false }))} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
                             <X size={20} className="text-gray-500" />
                         </button>
                     </div>
@@ -365,16 +362,12 @@ export const ReporteEgresosTerceroPage = () => {
                 onHastaChange={setHasta}
                 cuentaId={cuentaId}
                 onCuentaChange={setCuentaId}
-                cuentas={cuentas}
                 terceroId={terceroId}
                 onTerceroChange={setTerceroId}
                 centroCostoId={centroCostoId}
                 onCentroCostoChange={setCentroCostoId}
                 conceptoId={conceptoId}
                 onConceptoChange={setConceptoId}
-                terceros={terceros}
-                centrosCostos={centrosCostos}
-                conceptos={conceptos}
                 showClasificacionFilters={true}
                 mostrarIngresos={mostrarIngresos}
                 onMostrarIngresosChange={setMostrarIngresos}

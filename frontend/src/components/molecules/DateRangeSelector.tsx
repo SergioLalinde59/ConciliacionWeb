@@ -8,7 +8,8 @@ import {
     getUltimos6Meses,
     getAnioYTD,
     getAnioAnterior,
-    getUltimos12Meses
+    getUltimos12Meses,
+    formatDateISO
 } from '../../utils/dateUtils'
 
 interface DateRangeProps {
@@ -56,21 +57,41 @@ export const DateRangeButtons = ({ onDesdeChange, onHastaChange }: DateRangeProp
 
 export const DateRangeInputs = ({ desde, hasta, onDesdeChange, onHastaChange }: DateRangeInputProps) => {
     return (
-        <div className="contents"> {/* 'contents' allows children to act as grid items if parent is grid */}
-            <Input
-                type="date"
-                label="Desde"
-                icon={Calendar}
-                value={desde}
-                onChange={(e) => onDesdeChange(e.target.value)}
-            />
-            <Input
-                type="date"
-                label="Hasta"
-                icon={Calendar}
-                value={hasta}
-                onChange={(e) => onHastaChange(e.target.value)}
-            />
+        <div className="flex flex-col sm:flex-row gap-4 flex-grow">
+            <div className="flex-grow">
+                <Input
+                    type="date"
+                    label="Desde"
+                    icon={Calendar}
+                    value={desde}
+                    onChange={(e) => {
+                        const newVal = e.target.value
+                        onDesdeChange(newVal)
+                        if (newVal) {
+                            const [year, month] = newVal.split('-').map(Number)
+                            if (year && month) {
+                                // month is 1-indexed from split, new Date taking (year, month, 0) gives last day of previous month index?
+                                // No: new Date(year, monthIndex, 0) gives last day of monthIndex-1.
+                                // wait.
+                                // split "2023-01-01" -> year=2023, month=1.
+                                // new Date(2023, 1, 0). Month index 1 is Feb. 0th day of Feb is Jan 31.
+                                // So this gives Jan 31. Correct.
+                                const lastDay = new Date(year, month, 0)
+                                onHastaChange(formatDateISO(lastDay))
+                            }
+                        }
+                    }}
+                />
+            </div>
+            <div className="flex-grow">
+                <Input
+                    type="date"
+                    label="Hasta"
+                    icon={Calendar}
+                    value={hasta}
+                    onChange={(e) => onHastaChange(e.target.value)}
+                />
+            </div>
         </div>
     )
 }
@@ -79,8 +100,6 @@ export const DateRangeInputs = ({ desde, hasta, onDesdeChange, onHastaChange }: 
 export const DateRangeSelector = (props: DateRangeInputProps) => (
     <div className="space-y-4">
         <DateRangeButtons onDesdeChange={props.onDesdeChange} onHastaChange={props.onHastaChange} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <DateRangeInputs {...props} />
-        </div>
+        <DateRangeInputs {...props} />
     </div>
 )

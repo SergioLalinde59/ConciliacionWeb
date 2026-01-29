@@ -6,7 +6,6 @@ import { FiltrosReporte } from '../components/organisms/FiltrosReporte' // Impor
 import { EstadisticasTotales } from '../components/organisms/EstadisticasTotales'
 import { CurrencyDisplay } from '../components/atoms/CurrencyDisplay'
 import { apiService } from '../services/api'
-import { useCatalogo } from '../hooks/useCatalogo'
 import { useSessionStorage } from '../hooks/useSessionStorage'
 import {
     formatDateISO,
@@ -59,8 +58,6 @@ export const ReporteIngresosGastosMesPage = () => {
 
     const actualCentrosCostosExcluidos = centrosCostosExcluidos || []
 
-    // Datos Maestros
-    const { cuentas, terceros, centrosCostos, conceptos } = useCatalogo()
 
     // Params for Hook
     const paramsReporte = useMemo(() => ({
@@ -190,7 +187,7 @@ export const ReporteIngresosGastosMesPage = () => {
 
         setTerceroModal({
             level: 'tercero',
-            title: `Terceros - ${itemMes.mes}`,
+            title: `Terceros - ${itemMes.mes} `,
             mes: itemMes.mes,
             data: [],
             isOpen: true,
@@ -209,10 +206,10 @@ export const ReporteIngresosGastosMesPage = () => {
                 concepto_id: conceptoId ? Number(conceptoId) : undefined,
                 centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined
             } as any)
-            setTerceroModal(prev => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
+            setTerceroModal((prev: DrilldownLevel) => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
         } catch (err) {
             console.error('Error cargando terceros:', err)
-            setTerceroModal(prev => ({ ...prev, data: [] }))
+            setTerceroModal((prev: DrilldownLevel) => ({ ...prev, data: [] }))
         }
     }
 
@@ -242,10 +239,10 @@ export const ReporteIngresosGastosMesPage = () => {
                 concepto_id: conceptoId ? Number(conceptoId) : undefined,
                 centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined
             } as any)
-            setCentroCostoModal(prev => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
+            setCentroCostoModal((prev: DrilldownLevel) => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
         } catch (err) {
             console.error('Error cargando centros de costo:', err)
-            setCentroCostoModal(prev => ({ ...prev, data: [] }))
+            setCentroCostoModal((prev: DrilldownLevel) => ({ ...prev, data: [] }))
         }
     }
 
@@ -277,10 +274,10 @@ export const ReporteIngresosGastosMesPage = () => {
                 concepto_id: conceptoId ? Number(conceptoId) : undefined,
                 centros_costos_excluidos: actualCentrosCostosExcluidos.length > 0 ? actualCentrosCostosExcluidos : undefined
             } as any)
-            setConceptoModal(prev => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
+            setConceptoModal((prev: DrilldownLevel) => ({ ...prev, data: (data as ItemDesglose[]) || [] }))
         } catch (err) {
             console.error('Error cargando conceptos:', err)
-            setConceptoModal(prev => ({ ...prev, data: [] }))
+            setConceptoModal((prev: DrilldownLevel) => ({ ...prev, data: [] }))
         }
     }
 
@@ -310,9 +307,9 @@ export const ReporteIngresosGastosMesPage = () => {
 
         const handleSort = (field: 'nombre' | 'ingresos' | 'egresos' | 'saldo') => {
             if (field === modalState.sortField) {
-                setModalState(prev => ({ ...prev, sortAsc: !prev.sortAsc }))
+                setModalState((prev: DrilldownLevel) => ({ ...prev, sortAsc: !prev.sortAsc }))
             } else {
-                setModalState(prev => ({
+                setModalState((prev: DrilldownLevel) => ({
                     ...prev,
                     sortField: field,
                     sortAsc: field === 'nombre'
@@ -335,7 +332,7 @@ export const ReporteIngresosGastosMesPage = () => {
                             <h3 className="text-lg font-bold text-gray-900">{modalState.title}</h3>
 
                         </div>
-                        <button onClick={() => setModalState(prev => ({ ...prev, isOpen: false }))} className="p-2 hover:bg-gray-200 rounded-full">
+                        <button onClick={() => setModalState((prev: DrilldownLevel) => ({ ...prev, isOpen: false }))} className="p-2 hover:bg-gray-200 rounded-full">
                             <X size={20} className="text-gray-500" />
                         </button>
                     </div>
@@ -408,7 +405,7 @@ export const ReporteIngresosGastosMesPage = () => {
                                     <tr
                                         key={idx}
                                         onClick={() => onRowClick && onRowClick(item)}
-                                        className={`hover:bg-blue-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                                        className={`hover: bg - blue - 50 transition - colors ${onRowClick ? 'cursor-pointer' : ''} `}
                                     >
                                         <td className="py-3 px-4 text-sm text-gray-700">{item.nombre}</td>
                                         <td className="py-3 px-4 text-sm text-right font-mono">
@@ -448,22 +445,18 @@ export const ReporteIngresosGastosMesPage = () => {
                 onHastaChange={setHasta}
                 cuentaId={cuentaId}
                 onCuentaChange={setCuentaId}
-                cuentas={cuentas}
                 terceroId={terceroId}
                 onTerceroChange={setTerceroId}
                 centroCostoId={centroCostoId}
                 onCentroCostoChange={setCentroCostoId}
                 conceptoId={conceptoId}
                 onConceptoChange={setConceptoId}
-                terceros={terceros}
-                centrosCostos={centrosCostos}
-                conceptos={conceptos}
+                onLimpiar={handleLimpiar}
                 showClasificacionFilters={true}
                 showIngresosEgresos={false}
                 configuracionExclusion={configuracionExclusion}
                 centrosCostosExcluidos={actualCentrosCostosExcluidos}
                 onCentrosCostosExcluidosChange={setCentrosCostosExcluidos}
-                onLimpiar={handleLimpiar}
             />
 
 
@@ -492,9 +485,9 @@ export const ReporteIngresosGastosMesPage = () => {
                             >
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis dataKey="mes" fontSize={12} />
-                                <YAxis fontSize={11} tickFormatter={(val: number) => `$${(val / 1000000).toFixed(1)}M`} />
+                                <YAxis fontSize={11} tickFormatter={(val: number) => `$${(val / 1000000).toFixed(1)} M`} />
                                 <Tooltip
-                                    formatter={(value: any) => `$${Number(value).toLocaleString('es-CO', { maximumFractionDigits: 0 })}`}
+                                    formatter={(value: any) => `$${Number(value).toLocaleString('es-CO', { maximumFractionDigits: 0 })} `}
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                 />
                                 <Bar dataKey="ingresos" name="Ingresos" fill="#10b981" radius={[4, 4, 0, 0]} />
@@ -517,9 +510,9 @@ export const ReporteIngresosGastosMesPage = () => {
                             >
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis dataKey="mes" fontSize={12} />
-                                <YAxis fontSize={11} tickFormatter={(val: number) => `$${(val / 1000000).toFixed(1)}M`} />
+                                <YAxis fontSize={11} tickFormatter={(val: number) => `$${(val / 1000000).toFixed(1)} M`} />
                                 <Tooltip
-                                    formatter={(value: any) => `$${Number(value).toLocaleString('es-CO', { maximumFractionDigits: 0 })}`}
+                                    formatter={(value: any) => `$${Number(value).toLocaleString('es-CO', { maximumFractionDigits: 0 })} `}
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                 />
                                 <Bar dataKey="egresos" name="Egresos" fill="#f43f5e" radius={[4, 4, 0, 0]} />

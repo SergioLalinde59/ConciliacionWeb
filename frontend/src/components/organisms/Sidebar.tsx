@@ -27,7 +27,8 @@ import {
     Shield,
     Settings,
     HardDrive,
-    AlertCircle
+    AlertCircle,
+    Unlink
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -70,6 +71,7 @@ export const Sidebar = () => {
         { name: 'Cargar Movimiento', path: '/movimientos/cargar', icon: UploadCloud },
         { name: 'Cargar Extractos', path: '/conciliacion/cargar-extracto', icon: FileText },
         { name: 'Procesar Matching', path: '/conciliacion/matching', icon: GitCompare },
+        { name: 'Desvincular Movimientos', path: '/herramientas/mantenimiento/desvincular-movimientos', icon: Unlink },
         { name: 'Por Clasificar', path: '/movimientos/clasificar', icon: ListTodo },
         { name: 'Movimientos', path: '/movimientos', icon: Receipt },
         { name: 'Sugerencias Reclasif.', path: '/movimientos/sugerencias', icon: Sparkles },
@@ -84,7 +86,7 @@ export const Sidebar = () => {
     ];
 
     const menuMantenimiento = [
-        { name: 'Reiniciar Periodo', path: '/herramientas/mantenimiento/reset-periodo', icon: RefreshCw },
+        { name: 'Reiniciar Conciliación', path: '/herramientas/mantenimiento/reset-periodo', icon: RefreshCw },
         { name: 'Configuración', path: '/herramientas/mantenimiento/configuracion', icon: Settings },
         { name: 'Datos', path: '/herramientas/mantenimiento/backups', icon: Download },
         { name: 'Maestros', path: '/herramientas/mantenimiento/maestros', icon: Shield },

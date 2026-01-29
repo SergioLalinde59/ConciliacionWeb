@@ -1,5 +1,5 @@
 
-import { ComboBox } from './ComboBox'
+import { EntitySelector } from './entities/EntitySelector'
 
 interface ClassificationFiltersProps {
     terceroId?: string
@@ -30,8 +30,8 @@ export const ClassificationFilters = ({
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-500 uppercase">1. Tercero</label>
-                <ComboBox
+                <EntitySelector
+                    label="1. Tercero"
                     options={terceros}
                     value={terceroId}
                     onChange={(val) => { onTerceroChange(val); }}
@@ -39,8 +39,8 @@ export const ClassificationFilters = ({
                 />
             </div>
             <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-500 uppercase">2. Centro de Costo</label>
-                <ComboBox
+                <EntitySelector
+                    label="2. Centro de Costo"
                     options={centrosCostos}
                     value={centroCostoId}
                     onChange={(val) => { onCentroCostoChange(val); onConceptoChange('') }}
@@ -48,8 +48,9 @@ export const ClassificationFilters = ({
                 />
             </div>
             <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-500 uppercase">Concepto</label>
-                <ComboBox
+                <EntitySelector
+                    label="Concepto"
+                    // @ts-ignore - centro_costo_id might be missing in Entity type definition but present in data
                     options={centroCostoId ? conceptos.filter(c => c.centro_costo_id === parseInt(centroCostoId)) : conceptos}
                     value={conceptoId}
                     onChange={onConceptoChange}

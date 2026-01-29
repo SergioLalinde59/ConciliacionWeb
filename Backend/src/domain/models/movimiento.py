@@ -18,6 +18,7 @@ class Movimiento:
     
     # Campos opcionales / Nullables
     id: Optional[int] = None
+    tercero_id: Optional[int] = None
     referencia: str = ""
     usd: Optional[Decimal] = None
     trm: Optional[Decimal] = None
@@ -30,9 +31,7 @@ class Movimiento:
     # Campos de visualización (poblados opcionalmente por joins)
     cuenta_nombre: Optional[str] = None
     moneda_nombre: Optional[str] = None
-    # Estos nombres ahora vendrían del primer detalle o concatenados, 
-    # se mantienen para compatibilidad de vistas simples, pero podrian ser removidos o calculados.
-    # [REMOVED from dataclass fields, converted to properties below]
+    _tercero_nombre: Optional[str] = None # Para compatibilidad
 
     def __post_init__(self):
         """Validaciones de integridad de dominio"""
@@ -64,6 +63,10 @@ class Movimiento:
     @property
     def necesita_clasificacion(self) -> bool:
         """Regla de negocio: está pendiente si no tiene detalles o están incompletos"""
+        # [MOD] Ahora el tercero también se valida en el encabezado
+        if self.tercero_id is None:
+            return True
+
         if not self.detalles:
             return True
             
@@ -90,10 +93,13 @@ class Movimiento:
                 valor=self.valor,
                 centro_costo_id=value,
                 concepto_id=None,
-                tercero_id=None
+                tercero_id=self.tercero_id
             ))
         else:
             self.detalles[0].centro_costo_id = value
+            # Ensure Tercero is synced if it was set on Header
+            if self.tercero_id:
+                self.detalles[0].tercero_id = self.tercero_id
         
     @property
     def concepto_id(self) -> Optional[int]:
@@ -108,33 +114,24 @@ class Movimiento:
                 valor=self.valor,
                 centro_costo_id=None,
                 concepto_id=value,
-                tercero_id=None
+                tercero_id=self.tercero_id
             ))
         else:
             self.detalles[0].concepto_id = value
+            # Ensure Tercero is synced if it was set on Header
+            if self.tercero_id:
+                self.detalles[0].tercero_id = self.tercero_id
         
     @property
-    def tercero_id(self) -> Optional[int]:
-        """Devuelve el tercero del primer detalle (compatibilidad)"""
-        return self.detalles[0].tercero_id if self.detalles else None
-
-    @tercero_id.setter
-    def tercero_id(self, value: Optional[int]):
-        """Asigna tercero al primer detalle (o crea uno)"""
-        if not self.detalles:
-            self.detalles.append(MovimientoDetalle(
-                valor=self.valor,
-                centro_costo_id=None,
-                concepto_id=None,
-                tercero_id=value
-            ))
-        else:
-            self.detalles[0].tercero_id = value
-
-    @property
     def tercero_nombre(self) -> Optional[str]:
-        """Devuelve el nombre del tercero del primer detalle"""
+        """Devuelve el nombre del tercero (si se pobló en el join del encabezado o primer detalle)"""
+        if self._tercero_nombre:
+            return self._tercero_nombre
         return self.detalles[0].tercero_nombre if self.detalles else None
+
+    @tercero_nombre.setter
+    def tercero_nombre(self, value: Optional[str]):
+        self._tercero_nombre = value
 
     @property
     def centro_costo_nombre(self) -> Optional[str]:

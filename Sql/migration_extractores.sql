@@ -17,23 +17,27 @@ CREATE INDEX IF NOT EXISTS idx_cuenta_extractores_cuenta_tipo ON cuenta_extracto
 TRUNCATE TABLE cuenta_extractores RESTART IDENTITY;
 
 -- Ahorros (ID 1)
-INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (1, 'MOVIMIENTOS', 'ahorros_extracto_movimientos', 1);
+INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (1, 'MOVIMIENTOS', 'ahorros_movimientos', 1);
+INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (1, 'MOVIMIENTOS', 'ahorros_extracto_movimientos', 2);
 INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (1, 'RESUMEN', 'ahorros_extracto', 1);
 
 -- FondoRenta (ID 3)
-INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (3, 'MOVIMIENTOS', 'fondorenta_extracto_movimientos', 1);
+INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (3, 'MOVIMIENTOS', 'fondorenta_movimientos', 1);
+INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (3, 'MOVIMIENTOS', 'fondorenta_extracto_movimientos', 2);
 INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (3, 'RESUMEN', 'fondorenta_extracto', 1);
 
 -- MasterCardPesos (ID 6)
--- New Format (Priority 1)
-INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (6, 'MOVIMIENTOS', 'mastercard_pesos_extracto_movimientos', 1);
+INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (6, 'MOVIMIENTOS', 'mastercard_movimientos', 1);
+INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (6, 'MOVIMIENTOS', 'mastercard_pesos_extracto_movimientos', 2);
+INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (6, 'MOVIMIENTOS', 'mastercard_pesos_extracto_anterior_movimientos', 3);
 -- Resumen
 INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (6, 'RESUMEN', 'mastercard_pesos_extracto', 1);
 INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (6, 'RESUMEN', 'mastercard_pesos_extracto_anterior', 2);
 
 -- MasterCardUSD (ID 7)
--- New Format
-INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (7, 'MOVIMIENTOS', 'mastercard_usd_extracto_movimientos', 1);
+INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (7, 'MOVIMIENTOS', 'mastercard_movimientos', 1);
+INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (7, 'MOVIMIENTOS', 'mastercard_usd_extracto_movimientos', 2);
+INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (7, 'MOVIMIENTOS', 'mastercard_usd_extracto_anterior_movimientos', 3);
 -- Resumen
 INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (7, 'RESUMEN', 'mastercard_usd_extracto', 1);
 INSERT INTO cuenta_extractores (cuenta_id, tipo, modulo, orden) VALUES (7, 'RESUMEN', 'mastercard_usd_extracto_anterior', 2);

@@ -1,4 +1,5 @@
-import { DataTable, idColumn, nombreColumn, type Column } from '../../molecules/DataTable'
+import { DataTable, type Column } from '../../molecules/DataTable'
+import { EntityDisplay } from '../../molecules/entities/EntityDisplay'
 import type { Tercero } from '../../../types'
 
 interface Props {
@@ -14,8 +15,18 @@ interface Props {
  */
 export const TercerosTable = ({ terceros, loading, onEdit, onDelete }: Props) => {
     const columns: Column<Tercero>[] = [
-        idColumn<Tercero>({ width: 'w-16' }),
-        nombreColumn<Tercero>(),
+        {
+            key: 'tercero',
+            header: 'TERCERO',
+            sortable: true,
+            sortKey: 'nombre', // Sort by name by default
+            accessor: (row) => (
+                <EntityDisplay
+                    id={row.id}
+                    nombre={row.nombre}
+                />
+            )
+        }
     ]
 
     return (

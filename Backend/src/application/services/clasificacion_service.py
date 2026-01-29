@@ -132,6 +132,9 @@ class ClasificacionService:
                 modificado = False
                 if regla.tercero_id and not movimiento.tercero_id:
                     movimiento.tercero_id = regla.tercero_id
+                    # Propagar al detalle si es único (consistencia)
+                    if len(movimiento.detalles) == 1:
+                        movimiento.detalles[0].tercero_id = regla.tercero_id
                     modificado = True
                 if regla.centro_costo_id and not movimiento.centro_costo_id:
                     movimiento.centro_costo_id = regla.centro_costo_id
@@ -162,9 +165,10 @@ class ClasificacionService:
                 mejor_candidato = candidatos[0] # Asumimos que repo devuelve ordenados, sino ordenar
                 
                 movimiento.tercero_id = mejor_candidato.tercero_id
-                movimiento.tercero_id = mejor_candidato.tercero_id
+                # Propagar al detalle si es único
+                if len(movimiento.detalles) == 1:
+                    movimiento.detalles[0].tercero_id = mejor_candidato.tercero_id
                 movimiento.centro_costo_id = mejor_candidato.centro_costo_id
-                movimiento.concepto_id = mejor_candidato.concepto_id
                 movimiento.concepto_id = mejor_candidato.concepto_id
                 return True, f"Histórico por Referencia ({movimiento.referencia})"
         
@@ -177,8 +181,9 @@ class ClasificacionService:
             td = self.tercero_descripcion_repo.buscar_por_referencia(movimiento.referencia)
             if td:
                 movimiento.tercero_id = td.terceroid
-                # Nota: Catálogo externo solo da Tercero, no CC/Concepto, por lo que podría quedar parcialmente clasificado
-                # Pero en este caso lo consideramos éxito para asignar el Tercero.
+                # Propagar al detalle si es único
+                if len(movimiento.detalles) == 1:
+                    movimiento.detalles[0].tercero_id = td.terceroid
                 return True, f"Referencia Catálogo Exacta: {movimiento.referencia}"
 
         return False, "Sin coincidencias"
@@ -212,10 +217,11 @@ class ClasificacionService:
         if not movimiento:
             raise ValueError(f"Movimiento {movimiento_id} no encontrado")
             
+        # Initialize suggestion with CURRENT movement values (preserve existing classification)
         sugerencia = {
-            'tercero_id': None, 
-            'centro_costo_id': None, 
-            'concepto_id': None,
+            'tercero_id': movimiento.tercero_id, 
+            'centro_costo_id': movimiento.centro_costo_id, 
+            'concepto_id': movimiento.concepto_id,
             'razon': None,
             'tipo_match': None
         }
@@ -226,8 +232,28 @@ class ClasificacionService:
         print(f"\n🚀 INICIANDO PIPELINE DE CLASIFICACIÓN para ID {movimiento_id}")
         print(f"   Descripción: '{movimiento.descripcion}'")
         print(f"   Valor: {movimiento.valor}")
+        print(f"   Tercero actual: {movimiento.tercero_id}")
         
         referencia_no_existe = False
+        
+        # ============================================
+        # 0.1. ESTRATEGIA: CONTEXTO PARA TERCERO EXISTENTE
+        # ============================================
+        # Si el movimiento YA tiene un tercero_id asignado, buscar su historial
+        # para mostrar en el contexto (esto ayuda aunque la descripción no coincida)
+        if movimiento.tercero_id and not match_referencia_encontrado:
+            print(f"   📋 Movimiento ya tiene TerceroID {movimiento.tercero_id}, buscando historial...")
+            cands_tercero_existente, _ = self.movimiento_repo.buscar_avanzado(
+                tercero_id=movimiento.tercero_id, 
+                limit=20
+            )
+            for m in cands_tercero_existente:
+                if m.id != movimiento.id:
+                    if m.id not in candidatos_map:
+                        candidatos_map[m.id] = {'mov': m, 'origen': {'tercero_existente'}, 'score_cobertura': 5}
+                    else:
+                        candidatos_map[m.id]['origen'].add('tercero_existente')
+                        candidatos_map[m.id]['score_cobertura'] += 5
 
         # ============================================
         # 0. ESTRATEGIA: REFERENCIA EXACTA (>8 DÍGITOS) - PRIORIDAD MÁXIMA

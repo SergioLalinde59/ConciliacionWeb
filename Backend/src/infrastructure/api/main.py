@@ -29,7 +29,8 @@ from src.infrastructure.api.routers import (
     matching,
     dashboard,
     admin,
-    config_valores_pendientes
+    config_valores_pendientes,
+    mantenimiento
 )
 
 
@@ -111,6 +112,7 @@ app.include_router(matching.router)
 app.include_router(dashboard.router)
 app.include_router(admin.router)
 app.include_router(config_valores_pendientes.router)
+app.include_router(mantenimiento.router)
 
 logger.info("Todos los routers registrados")
 

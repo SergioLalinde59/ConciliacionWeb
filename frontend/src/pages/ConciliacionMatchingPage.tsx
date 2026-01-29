@@ -9,8 +9,10 @@ import { MatchesIncorrectosModal } from '../components/organisms/MatchesIncorrec
 import { MovimientoModal } from '../components/organisms/modals/MovimientoModal'
 import { matchingService } from '../services/matching.service'
 import { conciliacionService } from '../services/conciliacionService'
-import { cuentasService, movimientosService } from '../services/api'
+import { movimientosService } from '../services/api'
 import { UnmatchedSystemTable } from '../components/organisms/UnmatchedSystemTable'
+import { SelectorCuenta } from '../components/molecules/SelectorCuenta'
+import { useCatalogo } from '../hooks/useCatalogo'
 
 export const ConciliacionMatchingPage = () => {
     // State para filtros principales
@@ -29,17 +31,11 @@ export const ConciliacionMatchingPage = () => {
     const [showEditSystemModal, setShowEditSystemModal] = useState(false)
 
     const queryClient = useQueryClient()
+    const { cuentas } = useCatalogo()
 
-    // Cargar cuentas
-    const { data: cuentasResult } = useQuery({
-        queryKey: ['cuentas'],
-        queryFn: cuentasService.listar
-    })
-    const cuentas = cuentasResult || []
-
-    // Filtrar solo cuentas que permiten conciliar
+    // Filtrar solo cuentas que permiten conciliar para la selección por defecto
     const reconcilableCuentas = useMemo(() => {
-        return cuentas.filter((c: Cuenta) => c.permite_conciliar)
+        return (cuentas as Cuenta[] || []).filter((c: Cuenta) => c.permite_conciliar)
     }, [cuentas])
 
     // Seleccionar primera cuenta por defecto
@@ -89,7 +85,7 @@ export const ConciliacionMatchingPage = () => {
             extractoMovs: any[]
         }> = {}
 
-        matchingResult.matches.forEach(match => {
+        matchingResult.matches.forEach((match: any) => {
             if (match.mov_sistema) {
                 const sysId = match.mov_sistema.id
                 if (!conteoPorSistema[sysId]) {
@@ -104,17 +100,17 @@ export const ConciliacionMatchingPage = () => {
 
         // Filtrar los que tienen > 1 vinculación
         const casosProblematicos = Object.values(conteoPorSistema)
-            .filter(grupo => grupo.extractoMovs.length > 1)
-            .map(grupo => ({
+            .filter((grupo: any) => grupo.extractoMovs.length > 1)
+            .map((grupo: any) => ({
                 sistema_id: grupo.sistemaMov.id,
                 sistema_descripcion: grupo.sistemaMov.descripcion,
                 sistema_valor: grupo.sistemaMov.valor,
                 sistema_fecha: grupo.sistemaMov.fecha,
                 num_vinculaciones: grupo.extractoMovs.length,
-                extracto_ids: grupo.extractoMovs.map(e => e.id),
-                extracto_descripciones: grupo.extractoMovs.map(e => e.descripcion),
-                extracto_valores: grupo.extractoMovs.map(e => e.valor),
-                extracto_fechas: grupo.extractoMovs.map(e => e.fecha)
+                extracto_ids: grupo.extractoMovs.map((e: any) => e.id),
+                extracto_descripciones: grupo.extractoMovs.map((e: any) => e.descripcion),
+                extracto_valores: grupo.extractoMovs.map((e: any) => e.valor),
+                extracto_fechas: grupo.extractoMovs.map((e: any) => e.fecha)
             }))
 
         if (casosProblematicos.length === 0) return null
@@ -299,20 +295,10 @@ export const ConciliacionMatchingPage = () => {
             <div className="bg-white rounded-xl border border-gray-200 p-3">
                 <div className="flex gap-4">
                     <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Cuenta
-                        </label>
-                        <select
+                        <SelectorCuenta
                             value={cuentaId || ''}
-                            onChange={(e) => setCuentaId(Number(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                            {reconcilableCuentas.map((cuenta: Cuenta) => (
-                                <option key={cuenta.id} value={cuenta.id}>
-                                    {cuenta.nombre}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(val) => setCuentaId(Number(val))}
+                        />
                     </div>
 
                     <div className="w-32">

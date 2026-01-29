@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { apiService } from '../services/api'
 import { BarChart2, X, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react'
 import { EstadisticasTotales } from '../components/organisms/EstadisticasTotales'
 import { CurrencyDisplay } from '../components/atoms/CurrencyDisplay'
 import { FiltrosReporte } from '../components/organisms/FiltrosReporte'
-import { apiService } from '../services/api'
 import { useCatalogo } from '../hooks/useCatalogo'
 import { useSessionStorage } from '../hooks/useSessionStorage'
 import { getMesActual } from '../utils/dateUtils'
@@ -27,12 +27,12 @@ export const ReporteClasificacionesPage = () => {
     const [desde, setDesde] = useSessionStorage('rep_filtro_desde', getMesActual().inicio)
     const [hasta, setHasta] = useSessionStorage('rep_filtro_hasta', getMesActual().fin)
     const [cuentaId, setCuentaId] = useSessionStorage('rep_filtro_cuentaId', '')
-    const [terceroId, setTerceroId] = useSessionStorage('rep_filtro_terceroId', '')
+    const [terceroId, setTerceroId] = useSessionStorage('rep_filtro_terceroId', '') as [string, (val: string) => void]
     const [centroCostoId, setCentroCostoId] = useSessionStorage('rep_filtro_centroCostoId', '')
     const [conceptoId, setConceptoId] = useSessionStorage('rep_filtro_conceptoId', '')
-    const [mostrarIngresos, setMostrarIngresos] = useSessionStorage('rep_filtro_mostrar_ingresos', true)
+    const [mostrarIngresos, setMostrarIngresos] = useSessionStorage('rep_filtro_mostrar_ingresos', true) as [boolean, (val: boolean) => void]
 
-    const [mostrarEgresos, setMostrarEgresos] = useSessionStorage('rep_filtro_mostrar_egresos', true)
+    const [mostrarEgresos, setMostrarEgresos] = useSessionStorage('rep_filtro_mostrar_egresos', true) as [boolean, (val: boolean) => void]
 
     // Dynamic Exclusion
     // Dynamic Exclusion
@@ -80,9 +80,7 @@ export const ReporteClasificacionesPage = () => {
     })
 
     // Datos Maestros
-    const { cuentas, terceros, centrosCostos, conceptos } = useCatalogo()
-
-    // Tipo de Agrupación (Calculado automáticamente más abajo)
+    const { terceros, centrosCostos } = useCatalogo()
 
     // Drilldown State (First Level: Centros de Costo)
 
@@ -142,8 +140,8 @@ export const ReporteClasificacionesPage = () => {
                 aVal = a.nombre.toLowerCase()
                 bVal = b.nombre.toLowerCase()
             } else {
-                aVal = a[sortField]
-                bVal = b[sortField]
+                aVal = a[sortField as keyof ItemReporte]
+                bVal = b[sortField as keyof ItemReporte]
             }
 
             if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1
@@ -156,7 +154,7 @@ export const ReporteClasificacionesPage = () => {
 
     // Handle modal sort for first drilldown
     const handleModalSort = (field: 'nombre' | 'ingresos' | 'egresos' | 'saldo') => {
-        setDrilldownState(prev => {
+        setDrilldownState((prev) => { // Fixed implicit type 'any'
             if (prev.sortField === field) {
                 return { ...prev, sortDirection: prev.sortDirection === 'asc' ? 'desc' : 'asc' }
             } else {
@@ -449,16 +447,12 @@ export const ReporteClasificacionesPage = () => {
                 onHastaChange={setHasta}
                 cuentaId={cuentaId}
                 onCuentaChange={setCuentaId}
-                cuentas={cuentas}
                 terceroId={terceroId}
                 onTerceroChange={setTerceroId}
                 centroCostoId={centroCostoId}
                 onCentroCostoChange={setCentroCostoId}
                 conceptoId={conceptoId}
                 onConceptoChange={setConceptoId}
-                terceros={terceros}
-                centrosCostos={centrosCostos}
-                conceptos={conceptos}
                 showClasificacionFilters={true}
                 mostrarIngresos={mostrarIngresos}
                 onMostrarIngresosChange={setMostrarIngresos}

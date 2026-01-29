@@ -38,6 +38,9 @@ export interface MovimientoFilterParams extends PaginationParams {
 
     // Búsqueda
     busqueda?: string
+
+    // Paginación manual adicional
+    limit?: number
 }
 
 /**

@@ -3,9 +3,10 @@ import type { Movimiento, SugerenciaClasificacion, ContextoClasificacionResponse
 import { apiService } from '../services/api'
 import { ComboBox } from '../components/molecules/ComboBox'
 import { TerceroModal } from '../components/organisms/modals/TerceroModal'
+import { MovimientoModal } from '../components/organisms/modals/MovimientoModal'
 
 import { CurrencyDisplay } from '../components/atoms/CurrencyDisplay'
-import { Save, Layers, Clock, CheckCircle, ArrowRight, Search, Copy, RefreshCw } from 'lucide-react'
+import { Save, Layers, Clock, CheckCircle, ArrowRight, Search, Copy, RefreshCw, Split } from 'lucide-react'
 import { DataTable } from '../components/molecules/DataTable'
 import type { Column } from '../components/molecules/DataTable'
 
@@ -28,6 +29,7 @@ export const ClasificarMovimientosPage: React.FC = () => {
 
     // Modals
     const [showTerceroModal, setShowTerceroModal] = useState(false)
+    const [showAdvancedModal, setShowAdvancedModal] = useState(false)
     const [modalInitialValues, setModalInitialValues] = useState<{ nombre?: string }>({})
 
     // Batch Lote Modal
@@ -122,14 +124,15 @@ export const ClasificarMovimientosPage: React.FC = () => {
     }
 
     const guardarClasificacion = async () => {
-        if (!movimientoActual || !terceroId || !centroCostoId || !conceptoId) {
-            alert("Por favor complete Tercero, Centro de Costo y Concepto")
+        if (!movimientoActual || !terceroId) {
+            alert("Por favor seleccione un Tercero (Identidad del Movimiento)")
             return
         }
 
         try {
+            const { detalles, ...movRest } = movimientoActual
             const payload = {
-                ...movimientoActual,
+                ...movRest,
                 tercero_id: terceroId,
                 centro_costo_id: centroCostoId,
                 concepto_id: conceptoId,
@@ -232,6 +235,21 @@ export const ClasificarMovimientosPage: React.FC = () => {
         }
     }
 
+    const handleGuardarAvanzado = async (payload: any) => {
+        if (!movimientoActual) return
+        try {
+            await apiService.movimientos.actualizar(movimientoActual.id, payload)
+            // Éxito: Remover de pendientes
+            setPendientes(prev => prev.filter(m => m.id !== movimientoActual.id))
+            setMovimientoActual(null)
+            setShowAdvancedModal(false)
+        } catch (error) {
+            console.error(error)
+            alert("Error guardando avanzado: " + error)
+            throw error // Re-throw to let modal know it failed if needed
+        }
+    }
+
     // --- DataTable Logic for Batch Modal ---
     const handleToggleBatchSelect = (id: number) => {
         const newSelected = new Set(batchSelectedIds)
@@ -270,7 +288,10 @@ export const ClasificarMovimientosPage: React.FC = () => {
             header: 'Valor',
             sortable: true,
             align: 'right',
-            accessor: (row) => <CurrencyDisplay value={row.valor} />
+            accessor: (row) => <CurrencyDisplay
+                value={row.cuenta_display?.toLowerCase().includes('usd') || (row.usd && row.usd !== 0) ? (row.usd || 0) : row.valor}
+                currency={row.cuenta_display?.toLowerCase().includes('usd') || (row.usd && row.usd !== 0) ? 'USD' : 'COP'}
+            />
         },
         {
             key: 'seleccionar',
@@ -338,7 +359,11 @@ export const ClasificarMovimientosPage: React.FC = () => {
                                                 )}
                                             <span className="text-xs font-semibold text-gray-500">{mov.fecha}</span>
                                         </div>
-                                        <CurrencyDisplay value={mov.valor} className="text-sm font-bold" />
+                                        <CurrencyDisplay
+                                            value={mov.cuenta_display?.toLowerCase().includes('usd') || (mov.usd && mov.usd !== 0) ? (mov.usd || 0) : mov.valor}
+                                            currency={mov.cuenta_display?.toLowerCase().includes('usd') || (mov.usd && mov.usd !== 0) ? 'USD' : 'COP'}
+                                            className="text-sm font-bold"
+                                        />
                                     </div>
                                     <div className="flex items-start gap-2">
                                         {mov.referencia && (
@@ -370,7 +395,11 @@ export const ClasificarMovimientosPage: React.FC = () => {
                                     <p className="text-gray-500 text-sm">ID: {movimientoActual.id}</p>
                                 </div>
                                 <div className="text-right">
-                                    <CurrencyDisplay value={movimientoActual.valor} className="text-3xl font-bold" />
+                                    <CurrencyDisplay
+                                        value={movimientoActual.cuenta_display?.toLowerCase().includes('usd') || (movimientoActual.usd && movimientoActual.usd !== 0) ? (movimientoActual.usd || 0) : movimientoActual.valor}
+                                        currency={movimientoActual.cuenta_display?.toLowerCase().includes('usd') || (movimientoActual.usd && movimientoActual.usd !== 0) ? 'USD' : 'COP'}
+                                        className="text-3xl font-bold"
+                                    />
                                     <div className="text-gray-500 text-sm">{movimientoActual.cuenta_display}</div>
                                 </div>
                             </div>
@@ -410,9 +439,12 @@ export const ClasificarMovimientosPage: React.FC = () => {
 
                             {/* Form Area */}
                             <div className="space-y-1.5">
-                                {/* Tercero */}
+                                {/* Tercero (Header Identity) */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tercero</label>
+                                    <label className="block text-sm font-bold text-blue-800 mb-1 flex items-center gap-1">
+                                        Tercero (Identidad del Movimiento)
+                                        <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider font-bold">Encabezado</span>
+                                    </label>
                                     <ComboBox
                                         options={terceros}
                                         value={terceroId ? terceroId.toString() : ""}
@@ -501,6 +533,14 @@ export const ClasificarMovimientosPage: React.FC = () => {
                                     )}
 
                                     <button
+                                        onClick={() => setShowAdvancedModal(true)}
+                                        className="flex items-center justify-center gap-2 text-purple-600 hover:text-purple-800 py-3 px-4 font-medium transition-colors"
+                                        title="Edición Avanzada / Dividir"
+                                    >
+                                        <Split className="h-5 w-5" />
+                                    </button>
+
+                                    <button
                                         onClick={() => setMovimientoActual(null)}
                                         className="flex items-center justify-center gap-2 text-gray-500 hover:text-gray-700 py-3 px-4"
                                     >
@@ -552,7 +592,12 @@ export const ClasificarMovimientosPage: React.FC = () => {
                                                         </td>
                                                         <td className="px-4 py-2 text-sm font-medium text-gray-900 whitespace-nowrap">{ctx.referencia || '-'}</td>
                                                         <td className="px-4 py-2 text-xs text-gray-500 max-w-xs line-clamp-3" title={ctx.descripcion}>{ctx.descripcion}</td>
-                                                        <td className="px-4 py-2"><CurrencyDisplay value={ctx.valor} /></td>
+                                                        <td className="px-4 py-2">
+                                                            <CurrencyDisplay
+                                                                value={ctx.cuenta_display?.toLowerCase().includes('usd') || (ctx.usd && ctx.usd !== 0) ? (ctx.usd || 0) : ctx.valor}
+                                                                currency={ctx.cuenta_display?.toLowerCase().includes('usd') || (ctx.usd && ctx.usd !== 0) ? 'USD' : 'COP'}
+                                                            />
+                                                        </td>
                                                         <td className="px-4 py-2">
                                                             <div className="text-gray-900 font-medium">{ctx.tercero_display?.split('-')[1] || '-'}</div>
                                                         </td>
@@ -601,6 +646,14 @@ export const ClasificarMovimientosPage: React.FC = () => {
                 initialValues={modalInitialValues}
                 onClose={() => setShowTerceroModal(false)}
                 onSave={handleGuardarTercero}
+            />
+
+            <MovimientoModal
+                isOpen={showAdvancedModal}
+                onClose={() => setShowAdvancedModal(false)}
+                movimiento={movimientoActual}
+                onSave={handleGuardarAvanzado}
+                mode="edit"
             />
 
             {/* Modal de Confirmación de Lote */}

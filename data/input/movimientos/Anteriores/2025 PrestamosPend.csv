@@ -1,0 +1,34 @@
+Fecha,Descripción,Referencia,Valor,USD,TRM,Detalle,monedaid,cuentaid,terceroid,grupoid,conceptoid
+03/Jan/2025,Consignacion Corresponsal Cb,,"70,000 ",,,,1,1,120,35,311
+17/Jan/2025,Consignacion Corresponsal Cb,,"80,000 ",,,,1,1,120,35,311
+02/feb/2025,Transferencia Cta Suc Virtual,49976573969,"50,000 ",,,,1,1,120,35,311
+16/feb/2025,Transferencia Cta Suc Virtual,49976573969,"100,000 ",,,,1,1,120,35,311
+28/feb/2025,Transferencia Cta Suc Virtual,49976573969,"100,000 ",,,,1,1,120,35,311
+16/mar/2025,Consignacion Corresponsal Cb,,"100,000 ",,,,1,1,120,35,311
+31/mar/2025,Transferencia Cta Suc Virtual,49973835202,"1,600,000 ",,,Boletas,1,1,128,35,311
+31/mar/2025,Tu Boleta,,"(1,546,667)",,,Tu Boleta,1,6,128,35,311
+01/Apr/2025,Consignacion Corresponsal Cb,,"150,000 ",,,,1,1,120,35,311
+10/Apr/2025,Transferencia Cta Suc Virtual,49973835202,"(200,000)",,,Mama,1,1,128,35,311
+11/Apr/2025,Transferencia Cta Suc Virtual,49973835202,"220,000 ",,,Mama,1,1,128,35,311
+16/Apr/2025,Consignacion Corresponsal Cb,,"100,000 ",,,,1,1,120,35,311
+22/Apr/2025,Impuesto Bogota Dc Pse,,"(7,424,000)",,,Pago Predial El Tunal,1,6,169,35,311
+02/may/2025,Consignacion Corresponsal Cb,,"100,000 ",,,,1,1,120,35,311
+09/may/2025,Pago Interbanc Montoya G E Hi,9000704590,"7,424,000 ",,,Pago Predial El Tunal,1,1,169,35,311
+10/may/2025,,,"(500,000)",,,,1,2,68,35,311
+20/may/2025,Consignacion Corresponsal Cb,,"610,000 ",,,,1,1,120,35,311
+23/may/2025,Transferencia Cta Suc Virtual,49976573969,"250,000 ",,,,1,1,120,35,311
+23/may/2025,Avianca,,"(1,080,550)",,,,1,6,120,35,311
+01/jun/2025,Transferencia Cta Suc Virtual,49976573969,"251,000 ",,,,1,1,120,35,311
+23/jun/2025,Transferencia Cta Suc Virtual,23671300211,"90,000 ",,,Compra sopladora,1,1,8,35,311
+21/jul/2025,Transferencia Cta Suc Virtual,10028827248,"30,000 ",,,,1,1,231,35,311
+29/jul/2025,Transferencia Cta Suc Virtual,20455805909,"300,000 ",,,Margarita,1,1,152,35,311
+07/Aug/2025,Exito La Ceja,,"(253,128)",,,,1,6,152,35,311
+07/Aug/2025,Tienda D1 Cantarrana,,"(46,872)",,,,1,6,152,35,311
+30/Aug/2025,Transferencia Cta Suc Virtual,10028827248,"500,000 ",,,,1,1,231,35,311
+22/oct/2025,Transf A Margarita Ma,null,"1,000,000 ",,,,1,1,152,35,311
+31/oct/2025,,,"(250,000)",,,,1,2,98,35,311
+06/nov/2025,Transferencia Cta Suc Virtual,20455805909,"(1,000,000)",,,,1,1,152,35,311
+06/nov/2025,Transferencia Cta Suc Virtual,10028827248,"(500,000)",,,,1,1,231,35,311
+12/nov/2025,Transferencia Cta Suc Virtual,1678703725,"(20,000,000)",,,,1,1,63,35,311
+15/nov/2025,Transf A Margarita Ma,null,"1,000,000 ",,,,1,1,152,35,311
+29/nov/2025,Transferencia Cta Suc Virtual,20455805909,"(1,000,000)",,,Margarita,1,1,152,35,311

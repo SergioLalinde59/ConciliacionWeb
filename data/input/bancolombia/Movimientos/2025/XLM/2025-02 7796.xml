@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<Movimientos>
+    <Movimiento>
+        <FECHA>2025/02/28</FECHA>
+        <DESCRIPCIÓN>INTERESES CORRIENTES</DESCRIPCIÓN>
+        <PLAZO>0</PLAZO>
+        <MONEDA>$</MONEDA>
+        <VALOR>17,978.63</VALOR>
+        <FECHA_FACTURACION>2025/02/28</FECHA_FACTURACION>
+    </Movimiento>
+    <Movimiento>
+        <FECHA>2025/02/28</FECHA>
+        <DESCRIPCIÓN>TIENDA D1 CARMEN TEZEN</DESCRIPCIÓN>
+        <PLAZO>1</PLAZO>
+        <MONEDA>$</MONEDA>
+        <VALOR>26,880.00</VALOR>
+        <FECHA_FACTURACION>2025/03/30</FECHA_FACTURACION>
+    </Movimiento>
+    <Movimiento>
+        <FECHA>2025/02/27</FECHA>
+        <DESCRIPCIÓN>CARDIOVIDA COLOMBIA</DESCRIPCIÓN>
+        <PLAZO>1</PLAZO>
+        <MONEDA>$</MONEDA>
+        <VALOR>32,900.00</VALOR>
+        <FECHA_FACTURACION>2025/02/28</FECHA_FACTURACION>
+    </Movimiento>
+    <Movimiento>
+        <FECHA>2025/02/27</FECHA>
+        <DESCRIPCIÓN>APPLE.COM/BILL</DESCRIPCIÓN>
+        <PLAZO>36</PLAZO>
+        <MONEDA>US$</MONEDA>
+        <VALOR>3.14</VALOR>
+        <FECHA_FACTURACION>2025/02/28</FECHA_FACTURACION>
+    </Movimiento>
+    <Movimiento>Este extracto es copia del original</Movimiento>
+</Movimientos>

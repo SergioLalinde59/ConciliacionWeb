@@ -1,0 +1,4 @@
+id,tipo,valor_id,descripcion,activo
+1,tercero,196,Por identificar,True
+3,concepto,310,Por Clasificar,True
+2,centro_costo,34,Por Clasificar,True

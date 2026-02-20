@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<Movimientos>
+    <Movimiento>
+        <FECHA>2025/04/29</FECHA>
+        <OFICINA/>
+        <DESCRIPCIÓN>TRASLADO DESDE CUENTA BANCOLOMBIASUCURSAL VIRTUAL</DESCRIPCIÓN>
+        <DETALLE>Traslado desde la cuenta n�mero 10270076377 de BANCOLOMBIA</DETALLE>
+        <UNITVAL>38,123.25</UNITVAL>
+        <VALOR>8,000,000.00</VALOR>
+        <UNITNUM>210.01434315</UNITNUM>
+    </Movimiento>
+    <Movimiento>
+        <FECHA>2025/04/22</FECHA>
+        <OFICINA/>
+        <DESCRIPCIÓN>TRASLADO HACIA CUENTA BANCOLOMBIASUCURSAL VIRTUAL</DESCRIPCIÓN>
+        <DETALLE>Traslado hacia la cuenta n�mero 10270076377 de BANCOLOMBIA</DETALLE>
+        <UNITVAL>38,047.67</UNITVAL>
+        <VALOR>-1,000,000.00</VALOR>
+        <UNITNUM>26.30329514</UNITNUM>
+    </Movimiento>
+    <Movimiento>
+        <FECHA>2025/04/22</FECHA>
+        <OFICINA/>
+        <DESCRIPCIÓN>RETENCION EN LA FUENTESUCURSAL VIRTUAL</DESCRIPCIÓN>
+        <DETALLE>Retenci�n en la Fuente</DETALLE>
+        <UNITVAL>38,047.67</UNITVAL>
+        <VALOR>-150.15</VALOR>
+        <UNITNUM>0.00394943</UNITNUM>
+    </Movimiento>
+    <Movimiento>
+        <FECHA>2025/04/15</FECHA>
+        <OFICINA/>
+        <DESCRIPCIÓN>TRASLADO HACIA CUENTA BANCOLOMBIASUCURSAL VIRTUAL</DESCRIPCIÓN>
+        <DETALLE>Traslado hacia la cuenta n�mero 10270076377 de BANCOLOMBIA</DETALLE>
+        <UNITVAL>37,924.62</UNITVAL>
+        <VALOR>-5,000,000.00</VALOR>
+        <UNITNUM>131.93984653</UNITNUM>
+    </Movimiento>
+    <Movimiento>
+        <FECHA>2025/04/15</FECHA>
+        <OFICINA/>
+        <DESCRIPCIÓN>RETENCION EN LA FUENTESUCURSAL VIRTUAL</DESCRIPCIÓN>
+        <DETALLE>Retenci�n en la Fuente</DETALLE>
+        <UNITVAL>37,924.62</UNITVAL>
+        <VALOR>-700.51</VALOR>
+        <UNITNUM>0.01848503</UNITNUM>
+    </Movimiento>
+    <Movimiento>
+        <FECHA>2025/03/31</FECHA>
+        <OFICINA/>
+        <DESCRIPCIÓN>TRASLADO HACIA CUENTA BANCOLOMBIASUCURSAL VIRTUAL</DESCRIPCIÓN>
+        <DETALLE>Traslado hacia la cuenta n�mero 10270076377 de BANCOLOMBIA</DETALLE>
+        <UNITVAL>37,927.96</UNITVAL>
+        <VALOR>-2,000,000.00</VALOR>
+        <UNITNUM>52.76845036</UNITNUM>
+    </Movimiento>
+    <Movimiento>
+        <FECHA>2025/03/31</FECHA>
+        <OFICINA/>
+        <DESCRIPCIÓN>RETENCION EN LA FUENTESUCURSAL VIRTUAL</DESCRIPCIÓN>
+        <DETALLE>Retenci�n en la Fuente</DETALLE>
+        <UNITVAL>37,927.96</UNITVAL>
+        <VALOR>-41.27</VALOR>
+        <UNITNUM>0.00108887</UNITNUM>
+    </Movimiento>
+    <Movimiento>
+        <FECHA>2025/03/28</FECHA>
+        <OFICINA/>
+        <DESCRIPCIÓN>TRASLADO DESDE CUENTA BANCOLOMBIASUCURSAL VIRTUAL</DESCRIPCIÓN>
+        <DETALLE>Traslado desde la cuenta n�mero 10270076377 de BANCOLOMBIA</DETALLE>
+        <UNITVAL>37,825.88</UNITVAL>
+        <VALOR>8,000,000.00</VALOR>
+        <UNITNUM>211.64115560</UNITNUM>
+    </Movimiento>
+    <Movimiento>
+        <FECHA>2025/03/17</FECHA>
+        <OFICINA/>
+        <DESCRIPCIÓN>TRASLADO HACIA CUENTA BANCOLOMBIASUCURSAL VIRTUAL</DESCRIPCIÓN>
+        <DETALLE>Traslado hacia la cuenta n�mero 10270076377 de BANCOLOMBIA</DETALLE>
+        <UNITVAL>38,273.73</UNITVAL>
+        <VALOR>-13,000,000.00</VALOR>
+        <UNITNUM>339.87942504</UNITNUM>
+    </Movimiento>
+    <Movimiento>
+        <FECHA>2025/03/17</FECHA>
+        <OFICINA/>
+        <DESCRIPCIÓN>RETENCION EN LA FUENTESUCURSAL VIRTUAL</DESCRIPCIÓN>
+        <DETALLE>Retenci�n en la Fuente</DETALLE>
+        <UNITVAL>38,273.73</UNITVAL>
+        <VALOR>-782.24</VALOR>
+        <UNITNUM>0.02045132</UNITNUM>
+    </Movimiento>
+    <Movimiento>
+        <FECHA>2025/03/14</FECHA>
+        <OFICINA/>
+        <DESCRIPCIÓN>TRASLADO DESDE CUENTA BANCOLOMBIASUCURSAL VIRTUAL</DESCRIPCIÓN>
+        <DETALLE>Traslado desde la cuenta n�mero 10270076377 de BANCOLOMBIA</DETALLE>
+        <UNITVAL>38,260.45</UNITVAL>
+        <VALOR>4,000,000.00</VALOR>
+        <UNITNUM>104.61349372</UNITNUM>
+    </Movimiento>
+    <Movimiento>Este extracto es copia del original</Movimiento>
+</Movimientos>

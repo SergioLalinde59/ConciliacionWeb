@@ -1,0 +1,2 @@
+2026/01/29 17:43:21 [error] 206#206: *9320 upstream prematurely closed connection while reading response header from upstream, client: 127.0.0.1, server: nginxproxymanager, request: "GET /api/ HTTP/1.1", upstream: "http://127.0.0.1:3000/", host: "127.0.0.1:81"
+2026/01/29 17:43:30 [error] 206#206: *9322 connect() failed (111: Connection refused) while connecting to upstream, client: 127.0.0.1, server: nginxproxymanager, request: "GET /api/ HTTP/1.1", upstream: "http://127.0.0.1:3000/", host: "127.0.0.1:81"
